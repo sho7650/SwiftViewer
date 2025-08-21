@@ -21,12 +21,18 @@ final class SlideShowViewModel {
     
     private let slideShowService: SlideShowServiceProtocol
     private let imageNavigator: ImageNavigationProtocol
+    private let settingsManager: SettingsManagerProtocol
     
-    let defaultInterval: TimeInterval = 3.0
+    var defaultInterval: TimeInterval {
+        settingsManager.slideShowInterval
+    }
     
-    init(slideShowService: SlideShowServiceProtocol, imageNavigator: ImageNavigationProtocol) {
+    init(slideShowService: SlideShowServiceProtocol, 
+         imageNavigator: ImageNavigationProtocol,
+         settingsManager: SettingsManagerProtocol) {
         self.slideShowService = slideShowService
         self.imageNavigator = imageNavigator
+        self.settingsManager = settingsManager
     }
     
     var isRunning: Bool {
@@ -37,10 +43,11 @@ final class SlideShowViewModel {
         slideShowService.currentInterval
     }
     
-    func startSlideShow(interval: TimeInterval = 3.0) {
-        guard interval > 0 else { return }
+    func startSlideShow(interval: TimeInterval? = nil) {
+        let actualInterval = interval ?? defaultInterval
+        guard actualInterval > 0 else { return }
         
-        slideShowService.startTimer(interval: interval) { [weak self] in
+        slideShowService.startTimer(interval: actualInterval) { [weak self] in
             guard let self = self else { return }
             // Note: For testing, we need synchronous execution
             Task { @MainActor in
@@ -53,7 +60,7 @@ final class SlideShowViewModel {
         slideShowService.stopTimer()
     }
     
-    func toggleSlideShow(interval: TimeInterval = 3.0) {
+    func toggleSlideShow(interval: TimeInterval? = nil) {
         if isRunning {
             stopSlideShow()
         } else {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum SortType {
+enum SortType: Equatable {
     case name(ascending: Bool)
     case date(ascending: Bool)
     case size(ascending: Bool)

@@ -24,11 +24,17 @@ final class SettingsManager: SettingsManagerProtocol {
     var slideShowInterval: TimeInterval {
         get {
             let interval = userDefaults.double(forKey: "slideShowInterval")
-            return interval > 0 ? interval : 3.0
+            return interval > 0 ? interval : 10.0
         }
         set {
-            userDefaults.set(newValue, forKey: "slideShowInterval")
+            let validatedValue = validateSlideShowInterval(newValue)
+            userDefaults.set(validatedValue, forKey: "slideShowInterval")
         }
+    }
+    
+    private func validateSlideShowInterval(_ interval: TimeInterval) -> TimeInterval {
+        // Allow intervals from 0.5 to 60 seconds
+        return max(0.5, min(60.0, interval))
     }
     
     var repeatEnabled: Bool {
@@ -95,7 +101,7 @@ final class SettingsManager: SettingsManagerProtocol {
 }
 
 final class MockSettingsManager: SettingsManagerProtocol {
-    var slideShowInterval: TimeInterval = 3.0
+    var slideShowInterval: TimeInterval = 10.0
     var repeatEnabled: Bool = false
     var sortType: SortType = .name(ascending: true)
     var debugLoggingEnabled: Bool = false
