@@ -11,6 +11,7 @@ protocol DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol { get }
     var imageLoaderService: ImageLoaderServiceProtocol { get }
     var settingsManager: SettingsManagerProtocol { get }
+    @MainActor var slideShowService: SlideShowServiceProtocol { get }
 }
 
 final class DependencyContainer: DependencyContainerProtocol {
@@ -29,12 +30,20 @@ final class DependencyContainer: DependencyContainerProtocol {
     lazy var settingsManager: SettingsManagerProtocol = {
         SettingsManager()
     }()
+    
+    @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
+        SlideShowService()
+    }()
 }
 
 final class MockDependencyContainer: DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol
     var imageLoaderService: ImageLoaderServiceProtocol
     var settingsManager: SettingsManagerProtocol
+    
+    @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
+        MockSlideShowService()
+    }()
     
     init(
         fileManagerService: FileManagerServiceProtocol = MockFileManagerService(),
