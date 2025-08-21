@@ -10,10 +10,17 @@ import AppKit
 
 struct ImageGalleryView: View {
     @State private var viewModel: ImageViewerViewModel
+    @State private var slideShowViewModel: SlideShowViewModel
     @FocusState private var isFocused: Bool
     
     init(viewModel: ImageViewerViewModel) {
         self.viewModel = viewModel
+        let dependencies = DependencyContainer.shared
+        self.slideShowViewModel = SlideShowViewModel(
+            slideShowService: dependencies.slideShowService,
+            imageNavigator: viewModel,
+            settingsManager: dependencies.settingsManager
+        )
     }
     
     var body: some View {
@@ -38,6 +45,11 @@ struct ImageGalleryView: View {
                 if viewModel.hasImages && !viewModel.isLoading {
                     imageInfoOverlay
                 }
+                
+                // Slideshow controls overlay
+                if viewModel.hasImages && !viewModel.isLoading {
+                    slideShowControlsOverlay
+                }
             }
         }
         .focusable()
@@ -48,6 +60,12 @@ struct ImageGalleryView: View {
         .onKeyPress { keyPress in
             handleKeyPress(keyPress.key)
             return .handled
+        }
+        .onDisappear {
+            slideShowViewModel.stopSlideShow()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .slideShowIntervalChanged)) { _ in
+            slideShowViewModel.updateIntervalIfRunning()
         }
     }
     
@@ -158,6 +176,46 @@ struct ImageGalleryView: View {
         .padding()
     }
     
+    private var slideShowControlsOverlay: some View {
+        VStack {
+            Spacer()
+            
+            HStack {
+                Spacer()
+                
+                SlideShowControlsView(
+                    isSlideShowRunning: slideShowViewModel.isRunning,
+                    currentIndex: viewModel.currentIndex,
+                    totalCount: viewModel.imageFiles.count,
+                    onPrevious: {
+                        Task { @MainActor in
+                            await viewModel.navigateToPrevious()
+                            slideShowViewModel.restartSlideShowIfRunning()
+                        }
+                    },
+                    onToggleSlideShow: {
+                        slideShowViewModel.toggleSlideShow()
+                    },
+                    onNext: {
+                        Task { @MainActor in
+                            await viewModel.navigateToNext()
+                            slideShowViewModel.restartSlideShowIfRunning()
+                        }
+                    },
+                    onProgressTapped: { index in
+                        Task { @MainActor in
+                            await viewModel.navigateToIndex(index)
+                            slideShowViewModel.restartSlideShowIfRunning()
+                        }
+                    }
+                )
+                
+                Spacer()
+            }
+        }
+        .padding()
+    }
+    
     // MARK: - Input Handling
     
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
@@ -165,15 +223,22 @@ struct ImageGalleryView: View {
             switch key {
             case .leftArrow:
                 await viewModel.navigateToPrevious()
+                slideShowViewModel.restartSlideShowIfRunning()
                 
             case .rightArrow:
                 await viewModel.navigateToNext()
+                slideShowViewModel.restartSlideShowIfRunning()
                 
             case .upArrow:
                 await viewModel.navigateToPrevious()
+                slideShowViewModel.restartSlideShowIfRunning()
                 
             case .downArrow:
                 await viewModel.navigateToNext()
+                slideShowViewModel.restartSlideShowIfRunning()
+                
+            case .space:
+                slideShowViewModel.toggleSlideShow()
                 
             default:
                 break

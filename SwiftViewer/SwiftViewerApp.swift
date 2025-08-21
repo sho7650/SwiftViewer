@@ -9,9 +9,22 @@ import SwiftUI
 
 @main
 struct SwiftViewerApp: App {
+    @State private var isShowingSettings = false
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .sheet(isPresented: $isShowingSettings) {
+                    SettingsView()
+                }
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Preferences...") {
+                    isShowingSettings = true
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
         }
     }
 }

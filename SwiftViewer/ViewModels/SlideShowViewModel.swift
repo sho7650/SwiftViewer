@@ -23,6 +23,8 @@ final class SlideShowViewModel {
     private let imageNavigator: ImageNavigationProtocol
     private let settingsManager: SettingsManagerProtocol
     
+    private var _isRunning: Bool = false
+    
     var defaultInterval: TimeInterval {
         settingsManager.slideShowInterval
     }
@@ -36,7 +38,7 @@ final class SlideShowViewModel {
     }
     
     var isRunning: Bool {
-        slideShowService.isRunning
+        _isRunning
     }
     
     var currentInterval: TimeInterval? {
@@ -49,15 +51,46 @@ final class SlideShowViewModel {
         
         slideShowService.startTimer(interval: actualInterval) { [weak self] in
             guard let self = self else { return }
-            // Note: For testing, we need synchronous execution
             Task { @MainActor in
                 await self.imageNavigator.navigateToNext()
+            }
+        }
+        
+        // Only update state if service actually started
+        if slideShowService.isRunning {
+            _isRunning = true
+        }
+    }
+    
+    func restartSlideShowIfRunning() {
+        if _isRunning {
+            let currentInterval = slideShowService.currentInterval ?? defaultInterval
+            slideShowService.stopTimer()
+            slideShowService.startTimer(interval: currentInterval) { [weak self] in
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.imageNavigator.navigateToNext()
+                }
+            }
+        }
+    }
+    
+    func updateIntervalIfRunning() {
+        if _isRunning {
+            let newInterval = defaultInterval
+            slideShowService.stopTimer()
+            slideShowService.startTimer(interval: newInterval) { [weak self] in
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.imageNavigator.navigateToNext()
+                }
             }
         }
     }
     
     func stopSlideShow() {
         slideShowService.stopTimer()
+        _isRunning = false
     }
     
     func toggleSlideShow(interval: TimeInterval? = nil) {
