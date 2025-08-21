@@ -13,7 +13,7 @@ import Observation
 @MainActor
 final class ImageViewerViewModel {
     
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
     
     var currentImage: NSImage?
     var currentImageFile: ImageFile?

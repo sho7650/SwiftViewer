@@ -1,5 +1,5 @@
 //
-//  ImageViewerView.swift
+//  ImageGalleryView.swift
 //  SwiftViewer
 //
 //  Created by Claude on 2025/08/21.
@@ -8,8 +8,9 @@
 import SwiftUI
 import AppKit
 
-struct ImageViewerView: View {
+struct ImageGalleryView: View {
     @State private var viewModel: ImageViewerViewModel
+    @FocusState private var isFocused: Bool
     
     init(viewModel: ImageViewerViewModel) {
         self.viewModel = viewModel
@@ -39,11 +40,15 @@ struct ImageViewerView: View {
                 }
             }
         }
+        .focusable()
+        .focused($isFocused)
+        .onAppear {
+            isFocused = true
+        }
         .onKeyPress { keyPress in
             handleKeyPress(keyPress.key)
             return .handled
         }
-        .focusable()
     }
     
     // MARK: - Subviews
@@ -135,10 +140,9 @@ struct ImageViewerView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("← Previous")
-                        .opacity(viewModel.canNavigatePrevious ? 1.0 : 0.5)
+                        .opacity(viewModel.currentIndex > 0 ? 1.0 : 0.5)
                     Text("→ Next")
-                        .opacity(viewModel.canNavigateNext ? 1.0 : 0.5)
-                    Text("Esc Folder Selection")
+                        .opacity(viewModel.currentIndex < viewModel.imageFiles.count - 1 ? 1.0 : 0.5)
                 }
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.7))
@@ -171,10 +175,6 @@ struct ImageViewerView: View {
             case .downArrow:
                 await viewModel.navigateToNext()
                 
-            case .escape:
-                // This will be handled by parent view for navigation back to folder selection
-                break
-                
             default:
                 break
             }
@@ -188,6 +188,6 @@ struct ImageViewerView: View {
     let mockContainer = MockDependencyContainer()
     let viewModel = ImageViewerViewModel(dependencies: mockContainer)
     
-    return ImageViewerView(viewModel: viewModel)
+    return ImageGalleryView(viewModel: viewModel)
         .preferredColorScheme(.dark)
 }

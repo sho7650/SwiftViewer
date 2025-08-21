@@ -26,10 +26,6 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onKeyPress { keyPress in
-            handleGlobalKeyPress(keyPress.key)
-            return .handled
-        }
         .focusable()
     }
     
@@ -43,7 +39,7 @@ struct ContentView: View {
     }
     
     private var imageViewerView: some View {
-        ImageViewerView(viewModel: imageViewerViewModel)
+        ImageGalleryView(viewModel: imageViewerViewModel)
             .transition(.opacity)
     }
     
@@ -64,26 +60,6 @@ struct ContentView: View {
         }
     }
     
-    private func returnToFolderSelection() {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            isImageViewerActive = false
-        }
-        selectedFolderURL = nil
-    }
-    
-    private func handleGlobalKeyPress(_ key: KeyEquivalent) {
-        switch key {
-        case .escape:
-            if isImageViewerActive {
-                returnToFolderSelection()
-            }
-        case "f", "F":
-            // TODO: Toggle fullscreen in future phase
-            break
-        default:
-            break
-        }
-    }
 }
 
 #Preview {
