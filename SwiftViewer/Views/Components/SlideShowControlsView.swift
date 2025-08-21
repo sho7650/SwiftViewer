@@ -11,6 +11,9 @@ struct SlideShowControlsView: View {
     let isSlideShowRunning: Bool
     let currentIndex: Int
     let totalCount: Int
+    let isLeftKeyPressed: Bool
+    let isSpaceKeyPressed: Bool
+    let isRightKeyPressed: Bool
     let onPrevious: () -> Void
     let onToggleSlideShow: () -> Void
     let onNext: () -> Void
@@ -20,6 +23,9 @@ struct SlideShowControlsView: View {
         isSlideShowRunning: Bool,
         currentIndex: Int,
         totalCount: Int,
+        isLeftKeyPressed: Bool = false,
+        isSpaceKeyPressed: Bool = false,
+        isRightKeyPressed: Bool = false,
         onPrevious: @escaping () -> Void,
         onToggleSlideShow: @escaping () -> Void,
         onNext: @escaping () -> Void,
@@ -28,6 +34,9 @@ struct SlideShowControlsView: View {
         self.isSlideShowRunning = isSlideShowRunning
         self.currentIndex = currentIndex
         self.totalCount = totalCount
+        self.isLeftKeyPressed = isLeftKeyPressed
+        self.isSpaceKeyPressed = isSpaceKeyPressed
+        self.isRightKeyPressed = isRightKeyPressed
         self.onPrevious = onPrevious
         self.onToggleSlideShow = onToggleSlideShow
         self.onNext = onNext
@@ -52,7 +61,7 @@ struct SlideShowControlsView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                 }
-                .buttonStyle(ControlButtonStyle())
+                .buttonStyle(ControlButtonStyle(isKeyPressed: isLeftKeyPressed))
                 .disabled(currentIndex == 0)
                 
                 // Play/Pause button
@@ -61,7 +70,7 @@ struct SlideShowControlsView: View {
                 } label: {
                     Image(systemName: isSlideShowRunning ? "pause.fill" : "play.fill")
                 }
-                .buttonStyle(ControlButtonStyle(isActive: isSlideShowRunning))
+                .buttonStyle(ControlButtonStyle(isActive: isSlideShowRunning, isKeyPressed: isSpaceKeyPressed))
                 
                 // Next button
                 Button {
@@ -69,7 +78,7 @@ struct SlideShowControlsView: View {
                 } label: {
                     Image(systemName: "chevron.right")
                 }
-                .buttonStyle(ControlButtonStyle())
+                .buttonStyle(ControlButtonStyle(isKeyPressed: isRightKeyPressed))
                 .disabled(currentIndex >= totalCount - 1)
             }
         }

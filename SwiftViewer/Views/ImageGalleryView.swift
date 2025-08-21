@@ -13,6 +13,11 @@ struct ImageGalleryView: View {
     @State private var slideShowViewModel: SlideShowViewModel
     @FocusState private var isFocused: Bool
     
+    // Keyboard press states for visual feedback
+    @State private var isLeftKeyPressed = false
+    @State private var isRightKeyPressed = false
+    @State private var isSpaceKeyPressed = false
+    
     init(viewModel: ImageViewerViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
@@ -187,6 +192,9 @@ struct ImageGalleryView: View {
                     isSlideShowRunning: slideShowViewModel.isRunning,
                     currentIndex: viewModel.currentIndex,
                     totalCount: viewModel.imageFiles.count,
+                    isLeftKeyPressed: isLeftKeyPressed,
+                    isSpaceKeyPressed: isSpaceKeyPressed,
+                    isRightKeyPressed: isRightKeyPressed,
                     onPrevious: {
                         Task { @MainActor in
                             await viewModel.navigateToPrevious()
@@ -221,24 +229,52 @@ struct ImageGalleryView: View {
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
         Task { @MainActor in
             switch key {
-            case .leftArrow:
+            case .leftArrow, .upArrow:
+                // Show visual feedback
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isLeftKeyPressed = true
+                }
+                
                 await viewModel.navigateToPrevious()
                 slideShowViewModel.restartSlideShowIfRunning()
                 
-            case .rightArrow:
+                // Reset visual feedback
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isLeftKeyPressed = false
+                    }
+                }
+                
+            case .rightArrow, .downArrow:
+                // Show visual feedback
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isRightKeyPressed = true
+                }
+                
                 await viewModel.navigateToNext()
                 slideShowViewModel.restartSlideShowIfRunning()
                 
-            case .upArrow:
-                await viewModel.navigateToPrevious()
-                slideShowViewModel.restartSlideShowIfRunning()
-                
-            case .downArrow:
-                await viewModel.navigateToNext()
-                slideShowViewModel.restartSlideShowIfRunning()
+                // Reset visual feedback
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isRightKeyPressed = false
+                    }
+                }
                 
             case .space:
+                // Show visual feedback
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isSpaceKeyPressed = true
+                }
+                
                 slideShowViewModel.toggleSlideShow()
+                
+                // Reset visual feedback
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isSpaceKeyPressed = false
+                    }
+                }
                 
             default:
                 break
@@ -249,10 +285,88 @@ struct ImageGalleryView: View {
 
 // MARK: - Preview
 
-#Preview {
+#Preview("Dark Mode - Empty State") {
     let mockContainer = MockDependencyContainer()
     let viewModel = ImageViewerViewModel(dependencies: mockContainer)
     
     return ImageGalleryView(viewModel: viewModel)
         .preferredColorScheme(.dark)
+        .frame(width: 800, height: 600)
+}
+
+#Preview("Light Mode - With Images") {
+    let mockContainer = MockDependencyContainer()
+    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    
+    // Simulate loaded images
+    Task { @MainActor in
+        viewModel.imageFiles = [
+            ImageFile(url: URL(fileURLWithPath: "/image1.jpg"), fileName: "image1.jpg", fileSize: 1024000, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/image2.jpg"), fileName: "image2.jpg", fileSize: 2048000, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/image3.jpg"), fileName: "image3.jpg", fileSize: 3072000, createdDate: Date())
+        ]
+        viewModel.currentIndex = 1
+    }
+    
+    return ImageGalleryView(viewModel: viewModel)
+        .preferredColorScheme(.light)
+        .frame(width: 800, height: 600)
+}
+
+#Preview("Slideshow Running") {
+    let mockContainer = MockDependencyContainer()
+    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    
+    // Simulate loaded images and running slideshow
+    Task { @MainActor in
+        viewModel.imageFiles = [
+            ImageFile(url: URL(fileURLWithPath: "/photo1.jpg"), fileName: "photo1.jpg", fileSize: 5242880, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/photo2.jpg"), fileName: "photo2.jpg", fileSize: 4194304, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/photo3.jpg"), fileName: "photo3.jpg", fileSize: 6291456, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/photo4.jpg"), fileName: "photo4.jpg", fileSize: 3145728, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/photo5.jpg"), fileName: "photo5.jpg", fileSize: 7340032, createdDate: Date())
+        ]
+        viewModel.currentIndex = 2
+    }
+    
+    return ImageGalleryView(viewModel: viewModel)
+        .preferredColorScheme(.dark)
+        .frame(width: 1024, height: 768)
+}
+
+#Preview("Compact View") {
+    let mockContainer = MockDependencyContainer()
+    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    
+    return ImageGalleryView(viewModel: viewModel)
+        .preferredColorScheme(.dark)
+        .frame(width: 400, height: 300)
+}
+
+#Preview("Loading State") {
+    let mockContainer = MockDependencyContainer()
+    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    
+    // Simulate loading state
+    Task { @MainActor in
+        viewModel.isLoading = true
+    }
+    
+    return ImageGalleryView(viewModel: viewModel)
+        .preferredColorScheme(.dark)
+        .frame(width: 600, height: 400)
+}
+
+#Preview("Error State") {
+    let mockContainer = MockDependencyContainer()
+    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    
+    // Simulate error state
+    Task { @MainActor in
+        viewModel.errorMessage = "Failed to load images from the selected folder"
+    }
+    
+    return ImageGalleryView(viewModel: viewModel)
+        .preferredColorScheme(.dark)
+        .frame(width: 600, height: 400)
 }

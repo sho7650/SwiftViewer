@@ -9,9 +9,11 @@ import SwiftUI
 
 struct ControlButtonStyle: ButtonStyle {
     let isActive: Bool
+    let isKeyPressed: Bool
     
-    init(isActive: Bool = false) {
+    init(isActive: Bool = false, isKeyPressed: Bool = false) {
         self.isActive = isActive
+        self.isKeyPressed = isKeyPressed
     }
     
     func makeBody(configuration: Configuration) -> some View {
@@ -29,7 +31,7 @@ struct ControlButtonStyle: ButtonStyle {
     }
     
     private func foregroundColor(_ isPressed: Bool) -> Color {
-        if isPressed {
+        if isPressed || isKeyPressed {
             return .white.opacity(0.8)
         } else if isActive {
             return .blue
@@ -39,7 +41,7 @@ struct ControlButtonStyle: ButtonStyle {
     }
     
     private func backgroundColor(_ isPressed: Bool) -> Color {
-        if isPressed {
+        if isPressed || isKeyPressed {
             return .black.opacity(0.8)
         } else {
             return .black.opacity(0.6)
