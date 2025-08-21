@@ -97,8 +97,10 @@ final class MockFileManagerService: FileManagerServiceProtocol {
     var mockImageFiles: [ImageFile] = []
     var shouldThrowError = false
     var errorToThrow: Error = FileManagerServiceError.directoryNotFound
+    var lastUsedSortType: SortType?
     
     func getImageFiles(from url: URL, sortBy: SortType) async throws -> [ImageFile] {
+        lastUsedSortType = sortBy
         if shouldThrowError {
             throw errorToThrow
         }
