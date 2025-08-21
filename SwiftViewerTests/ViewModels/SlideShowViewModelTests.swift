@@ -14,14 +14,17 @@ final class SlideShowViewModelTests: XCTestCase {
     var sut: SlideShowViewModel!
     var mockSlideShowService: MockSlideShowService!
     var mockImageViewerViewModel: MockImageViewerViewModel!
+    var mockSettingsManager: MockSettingsManager!
     
     override func setUp() {
         super.setUp()
         mockSlideShowService = MockSlideShowService()
         mockImageViewerViewModel = MockImageViewerViewModel()
+        mockSettingsManager = MockSettingsManager()
         sut = SlideShowViewModel(
             slideShowService: mockSlideShowService,
-            imageNavigator: mockImageViewerViewModel
+            imageNavigator: mockImageViewerViewModel,
+            settingsManager: mockSettingsManager
         )
     }
     
@@ -30,6 +33,7 @@ final class SlideShowViewModelTests: XCTestCase {
         sut = nil
         mockSlideShowService = nil
         mockImageViewerViewModel = nil
+        mockSettingsManager = nil
         super.tearDown()
     }
     
@@ -38,7 +42,7 @@ final class SlideShowViewModelTests: XCTestCase {
     func test_initialState_isCorrect() {
         XCTAssertFalse(sut.isRunning)
         XCTAssertNil(sut.currentInterval)
-        XCTAssertEqual(sut.defaultInterval, 3.0)
+        XCTAssertEqual(sut.defaultInterval, 10.0)
     }
     
     // MARK: - Start Slideshow Tests
@@ -47,7 +51,7 @@ final class SlideShowViewModelTests: XCTestCase {
         sut.startSlideShow()
         
         XCTAssertTrue(mockSlideShowService.isRunning)
-        XCTAssertEqual(mockSlideShowService.currentInterval, 3.0)
+        XCTAssertEqual(mockSlideShowService.currentInterval, 10.0)
         XCTAssertTrue(sut.isRunning)
     }
     
@@ -139,7 +143,7 @@ final class SlideShowViewModelTests: XCTestCase {
         sut.toggleSlideShow()
         
         XCTAssertTrue(sut.isRunning)
-        XCTAssertEqual(sut.currentInterval, 3.0)
+        XCTAssertEqual(sut.currentInterval, 10.0)
     }
     
     func test_toggleSlideShow_stopsWhenRunning() {
@@ -198,13 +202,49 @@ final class SlideShowViewModelTests: XCTestCase {
         // Simply test that object can be deallocated
         let viewModel = SlideShowViewModel(
             slideShowService: MockSlideShowService(),
-            imageNavigator: MockImageViewerViewModel()
+            imageNavigator: MockImageViewerViewModel(),
+            settingsManager: MockSettingsManager()
         )
         viewModel.startSlideShow()
         
         // This test verifies that SlideShowViewModel can be created and deallocated
         // Timer cleanup is handled by the SlideShowService's own deinit
         XCTAssertTrue(true, "SlideShowViewModel test completed")
+    }
+    
+    // MARK: - Settings Integration Tests
+    
+    func test_defaultInterval_readsFromSettingsManager() {
+        mockSettingsManager.slideShowInterval = 15.0
+        
+        XCTAssertEqual(sut.defaultInterval, 15.0, "Should read default interval from settings")
+    }
+    
+    func test_startSlideShow_usesSettingsManagerInterval_whenNoIntervalProvided() {
+        mockSettingsManager.slideShowInterval = 7.5
+        
+        sut.startSlideShow()
+        
+        XCTAssertTrue(mockSlideShowService.isRunning)
+        XCTAssertEqual(mockSlideShowService.currentInterval, 7.5)
+    }
+    
+    func test_startSlideShow_usesProvidedInterval_overridingSettings() {
+        mockSettingsManager.slideShowInterval = 15.0
+        
+        sut.startSlideShow(interval: 5.0)
+        
+        XCTAssertTrue(mockSlideShowService.isRunning)
+        XCTAssertEqual(mockSlideShowService.currentInterval, 5.0)
+    }
+    
+    func test_toggleSlideShow_usesSettingsManagerInterval_whenNoIntervalProvided() {
+        mockSettingsManager.slideShowInterval = 12.5
+        
+        sut.toggleSlideShow()
+        
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 12.5)
     }
 }
 
