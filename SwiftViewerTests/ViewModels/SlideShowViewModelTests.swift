@@ -104,6 +104,7 @@ final class SlideShowViewModelTests: XCTestCase {
         
         sut.startSlideShow()
         
+        // Since service failed to start, isRunning should remain false
         XCTAssertFalse(sut.isRunning)
         XCTAssertNil(sut.currentInterval)
     }
@@ -166,13 +167,13 @@ final class SlideShowViewModelTests: XCTestCase {
     
     // MARK: - State Synchronization Tests
     
-    func test_isRunning_reflectsServiceState() {
+    func test_isRunning_reflectsViewModelState() {
         XCTAssertFalse(sut.isRunning)
         
-        mockSlideShowService.isRunning = true
+        sut.startSlideShow()
         XCTAssertTrue(sut.isRunning)
         
-        mockSlideShowService.isRunning = false
+        sut.stopSlideShow()
         XCTAssertFalse(sut.isRunning)
     }
     
