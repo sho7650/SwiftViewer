@@ -137,8 +137,8 @@ final class ImageFileTests: XCTestCase {
             createdDate: Date()
         )
         
-        XCTAssertEqual(imageFile1.formattedFileSize, "512 B")
-        XCTAssertEqual(imageFile2.formattedFileSize, "1.0 MB")
-        XCTAssertEqual(imageFile3.formattedFileSize, "1.0 GB")
+        XCTAssertEqual(imageFile1.formattedFileSize, "512 bytes")
+        XCTAssertEqual(imageFile2.formattedFileSize, "1 MB")
+        XCTAssertEqual(imageFile3.formattedFileSize, "1.07 GB")
     }
 }
