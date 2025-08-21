@@ -5,7 +5,8 @@
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon[]
+Icon[
+]
 
 # Thumbnails
 ._*
@@ -103,3 +104,9 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+#
+.env
+.mcp.json
+data/cipher*
+memAgent/
