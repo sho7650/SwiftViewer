@@ -137,12 +137,14 @@ final class SlideShowServiceTests: XCTestCase {
     
     func test_startTimer_handlesZeroInterval() {
         let expectation = XCTestExpectation(description: "Zero interval handled")
+        expectation.isInverted = true // Should NOT be called
         
         sut.startTimer(interval: 0) {
             expectation.fulfill()
         }
         
         wait(for: [expectation], timeout: 0.1)
+        XCTAssertFalse(sut.isRunning)
     }
     
     func test_startTimer_handlesNegativeInterval() {
