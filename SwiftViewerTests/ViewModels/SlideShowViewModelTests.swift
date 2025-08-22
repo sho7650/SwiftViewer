@@ -247,6 +247,135 @@ final class SlideShowViewModelTests: XCTestCase {
         XCTAssertTrue(sut.isRunning)
         XCTAssertEqual(sut.currentInterval, 12.5)
     }
+    
+    // MARK: - New Features Tests (Phase 3)
+    
+    func test_restartSlideShowIfRunning_restartsWhenRunning() {
+        // Start slideshow first
+        sut.startSlideShow(interval: 2.0)
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 2.0)
+        
+        // Restart should maintain the running state
+        sut.restartSlideShowIfRunning()
+        
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 2.0)
+        // Service should have been stopped and restarted
+        XCTAssertTrue(mockSlideShowService.isRunning)
+    }
+    
+    func test_restartSlideShowIfRunning_doesNothingWhenStopped() {
+        // Ensure slideshow is not running
+        XCTAssertFalse(sut.isRunning)
+        
+        sut.restartSlideShowIfRunning()
+        
+        // Should remain stopped
+        XCTAssertFalse(sut.isRunning)
+        XCTAssertFalse(mockSlideShowService.isRunning)
+    }
+    
+    func test_updateIntervalIfRunning_updatesWhenRunning() {
+        // Start slideshow with initial interval
+        sut.startSlideShow(interval: 3.0)
+        XCTAssertEqual(sut.currentInterval, 3.0)
+        
+        // Change settings interval
+        mockSettingsManager.slideShowInterval = 5.0
+        
+        // Update interval if running
+        sut.updateIntervalIfRunning()
+        
+        // Should use new interval from settings
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 5.0)
+        XCTAssertEqual(mockSlideShowService.currentInterval, 5.0)
+    }
+    
+    func test_updateIntervalIfRunning_doesNothingWhenStopped() {
+        // Ensure slideshow is not running
+        XCTAssertFalse(sut.isRunning)
+        
+        // Change settings interval
+        mockSettingsManager.slideShowInterval = 8.0
+        
+        sut.updateIntervalIfRunning()
+        
+        // Should remain stopped and not use new interval
+        XCTAssertFalse(sut.isRunning)
+        XCTAssertNil(sut.currentInterval)
+    }
+    
+    func test_isRunning_propertyReflectsInternalState() {
+        // Test that isRunning property reflects internal _isRunning state
+        XCTAssertFalse(sut.isRunning)
+        
+        sut.startSlideShow()
+        XCTAssertTrue(sut.isRunning)
+        
+        sut.stopSlideShow()
+        XCTAssertFalse(sut.isRunning)
+        
+        // Test toggle
+        sut.toggleSlideShow()
+        XCTAssertTrue(sut.isRunning)
+        
+        sut.toggleSlideShow()
+        XCTAssertFalse(sut.isRunning)
+    }
+    
+    func test_slideShowViewModel_handlesSettingsChanges() {
+        // Start with initial interval
+        mockSettingsManager.slideShowInterval = 2.0
+        sut.startSlideShow()
+        XCTAssertEqual(sut.currentInterval, 2.0)
+        
+        // Simulate settings change
+        mockSettingsManager.slideShowInterval = 4.0
+        sut.updateIntervalIfRunning()
+        
+        XCTAssertEqual(sut.currentInterval, 4.0)
+        XCTAssertTrue(sut.isRunning)
+    }
+    
+    func test_slideShowViewModel_notificationCenterIntegration() {
+        // This test verifies the structure for notification handling
+        // In real implementation, this would be handled by the view
+        
+        sut.startSlideShow(interval: 1.0)
+        XCTAssertEqual(sut.currentInterval, 1.0)
+        
+        // Simulate interval change via settings
+        mockSettingsManager.slideShowInterval = 3.0
+        sut.updateIntervalIfRunning()
+        
+        XCTAssertEqual(sut.currentInterval, 3.0)
+    }
+    
+    func test_slideShowViewModel_keyboardNavigationIntegration() {
+        // Test that slideshow restarts properly after keyboard navigation
+        sut.startSlideShow(interval: 2.0)
+        XCTAssertTrue(sut.isRunning)
+        
+        // Simulate keyboard navigation (which should restart slideshow)
+        sut.restartSlideShowIfRunning()
+        
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 2.0)
+    }
+    
+    func test_slideShowViewModel_progressBarNavigationIntegration() {
+        // Test that slideshow restarts properly after progress bar tap
+        sut.startSlideShow(interval: 1.5)
+        XCTAssertTrue(sut.isRunning)
+        
+        // Simulate progress bar tap navigation
+        sut.restartSlideShowIfRunning()
+        
+        XCTAssertTrue(sut.isRunning)
+        XCTAssertEqual(sut.currentInterval, 1.5)
+    }
 }
 
 // MARK: - Mock ImageViewerViewModel

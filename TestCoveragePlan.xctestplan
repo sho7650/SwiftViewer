@@ -1,0 +1,18 @@
+{
+  "configurations" : [
+    {
+      "id" : "ECD85F27-68B5-4227-8143-BEEE52664421",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+
+  ],
+  "version" : 1
+}
