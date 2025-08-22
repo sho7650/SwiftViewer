@@ -23,8 +23,8 @@ jobs:
 
     - name: Build
       run: |
-        xcodebuild -scheme YourSchemeName -sdk macosx -configuration Release build
+        xcodebuild -scheme SwiftViewer -sdk macosx -configuration Release build
 
     - name: Run Tests
       run: |
-        xcodebuild -scheme YourSchemeName -sdk macosx -configuration Release test
+        xcodebuild -scheme SwiftViewer -sdk macosx -configuration Release test
