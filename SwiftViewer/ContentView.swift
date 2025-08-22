@@ -11,7 +11,7 @@ import AppKit
 
 struct ContentView: View {
     @State private var selectedFolderURL: URL?
-    @State private var imageViewerViewModel: ImageViewerViewModel
+    @State private var imageGalleryViewModel: ImageGalleryViewModel
     @State private var isImageViewerActive = false
     @State private var isShowingFolderPicker = false
     @State private var isFullscreen = false
@@ -20,13 +20,13 @@ struct ContentView: View {
     
     init() {
         let dependencies = DependencyContainer.shared
-        self._imageViewerViewModel = State(initialValue: ImageViewerViewModel(dependencies: dependencies))
+        self._imageGalleryViewModel = State(initialValue: ImageGalleryViewModel(dependencies: dependencies))
     }
     
     var body: some View {
         ZStack {
             if isImageViewerActive, selectedFolderURL != nil {
-                imageViewerView
+                imageGalleryView
             } else {
                 folderSelectionView
             }
@@ -65,7 +65,7 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
             if let sortType = notification.object as? SortType {
                 Task { @MainActor in
-                    await imageViewerViewModel.refreshWithCurrentSort()
+                    await imageGalleryViewModel.refreshWithCurrentSort()
                 }
             }
         }
@@ -80,8 +80,8 @@ struct ContentView: View {
         .transition(.opacity)
     }
     
-    private var imageViewerView: some View {
-        ImageGalleryView(viewModel: imageViewerViewModel)
+    private var imageGalleryView: some View {
+        ImageGalleryView(viewModel: imageGalleryViewModel)
             .transition(.opacity)
     }
     
@@ -91,10 +91,10 @@ struct ContentView: View {
         selectedFolderURL = url
         
         Task { @MainActor in
-            await imageViewerViewModel.loadFolder(url)
+            await imageGalleryViewModel.loadFolder(url)
             
             // Only show image viewer if we successfully loaded images
-            if imageViewerViewModel.hasImages && imageViewerViewModel.errorMessage == nil {
+            if imageGalleryViewModel.hasImages && imageGalleryViewModel.errorMessage == nil {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isImageViewerActive = true
                 }

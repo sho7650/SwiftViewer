@@ -1,5 +1,5 @@
 //
-//  ImageViewerViewModel.swift
+//  ImageGalleryViewModel.swift
 //  SwiftViewer
 //
 //  Created by Claude on 2025/08/21.
@@ -11,7 +11,7 @@ import Observation
 
 @Observable
 @MainActor
-final class ImageViewerViewModel {
+final class ImageGalleryViewModel {
     
     // MARK: - Observable Properties
     

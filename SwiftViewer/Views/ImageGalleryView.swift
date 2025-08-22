@@ -9,7 +9,7 @@ import SwiftUI
 import AppKit
 
 struct ImageGalleryView: View {
-    @State private var viewModel: ImageViewerViewModel
+    @State private var viewModel: ImageGalleryViewModel
     @State private var slideShowViewModel: SlideShowViewModel
     @FocusState private var isFocused: Bool
     
@@ -18,7 +18,7 @@ struct ImageGalleryView: View {
     @State private var isRightKeyPressed = false
     @State private var isSpaceKeyPressed = false
     
-    init(viewModel: ImageViewerViewModel) {
+    init(viewModel: ImageGalleryViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
         self.slideShowViewModel = SlideShowViewModel(
@@ -294,7 +294,7 @@ struct ImageGalleryView: View {
 
 #Preview("Dark Mode - Empty State") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     return ImageGalleryView(viewModel: viewModel)
         .preferredColorScheme(.dark)
@@ -303,7 +303,7 @@ struct ImageGalleryView: View {
 
 #Preview("Light Mode - With Images") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     // Simulate loaded images
     Task { @MainActor in
@@ -322,7 +322,7 @@ struct ImageGalleryView: View {
 
 #Preview("Slideshow Running") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     // Simulate loaded images and running slideshow
     Task { @MainActor in
@@ -343,7 +343,7 @@ struct ImageGalleryView: View {
 
 #Preview("Compact View") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     return ImageGalleryView(viewModel: viewModel)
         .preferredColorScheme(.dark)
@@ -352,7 +352,7 @@ struct ImageGalleryView: View {
 
 #Preview("Loading State") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     // Simulate loading state
     Task { @MainActor in
@@ -366,7 +366,7 @@ struct ImageGalleryView: View {
 
 #Preview("Error State") {
     let mockContainer = MockDependencyContainer()
-    let viewModel = ImageViewerViewModel(dependencies: mockContainer)
+    let viewModel = ImageGalleryViewModel(dependencies: mockContainer)
     
     // Simulate error state
     Task { @MainActor in

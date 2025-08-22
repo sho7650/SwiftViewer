@@ -8,21 +8,21 @@
 import Foundation
 
 @MainActor
-protocol ImageNavigationProtocol {
+protocol ImageGalleryNavigationProtocol {
     func navigateToNext() async
     func navigateToPrevious() async
     var currentIndex: Int { get }
     var imageFiles: [ImageFile] { get }
 }
 
-extension ImageViewerViewModel: ImageNavigationProtocol {}
+extension ImageGalleryViewModel: ImageGalleryNavigationProtocol {}
 
 @MainActor
 @Observable
 final class SlideShowViewModel {
     
     private let slideShowService: SlideShowServiceProtocol
-    private let imageNavigator: ImageNavigationProtocol
+    private let imageNavigator: ImageGalleryNavigationProtocol
     private let settingsManager: SettingsManagerProtocol
     
     private var _isRunning: Bool = false
@@ -40,7 +40,7 @@ final class SlideShowViewModel {
     }
     
     init(slideShowService: SlideShowServiceProtocol, 
-         imageNavigator: ImageNavigationProtocol,
+         imageNavigator: ImageGalleryNavigationProtocol,
          settingsManager: SettingsManagerProtocol) {
         self.slideShowService = slideShowService
         self.imageNavigator = imageNavigator

@@ -14,7 +14,7 @@ final class RepeatModeTests: XCTestCase {
     var mockContainer: MockDependencyContainer!
     var mockNavigator: MockImageNavigator!
     var slideShowViewModel: SlideShowViewModel!
-    var imageViewerViewModel: ImageViewerViewModel!
+    var imageViewerViewModel: ImageGalleryViewModel!
     
     override func setUp() {
         super.setUp()
@@ -25,7 +25,7 @@ final class RepeatModeTests: XCTestCase {
             imageNavigator: mockNavigator,
             settingsManager: mockContainer.settingsManager
         )
-        imageViewerViewModel = ImageViewerViewModel(dependencies: mockContainer)
+        imageViewerViewModel = ImageGalleryViewModel(dependencies: mockContainer)
     }
     
     override func tearDown() {
@@ -215,7 +215,7 @@ final class RepeatModeTests: XCTestCase {
 // MARK: - Mock Image Navigator
 
 @MainActor
-final class MockImageNavigator: ImageNavigationProtocol {
+final class MockImageNavigator: ImageGalleryNavigationProtocol {
     var currentIndex: Int = 0
     var imageFiles: [ImageFile] = []
     var navigateToNextCalled = false

@@ -1,5 +1,5 @@
 //
-//  ImageViewerViewModelTests.swift
+//  ImageGalleryViewModelTests.swift
 //  SwiftViewerTests
 //
 //  Created by Claude on 2025/08/21.
@@ -10,9 +10,9 @@ import AppKit
 @testable import SwiftViewer
 
 @MainActor
-final class ImageViewerViewModelTests: XCTestCase {
+final class ImageGalleryViewModelTests: XCTestCase {
     
-    var sut: ImageViewerViewModel!
+    var sut: ImageGalleryViewModel!
     var mockFileManagerService: MockFileManagerService!
     var mockImageLoaderService: MockImageLoaderService!
     var mockSettingsManager: MockSettingsManager!
@@ -28,7 +28,7 @@ final class ImageViewerViewModelTests: XCTestCase {
             imageLoaderService: mockImageLoaderService,
             settingsManager: mockSettingsManager
         )
-        sut = ImageViewerViewModel(dependencies: mockContainer)
+        sut = ImageGalleryViewModel(dependencies: mockContainer)
     }
     
     override func tearDown() {
