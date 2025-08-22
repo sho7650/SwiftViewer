@@ -6,11 +6,17 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
+import AppKit
 
 struct ContentView: View {
     @State private var selectedFolderURL: URL?
     @State private var imageViewerViewModel: ImageViewerViewModel
     @State private var isImageViewerActive = false
+    @State private var isShowingFolderPicker = false
+    @State private var isFullscreen = false
+    
+    @Environment(MenuState.self) private var menuState
     
     init() {
         let dependencies = DependencyContainer.shared
@@ -27,6 +33,39 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .focusable()
+        .focusedValue(\.openFolderAction) {
+            isShowingFolderPicker = true
+        }
+        .focusedValue(\.sortSelectionAction) { sortType in
+            handleSortChange(sortType)
+        }
+        .focusedValue(\.displayModeAction) { displayMode in
+            handleDisplayModeChange(displayMode)
+        }
+        .focusedValue(\.toggleFullscreenAction) {
+            toggleFullscreen()
+        }
+        .fileImporter(
+            isPresented: $isShowingFolderPicker,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first {
+                    handleFolderSelection(url)
+                }
+            case .failure(let error):
+                print("Error selecting folder: \(error)")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
+            if let sortType = notification.object as? SortType {
+                Task { @MainActor in
+                    await imageViewerViewModel.refreshWithCurrentSort()
+                }
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -60,6 +99,24 @@ struct ContentView: View {
         }
     }
     
+    private func handleSortChange(_ sortType: SortType) {
+        menuState.updateSortType(sortType)
+    }
+    
+    private func handleDisplayModeChange(_ displayMode: DisplayMode) {
+        // Placeholder for Phase 6.1 implementation
+        menuState.updateDisplayMode(displayMode)
+        print("Display mode changed to: \(displayMode.rawValue)")
+    }
+    
+    private func toggleFullscreen() {
+        // Placeholder for Phase 4.2 implementation
+        menuState.toggleFullscreen()
+        
+        if let window = NSApp.keyWindow {
+            window.toggleFullScreen(nil)
+        }
+    }
 }
 
 #Preview {
