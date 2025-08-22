@@ -212,7 +212,9 @@ struct ImageGalleryView: View {
                         }
                     },
                     onToggleRepeat: {
-                        slideShowViewModel.isRepeatEnabled.toggle()
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            slideShowViewModel.isRepeatEnabled.toggle()
+                        }
                         NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                     },
                     onProgressTapped: { index in
