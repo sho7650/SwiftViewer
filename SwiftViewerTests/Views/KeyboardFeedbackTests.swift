@@ -13,12 +13,12 @@ import SwiftUI
 final class KeyboardFeedbackTests: XCTestCase {
     
     var mockContainer: MockDependencyContainer!
-    var viewModel: ImageViewerViewModel!
+    var viewModel: ImageGalleryViewModel!
     
     override func setUp() {
         super.setUp()
         mockContainer = MockDependencyContainer()
-        viewModel = ImageViewerViewModel(dependencies: mockContainer)
+        viewModel = ImageGalleryViewModel(dependencies: mockContainer)
         
         // Set up mock images for testing
         let mockImages = [

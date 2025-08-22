@@ -25,6 +25,10 @@ struct FullscreenToggleKey: FocusedValueKey {
     typealias Value = () -> Void
 }
 
+struct RepeatToggleKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 extension FocusedValues {
     var openFolderAction: (() -> Void)? {
         get { self[FolderSelectionKey.self] }
@@ -45,6 +49,11 @@ extension FocusedValues {
         get { self[FullscreenToggleKey.self] }
         set { self[FullscreenToggleKey.self] = newValue }
     }
+    
+    var toggleRepeatAction: (() -> Void)? {
+        get { self[RepeatToggleKey.self] }
+        set { self[RepeatToggleKey.self] = newValue }
+    }
 }
 
 // MARK: - Display Mode
@@ -62,6 +71,7 @@ struct MenuCommands: Commands {
     @FocusedValue(\.sortSelectionAction) var sortSelectionAction
     @FocusedValue(\.displayModeAction) var displayModeAction
     @FocusedValue(\.toggleFullscreenAction) var toggleFullscreenAction
+    @FocusedValue(\.toggleRepeatAction) var toggleRepeatAction
     
     var body: some Commands {
         // MARK: - File Menu
@@ -86,6 +96,13 @@ struct MenuCommands: Commands {
                 toggleFullscreenAction?()
             }
             .keyboardShortcut("f", modifiers: .command)
+            
+            Divider()
+            
+            Button("Repeat Slideshow") {
+                toggleRepeatAction?()
+            }
+            .keyboardShortcut("r", modifiers: .command)
             
             Divider()
             
@@ -169,11 +186,13 @@ final class MenuState {
     var currentSortType: SortType = .name(ascending: true)
     var currentDisplayMode: DisplayMode = .fit
     var isFullscreen: Bool = false
+    var isRepeatEnabled: Bool = false
     var hasRecentFolders: Bool = false
     
     init() {
         let settingsManager = DependencyContainer.shared.settingsManager
         self.currentSortType = settingsManager.sortType
+        self.isRepeatEnabled = settingsManager.repeatEnabled
     }
     
     func updateSortType(_ sortType: SortType) {
@@ -191,6 +210,12 @@ final class MenuState {
         isFullscreen.toggle()
         NotificationCenter.default.post(name: .fullscreenToggled, object: isFullscreen)
     }
+    
+    func toggleRepeat() {
+        isRepeatEnabled.toggle()
+        DependencyContainer.shared.settingsManager.repeatEnabled = isRepeatEnabled
+        NotificationCenter.default.post(name: .repeatModeChanged, object: isRepeatEnabled)
+    }
 }
 
 // MARK: - Notification Names
@@ -199,4 +224,5 @@ extension Notification.Name {
     static let sortTypeChanged = Notification.Name("sortTypeChanged")
     static let displayModeChanged = Notification.Name("displayModeChanged")
     static let fullscreenToggled = Notification.Name("fullscreenToggled")
+    static let repeatModeChanged = Notification.Name("repeatModeChanged")
 }

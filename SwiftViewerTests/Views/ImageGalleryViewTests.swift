@@ -13,13 +13,13 @@ import SwiftUI
 final class ImageGalleryViewTests: XCTestCase {
     
     var mockContainer: MockDependencyContainer!
-    var viewModel: ImageViewerViewModel!
+    var viewModel: ImageGalleryViewModel!
     var galleryView: ImageGalleryView!
     
     override func setUp() {
         super.setUp()
         mockContainer = MockDependencyContainer()
-        viewModel = ImageViewerViewModel(dependencies: mockContainer)
+        viewModel = ImageGalleryViewModel(dependencies: mockContainer)
         galleryView = ImageGalleryView(viewModel: viewModel)
     }
     

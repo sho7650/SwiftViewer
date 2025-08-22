@@ -13,17 +13,17 @@ final class SlideShowViewModelTests: XCTestCase {
     
     var sut: SlideShowViewModel!
     var mockSlideShowService: MockSlideShowService!
-    var mockImageViewerViewModel: MockImageViewerViewModel!
+    var mockImageGalleryViewModel: MockImageGalleryViewModel!
     var mockSettingsManager: MockSettingsManager!
     
     override func setUp() {
         super.setUp()
         mockSlideShowService = MockSlideShowService()
-        mockImageViewerViewModel = MockImageViewerViewModel()
+        mockImageGalleryViewModel = MockImageGalleryViewModel()
         mockSettingsManager = MockSettingsManager()
         sut = SlideShowViewModel(
             slideShowService: mockSlideShowService,
-            imageNavigator: mockImageViewerViewModel,
+            imageNavigator: mockImageGalleryViewModel,
             settingsManager: mockSettingsManager
         )
     }
@@ -32,7 +32,7 @@ final class SlideShowViewModelTests: XCTestCase {
         sut.stopSlideShow()
         sut = nil
         mockSlideShowService = nil
-        mockImageViewerViewModel = nil
+        mockImageGalleryViewModel = nil
         mockSettingsManager = nil
         super.tearDown()
     }
@@ -74,7 +74,7 @@ final class SlideShowViewModelTests: XCTestCase {
         
         // Wait a brief moment for async Task to complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            XCTAssertEqual(self.mockImageViewerViewModel.navigateToNextCallCount, 1)
+            XCTAssertEqual(self.mockImageGalleryViewModel.navigateToNextCallCount, 1)
             expectation.fulfill()
         }
         
@@ -92,7 +92,7 @@ final class SlideShowViewModelTests: XCTestCase {
         
         // Wait a brief moment for async Tasks to complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            XCTAssertEqual(self.mockImageViewerViewModel.navigateToNextCallCount, 3)
+            XCTAssertEqual(self.mockImageGalleryViewModel.navigateToNextCallCount, 3)
             expectation.fulfill()
         }
         
@@ -133,7 +133,7 @@ final class SlideShowViewModelTests: XCTestCase {
         
         mockSlideShowService.simulateTimerFire()
         
-        XCTAssertEqual(mockImageViewerViewModel.navigateToNextCallCount, 0)
+        XCTAssertEqual(mockImageGalleryViewModel.navigateToNextCallCount, 0)
     }
     
     // MARK: - Toggle Slideshow Tests
@@ -203,7 +203,7 @@ final class SlideShowViewModelTests: XCTestCase {
         // Simply test that object can be deallocated
         let viewModel = SlideShowViewModel(
             slideShowService: MockSlideShowService(),
-            imageNavigator: MockImageViewerViewModel(),
+            imageNavigator: MockImageGalleryViewModel(),
             settingsManager: MockSettingsManager()
         )
         viewModel.startSlideShow()
@@ -378,10 +378,10 @@ final class SlideShowViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - Mock ImageViewerViewModel
+// MARK: - Mock ImageGalleryViewModel
 
 @MainActor
-final class MockImageViewerViewModel: ImageNavigationProtocol {
+final class MockImageGalleryViewModel: ImageGalleryNavigationProtocol {
     var navigateToNextCallCount = 0
     var navigateToPreviousCallCount = 0
     
