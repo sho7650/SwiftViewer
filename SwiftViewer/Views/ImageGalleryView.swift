@@ -192,6 +192,7 @@ struct ImageGalleryView: View {
                     isSlideShowRunning: slideShowViewModel.isRunning,
                     currentIndex: viewModel.currentIndex,
                     totalCount: viewModel.imageFiles.count,
+                    isRepeatEnabled: slideShowViewModel.isRepeatEnabled,
                     isLeftKeyPressed: isLeftKeyPressed,
                     isSpaceKeyPressed: isSpaceKeyPressed,
                     isRightKeyPressed: isRightKeyPressed,
@@ -209,6 +210,10 @@ struct ImageGalleryView: View {
                             await viewModel.navigateToNext()
                             slideShowViewModel.restartSlideShowIfRunning()
                         }
+                    },
+                    onToggleRepeat: {
+                        slideShowViewModel.isRepeatEnabled.toggle()
+                        NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                     },
                     onProgressTapped: { index in
                         Task { @MainActor in

@@ -11,35 +11,41 @@ struct SlideShowControlsView: View {
     let isSlideShowRunning: Bool
     let currentIndex: Int
     let totalCount: Int
+    let isRepeatEnabled: Bool
     let isLeftKeyPressed: Bool
     let isSpaceKeyPressed: Bool
     let isRightKeyPressed: Bool
     let onPrevious: () -> Void
     let onToggleSlideShow: () -> Void
     let onNext: () -> Void
+    let onToggleRepeat: () -> Void
     let onProgressTapped: ((Int) -> Void)?
     
     init(
         isSlideShowRunning: Bool,
         currentIndex: Int,
         totalCount: Int,
+        isRepeatEnabled: Bool = false,
         isLeftKeyPressed: Bool = false,
         isSpaceKeyPressed: Bool = false,
         isRightKeyPressed: Bool = false,
         onPrevious: @escaping () -> Void,
         onToggleSlideShow: @escaping () -> Void,
         onNext: @escaping () -> Void,
+        onToggleRepeat: @escaping () -> Void,
         onProgressTapped: ((Int) -> Void)? = nil
     ) {
         self.isSlideShowRunning = isSlideShowRunning
         self.currentIndex = currentIndex
         self.totalCount = totalCount
+        self.isRepeatEnabled = isRepeatEnabled
         self.isLeftKeyPressed = isLeftKeyPressed
         self.isSpaceKeyPressed = isSpaceKeyPressed
         self.isRightKeyPressed = isRightKeyPressed
         self.onPrevious = onPrevious
         self.onToggleSlideShow = onToggleSlideShow
         self.onNext = onNext
+        self.onToggleRepeat = onToggleRepeat
         self.onProgressTapped = onProgressTapped
     }
     
@@ -62,7 +68,7 @@ struct SlideShowControlsView: View {
                     Image(systemName: "chevron.left")
                 }
                 .buttonStyle(ControlButtonStyle(isKeyPressed: isLeftKeyPressed))
-                .disabled(currentIndex == 0)
+                .disabled(currentIndex == 0 && !isRepeatEnabled)
                 
                 // Play/Pause button
                 Button {
@@ -79,7 +85,21 @@ struct SlideShowControlsView: View {
                     Image(systemName: "chevron.right")
                 }
                 .buttonStyle(ControlButtonStyle(isKeyPressed: isRightKeyPressed))
-                .disabled(currentIndex >= totalCount - 1)
+                .disabled(currentIndex >= totalCount - 1 && !isRepeatEnabled)
+                
+                Divider()
+                    .frame(height: 20)
+                    .background(Color.white.opacity(0.3))
+                
+                // Repeat button
+                Button {
+                    onToggleRepeat()
+                } label: {
+                    Image(systemName: isRepeatEnabled ? "repeat.circle.fill" : "repeat")
+                        .foregroundColor(isRepeatEnabled ? .blue : .white)
+                }
+                .buttonStyle(ControlButtonStyle(isActive: isRepeatEnabled))
+                .help("Toggle Repeat (⌘R)")
             }
         }
         .padding(16)
@@ -93,24 +113,28 @@ struct SlideShowControlsView: View {
 
 #Preview {
     VStack(spacing: 40) {
-        // Running slideshow
+        // Running slideshow with repeat
         SlideShowControlsView(
             isSlideShowRunning: true,
             currentIndex: 6,
             totalCount: 50,
+            isRepeatEnabled: true,
             onPrevious: { print("Previous") },
             onToggleSlideShow: { print("Toggle") },
-            onNext: { print("Next") }
+            onNext: { print("Next") },
+            onToggleRepeat: { print("Toggle Repeat") }
         )
         
-        // Paused slideshow
+        // Paused slideshow without repeat
         SlideShowControlsView(
             isSlideShowRunning: false,
             currentIndex: 24,
             totalCount: 25,
+            isRepeatEnabled: false,
             onPrevious: { print("Previous") },
             onToggleSlideShow: { print("Toggle") },
-            onNext: { print("Next") }
+            onNext: { print("Next") },
+            onToggleRepeat: { print("Toggle Repeat") }
         )
     }
     .padding()

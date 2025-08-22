@@ -11,6 +11,8 @@ import Foundation
 protocol ImageNavigationProtocol {
     func navigateToNext() async
     func navigateToPrevious() async
+    var currentIndex: Int { get }
+    var imageFiles: [ImageFile] { get }
 }
 
 extension ImageViewerViewModel: ImageNavigationProtocol {}
@@ -27,6 +29,14 @@ final class SlideShowViewModel {
     
     var defaultInterval: TimeInterval {
         settingsManager.slideShowInterval
+    }
+    
+    var isRepeatEnabled: Bool {
+        get { settingsManager.repeatEnabled }
+        set { 
+            // SettingsManager handles persistence directly
+            DependencyContainer.shared.settingsManager.repeatEnabled = newValue
+        }
     }
     
     init(slideShowService: SlideShowServiceProtocol, 
@@ -52,7 +62,16 @@ final class SlideShowViewModel {
         slideShowService.startTimer(interval: actualInterval) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
-                await self.imageNavigator.navigateToNext()
+                // Check if we should stop at the last image
+                let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
+                let isRepeatEnabled = self.settingsManager.repeatEnabled
+                
+                if isAtLastImage && !isRepeatEnabled {
+                    // Stop slideshow when reaching the last image without repeat
+                    self.stopSlideShow()
+                } else {
+                    await self.imageNavigator.navigateToNext()
+                }
             }
         }
         
@@ -69,7 +88,16 @@ final class SlideShowViewModel {
             slideShowService.startTimer(interval: currentInterval) { [weak self] in
                 guard let self = self else { return }
                 Task { @MainActor in
-                    await self.imageNavigator.navigateToNext()
+                    // Check if we should stop at the last image
+                    let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
+                    let isRepeatEnabled = self.settingsManager.repeatEnabled
+                    
+                    if isAtLastImage && !isRepeatEnabled {
+                        // Stop slideshow when reaching the last image without repeat
+                        self.stopSlideShow()
+                    } else {
+                        await self.imageNavigator.navigateToNext()
+                    }
                 }
             }
         }
@@ -82,7 +110,16 @@ final class SlideShowViewModel {
             slideShowService.startTimer(interval: newInterval) { [weak self] in
                 guard let self = self else { return }
                 Task { @MainActor in
-                    await self.imageNavigator.navigateToNext()
+                    // Check if we should stop at the last image
+                    let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
+                    let isRepeatEnabled = self.settingsManager.repeatEnabled
+                    
+                    if isAtLastImage && !isRepeatEnabled {
+                        // Stop slideshow when reaching the last image without repeat
+                        self.stopSlideShow()
+                    } else {
+                        await self.imageNavigator.navigateToNext()
+                    }
                 }
             }
         }

@@ -45,6 +45,9 @@ struct ContentView: View {
         .focusedValue(\.toggleFullscreenAction) {
             toggleFullscreen()
         }
+        .focusedValue(\.toggleRepeatAction) {
+            toggleRepeat()
+        }
         .fileImporter(
             isPresented: $isShowingFolderPicker,
             allowedContentTypes: [.folder],
@@ -116,6 +119,10 @@ struct ContentView: View {
         if let window = NSApp.keyWindow {
             window.toggleFullScreen(nil)
         }
+    }
+    
+    private func toggleRepeat() {
+        menuState.toggleRepeat()
     }
 }
 

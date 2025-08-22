@@ -70,12 +70,28 @@ final class ImageViewerViewModel {
     func navigateToNext() async {
         guard !imageFiles.isEmpty else { return }
         
+        let isRepeatEnabled = settingsManager.repeatEnabled
+        let isAtLastImage = currentIndex == imageFiles.count - 1
+        
+        if isAtLastImage && !isRepeatEnabled {
+            // Don't navigate if we're at the last image and repeat is disabled
+            return
+        }
+        
         let nextIndex = (currentIndex + 1) % imageFiles.count
         await navigateToIndex(nextIndex)
     }
     
     func navigateToPrevious() async {
         guard !imageFiles.isEmpty else { return }
+        
+        let isRepeatEnabled = settingsManager.repeatEnabled
+        let isAtFirstImage = currentIndex == 0
+        
+        if isAtFirstImage && !isRepeatEnabled {
+            // Don't navigate if we're at the first image and repeat is disabled
+            return
+        }
         
         let previousIndex = currentIndex == 0 ? imageFiles.count - 1 : currentIndex - 1
         await navigateToIndex(previousIndex)
