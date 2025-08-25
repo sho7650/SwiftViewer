@@ -31,6 +31,7 @@ final class DependencyContainer: DependencyContainerProtocol {
         SettingsManager()
     }()
     
+    
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         SlideShowService()
     }()

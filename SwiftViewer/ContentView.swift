@@ -13,7 +13,6 @@ struct ContentView: View {
     @State private var selectedFolderURL: URL?
     @State private var imageGalleryViewModel: ImageGalleryViewModel
     @State private var isImageViewerActive = false
-    @State private var isShowingFolderPicker = false
     @State private var isFullscreen = false
     
     @Environment(MenuState.self) private var menuState
@@ -34,7 +33,7 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .focusable()
         .focusedValue(\.openFolderAction) {
-            isShowingFolderPicker = true
+            openFolderPicker()
         }
         .focusedValue(\.sortSelectionAction) { sortType in
             handleSortChange(sortType)
@@ -47,20 +46,6 @@ struct ContentView: View {
         }
         .focusedValue(\.toggleRepeatAction) {
             toggleRepeat()
-        }
-        .fileImporter(
-            isPresented: $isShowingFolderPicker,
-            allowedContentTypes: [.folder],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                if let url = urls.first {
-                    handleFolderSelection(url)
-                }
-            case .failure(let error):
-                Logger.shared.error("Error selecting folder", error: error)
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
             if let sortType = notification.object as? SortType {
@@ -87,10 +72,25 @@ struct ContentView: View {
     
     // MARK: - Actions
     
+    private func openFolderPicker() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = false
+        
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                handleFolderSelection(url)
+            }
+        }
+    }
+    
     private func handleFolderSelection(_ url: URL) {
         selectedFolderURL = url
         
         Task { @MainActor in
+            // Load folder contents
             await imageGalleryViewModel.loadFolder(url)
             
             // Only show image viewer if we successfully loaded images
@@ -101,6 +101,7 @@ struct ContentView: View {
             }
         }
     }
+    
     
     private func handleSortChange(_ sortType: SortType) {
         menuState.updateSortType(sortType)

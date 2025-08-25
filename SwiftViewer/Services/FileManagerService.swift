@@ -65,13 +65,18 @@ final class FileManagerService: FileManagerServiceProtocol {
                 }
                 
                 return sortImageFiles(imageFiles, by: sortBy)
-                
-            } catch {
-                logger.error("Failed to get image files from \(url.path)", error: error)
-                throw FileManagerServiceError.readError(error)
+            } catch let error as NSError {
+                if error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError {
+                    throw FileManagerServiceError.directoryNotFound
+                } else if error.code == NSFileReadNoPermissionError {
+                    throw FileManagerServiceError.accessDenied
+                } else {
+                    throw FileManagerServiceError.readError(error)
+                }
             }
         }.value
     }
+    
     
     private func sortImageFiles(_ files: [ImageFile], by sortType: SortType) -> [ImageFile] {
         switch sortType {
