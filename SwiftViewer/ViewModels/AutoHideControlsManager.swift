@@ -97,10 +97,8 @@ class AutoHideControlsManager {
     }
     
     open func shouldAllowAutoHide() -> Bool {
-        // Don't auto-hide if slideshow is running (user needs access to pause)
-        if let slideShowVM = slideShowViewModel, slideShowVM.isRunning {
-            return false
-        }
+        // Allow auto-hide during slideshow - controls will reappear on any user interaction
+        // This provides a cleaner viewing experience while keeping controls accessible
         
         // Don't auto-hide if we're in loading state
         if let galleryVM = imageGalleryViewModel, galleryVM.isLoading {

@@ -92,15 +92,6 @@ struct ImageGalleryView: View {
         .onReceive(NotificationCenter.default.publisher(for: .slideShowIntervalChanged)) { _ in
             slideShowViewModel.updateIntervalIfRunning()
         }
-        // Monitor slideshow state changes to manage control visibility
-        .onChange(of: slideShowViewModel.isRunning) { oldValue, newValue in
-            // When slideshow starts/stops, reset the control timer
-            // This ensures controls stay visible while slideshow is running
-            // and can auto-hide again when slideshow stops
-            if oldValue != newValue {
-                autoHideManager.showControlsAndResetTimer()
-            }
-        }
     }
     
     // MARK: - Subviews
