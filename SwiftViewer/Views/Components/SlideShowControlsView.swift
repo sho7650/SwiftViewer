@@ -119,10 +119,10 @@ struct SlideShowControlsView: View {
             currentIndex: 6,
             totalCount: 50,
             isRepeatEnabled: true,
-            onPrevious: { print("Previous") },
-            onToggleSlideShow: { print("Toggle") },
-            onNext: { print("Next") },
-            onToggleRepeat: { print("Toggle Repeat") }
+            onPrevious: { Logger.shared.debug("Preview: Previous button tapped") },
+            onToggleSlideShow: { Logger.shared.debug("Preview: Toggle slideshow") },
+            onNext: { Logger.shared.debug("Preview: Next button tapped") },
+            onToggleRepeat: { Logger.shared.debug("Preview: Toggle repeat") }
         )
         
         // Paused slideshow without repeat
@@ -131,10 +131,10 @@ struct SlideShowControlsView: View {
             currentIndex: 24,
             totalCount: 25,
             isRepeatEnabled: false,
-            onPrevious: { print("Previous") },
-            onToggleSlideShow: { print("Toggle") },
-            onNext: { print("Next") },
-            onToggleRepeat: { print("Toggle Repeat") }
+            onPrevious: { Logger.shared.debug("Preview: Previous button tapped") },
+            onToggleSlideShow: { Logger.shared.debug("Preview: Toggle slideshow") },
+            onNext: { Logger.shared.debug("Preview: Next button tapped") },
+            onToggleRepeat: { Logger.shared.debug("Preview: Toggle repeat") }
         )
     }
     .padding()

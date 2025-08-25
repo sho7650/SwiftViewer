@@ -144,7 +144,7 @@ struct FolderSelectionView: View {
 
 #Preview {
     FolderSelectionView { url in
-        print("Selected folder: \(url.path)")
+        Logger.shared.debug("Folder selected: \(url.path)")
     }
     .frame(width: 600, height: 500)
 }

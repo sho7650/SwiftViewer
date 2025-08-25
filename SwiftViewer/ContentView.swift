@@ -59,7 +59,7 @@ struct ContentView: View {
                     handleFolderSelection(url)
                 }
             case .failure(let error):
-                print("Error selecting folder: \(error)")
+                Logger.shared.error("Error selecting folder", error: error)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
@@ -109,7 +109,7 @@ struct ContentView: View {
     private func handleDisplayModeChange(_ displayMode: DisplayMode) {
         // Placeholder for Phase 6.1 implementation
         menuState.updateDisplayMode(displayMode)
-        print("Display mode changed to: \(displayMode.rawValue)")
+        Logger.shared.info("Display mode changed to: \(displayMode.rawValue)")
     }
     
     private func toggleFullscreen() {

@@ -20,10 +20,23 @@ final class LoggerTests: XCTestCase {
         super.tearDown()
     }
     
+    // MARK: - Singleton Tests
+    
+    func test_logger_shared_instance_is_singleton() {
+        // Given
+        let logger1 = Logger.shared
+        let logger2 = Logger.shared
+        
+        // Then
+        XCTAssertTrue(logger1 === logger2, "Logger.shared should return the same instance")
+    }
+    
+    // MARK: - Debug Mode Tests
+    
     func test_logger_logsDebugMessage_whenDebugLoggingEnabled() {
         UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
         
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test debug message"
         
         XCTAssertNoThrow(logger.debug(testMessage))
@@ -32,36 +45,60 @@ final class LoggerTests: XCTestCase {
     func test_logger_doesNotLogDebugMessage_whenDebugLoggingDisabled() {
         UserDefaults.standard.set(false, forKey: "debugLoggingEnabled")
         
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test debug message"
         
         XCTAssertNoThrow(logger.debug(testMessage))
     }
     
+    func test_debug_logging_disabled_by_default() {
+        // Given
+        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        
+        // When
+        let debugEnabled = UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        
+        // Then
+        XCTAssertFalse(debugEnabled, "Debug logging should be disabled by default")
+    }
+    
+    // MARK: - Logging Methods Tests
+    
     func test_logger_logsInfoMessage() {
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test info message"
         
         XCTAssertNoThrow(logger.info(testMessage))
     }
     
     func test_logger_logsWarningMessage() {
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test warning message"
         
         XCTAssertNoThrow(logger.warning(testMessage))
     }
     
     func test_logger_logsErrorMessage() {
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test error message"
         let testError = NSError(domain: "TestDomain", code: 1, userInfo: nil)
         
         XCTAssertNoThrow(logger.error(testMessage, error: testError))
     }
     
+    func test_logger_error_without_error_object() {
+        // Given
+        let logger = Logger.shared
+        let message = "Something went wrong"
+        
+        // When - This should not crash
+        XCTAssertNoThrow(logger.error(message))
+    }
+    
+    // MARK: - Message Formatting Tests
+    
     func test_logger_formatsMessageWithFile_andFunction_andLine() {
-        let logger = Logger()
+        let logger = Logger.shared
         let testMessage = "Test message"
         let file = "TestFile.swift"
         let function = "testFunction()"
@@ -82,9 +119,41 @@ final class LoggerTests: XCTestCase {
         XCTAssertTrue(formattedMessage.contains(testMessage))
     }
     
+    func test_logger_formatMessage_with_different_log_levels() {
+        // Given
+        let logger = Logger.shared
+        let message = "Test message"
+        let file = "TestFile.swift"
+        let function = "testFunction()"
+        let line = 1
+        
+        // When & Then
+        let debugMessage = logger.formatMessage(message, level: .debug, file: file, function: function, line: line)
+        XCTAssertTrue(debugMessage.contains("[DEBUG]"), "Debug message should have DEBUG prefix")
+        
+        let infoMessage = logger.formatMessage(message, level: .info, file: file, function: function, line: line)
+        XCTAssertTrue(infoMessage.contains("[INFO]"), "Info message should have INFO prefix")
+        
+        let warningMessage = logger.formatMessage(message, level: .warning, file: file, function: function, line: line)
+        XCTAssertTrue(warningMessage.contains("[WARNING]"), "Warning message should have WARNING prefix")
+        
+        let errorMessage = logger.formatMessage(message, level: .error, file: file, function: function, line: line)
+        XCTAssertTrue(errorMessage.contains("[ERROR]"), "Error message should have ERROR prefix")
+    }
+    
+    // MARK: - LogLevel Tests
+    
     func test_logLevel_hasCorrectPriority() {
         XCTAssertLessThan(LogLevel.debug.rawValue, LogLevel.info.rawValue)
         XCTAssertLessThan(LogLevel.info.rawValue, LogLevel.warning.rawValue)
         XCTAssertLessThan(LogLevel.warning.rawValue, LogLevel.error.rawValue)
+    }
+    
+    func test_logLevel_prefix_values() {
+        // When & Then
+        XCTAssertEqual(LogLevel.debug.prefix, "[DEBUG]", "Debug level should have correct prefix")
+        XCTAssertEqual(LogLevel.info.prefix, "[INFO]", "Info level should have correct prefix")
+        XCTAssertEqual(LogLevel.warning.prefix, "[WARNING]", "Warning level should have correct prefix")
+        XCTAssertEqual(LogLevel.error.prefix, "[ERROR]", "Error level should have correct prefix")
     }
 }
