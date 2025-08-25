@@ -13,14 +13,16 @@ struct ContentView: View {
     @State private var selectedFolderURL: URL?
     @State private var imageGalleryViewModel: ImageGalleryViewModel
     @State private var isImageViewerActive = false
-    @State private var isShowingFolderPicker = false
     @State private var isFullscreen = false
     
     @Environment(MenuState.self) private var menuState
     
+    private let bookmarkManagerService: BookmarkManagerServiceProtocol
+    
     init() {
         let dependencies = DependencyContainer.shared
         self._imageGalleryViewModel = State(initialValue: ImageGalleryViewModel(dependencies: dependencies))
+        self.bookmarkManagerService = dependencies.bookmarkManagerService
     }
     
     var body: some View {
@@ -34,7 +36,7 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .focusable()
         .focusedValue(\.openFolderAction) {
-            isShowingFolderPicker = true
+            openFolderPicker()
         }
         .focusedValue(\.sortSelectionAction) { sortType in
             handleSortChange(sortType)
@@ -47,20 +49,6 @@ struct ContentView: View {
         }
         .focusedValue(\.toggleRepeatAction) {
             toggleRepeat()
-        }
-        .fileImporter(
-            isPresented: $isShowingFolderPicker,
-            allowedContentTypes: [.folder],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                if let url = urls.first {
-                    handleFolderSelection(url)
-                }
-            case .failure(let error):
-                Logger.shared.error("Error selecting folder", error: error)
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
             if let sortType = notification.object as? SortType {
@@ -87,10 +75,28 @@ struct ContentView: View {
     
     // MARK: - Actions
     
+    private func openFolderPicker() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = false
+        
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                handleFolderSelection(url)
+            }
+        }
+    }
+    
     private func handleFolderSelection(_ url: URL) {
         selectedFolderURL = url
         
         Task { @MainActor in
+            // Create persistent bookmark for future access
+            await createBookmarkForFolder(url)
+            
+            // Load folder contents
             await imageGalleryViewModel.loadFolder(url)
             
             // Only show image viewer if we successfully loaded images
@@ -99,6 +105,26 @@ struct ContentView: View {
                     isImageViewerActive = true
                 }
             }
+        }
+    }
+    
+    private func createBookmarkForFolder(_ url: URL) async {
+        // For external volumes, try creating bookmark after a brief delay
+        // This allows the system permission to be fully established
+        if url.path.starts(with: "/Volumes/") {
+            // Small delay for external volume permission establishment
+            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+        }
+        
+        do {
+            try bookmarkManagerService.createAndStoreBookmark(for: url)
+            Logger.shared.info("Successfully created bookmark for folder: \(url.path)")
+        } catch let error as BookmarkManagerError {
+            Logger.shared.warning("Could not create bookmark for folder: \(url.path). App will use temporary permissions.")
+            Logger.shared.debug("Bookmark creation failed: \(error.localizedDescription)")
+            // Don't prevent folder loading - temporary permissions from NSOpenPanel should still work
+        } catch {
+            Logger.shared.error("Unexpected error creating bookmark: \(url.path)", error: error)
         }
     }
     
