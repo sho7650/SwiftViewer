@@ -40,30 +40,40 @@ final class FileManagerService: FileManagerServiceProtocol {
     
     func getImageFiles(from url: URL, sortBy: SortType = .name(ascending: true)) async throws -> [ImageFile] {
         return try await Task {
-            let contents = try fileManager.contentsOfDirectory(
-                at: url,
-                includingPropertiesForKeys: [.fileSizeKey, .creationDateKey],
-                options: [.skipsHiddenFiles]
-            )
-            
-            let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
-                let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
-                
-                let fileName = fileURL.lastPathComponent
-                let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
-                let createdDate = (attributes[.creationDate] as? Date) ?? Date()
-                
-                let imageFile = ImageFile(
-                    url: fileURL,
-                    fileName: fileName,
-                    fileSize: fileSize,
-                    createdDate: createdDate
+            do {
+                let contents = try fileManager.contentsOfDirectory(
+                    at: url,
+                    includingPropertiesForKeys: [.fileSizeKey, .creationDateKey],
+                    options: [.skipsHiddenFiles]
                 )
                 
-                return imageFile.isValidImageFormat ? imageFile : nil
+                let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
+                    let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
+                    
+                    let fileName = fileURL.lastPathComponent
+                    let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
+                    let createdDate = (attributes[.creationDate] as? Date) ?? Date()
+                    
+                    let imageFile = ImageFile(
+                        url: fileURL,
+                        fileName: fileName,
+                        fileSize: fileSize,
+                        createdDate: createdDate
+                    )
+                    
+                    return imageFile.isValidImageFormat ? imageFile : nil
+                }
+                
+                return sortImageFiles(imageFiles, by: sortBy)
+            } catch let error as NSError {
+                if error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError {
+                    throw FileManagerServiceError.directoryNotFound
+                } else if error.code == NSFileReadNoPermissionError {
+                    throw FileManagerServiceError.accessDenied
+                } else {
+                    throw FileManagerServiceError.readError(error)
+                }
             }
-            
-            return sortImageFiles(imageFiles, by: sortBy)
         }.value
     }
     
