@@ -1,7 +1,7 @@
 # This workflow will build a Swift project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
 
-name: Swift
+name: Swift CI
 
 on:
   push:
@@ -21,10 +21,38 @@ jobs:
       run: |
         sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
-    - name: Build
+    - name: Cache DerivedData
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-xcode-${{ hashFiles('**/*.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-xcode-
+
+    - name: Build for Release
       run: |
-        xcodebuild -scheme SwiftViewer -sdk macosx -configuration Release build
+        xcodebuild \
+          -scheme SwiftViewer \
+          -sdk macosx \
+          -destination "platform=macOS,arch=arm64" \
+          -configuration Release \
+          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          ONLY_ACTIVE_ARCH=NO \
+          build
 
     - name: Run Tests
       run: |
-        xcodebuild -scheme SwiftViewer -sdk macosx -configuration Release test
+        xcodebuild \
+          -scheme SwiftViewer \
+          -sdk macosx \
+          -destination "platform=macOS,arch=arm64" \
+          -configuration Debug \
+          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          ONLY_ACTIVE_ARCH=NO \
+          test
