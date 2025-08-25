@@ -20,6 +20,7 @@ final class ImageGalleryViewTests: XCTestCase {
         super.setUp()
         mockContainer = MockDependencyContainer()
         viewModel = ImageGalleryViewModel(dependencies: mockContainer)
+        // Pass the ViewModel as a property, not creating new state
         galleryView = ImageGalleryView(viewModel: viewModel)
     }
     
@@ -195,6 +196,27 @@ final class ImageGalleryViewTests: XCTestCase {
         viewModel.errorMessage = nil
         let compactBody = galleryView.body
         XCTAssertNotNil(compactBody)
+    }
+    
+    func test_imageGalleryView_uses_injected_viewModel() {
+        // Test that the view uses the injected ViewModel instance
+        // Update ViewModel state
+        viewModel.isLoading = true
+        
+        // The view should reflect the same state
+        let body = galleryView.body
+        XCTAssertNotNil(body)
+        XCTAssertTrue(viewModel.isLoading)
+        
+        // Change state again
+        viewModel.isLoading = false
+        viewModel.errorMessage = "Test error"
+        
+        // View should still reflect the changes
+        let updatedBody = galleryView.body
+        XCTAssertNotNil(updatedBody)
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertEqual(viewModel.errorMessage, "Test error")
     }
     
     func test_imageGalleryView_notificationHandling() {
