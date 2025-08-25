@@ -99,12 +99,12 @@ final class AutoHideControlsManagerTests: XCTestCase {
     
     // MARK: - Timer Behavior Tests
     
-    func test_shouldAllowAutoHide_returnsFalse_whenSlideshowRunning() {
+    func test_shouldAllowAutoHide_returnsTrue_whenSlideshowRunning() {
         // Start slideshow
         slideShowViewModel.startSlideShow(interval: 1.0)
         
-        // Should not allow auto-hide when slideshow is running
-        XCTAssertFalse(autoHideManager.shouldAllowAutoHide(), "Should not allow auto-hide when slideshow is running")
+        // Should allow auto-hide during slideshow for cleaner viewing experience
+        XCTAssertTrue(autoHideManager.shouldAllowAutoHide(), "Should allow auto-hide during slideshow for better UX")
     }
     
     func test_shouldAllowAutoHide_returnsFalse_whenLoading() {
@@ -151,8 +151,8 @@ final class AutoHideControlsManagerTests: XCTestCase {
     }
     
     func test_hideControlsIfAllowed_keepsControlsVisible_whenNotAllowed() {
-        // Start slideshow to prevent auto-hide
-        slideShowViewModel.startSlideShow(interval: 1.0)
+        // Set loading state to prevent auto-hide
+        viewModel.isLoading = true
         
         // Ensure controls are visible
         autoHideManager.showControlsAndResetTimer()
@@ -161,7 +161,7 @@ final class AutoHideControlsManagerTests: XCTestCase {
         // Try to hide controls
         autoHideManager.hideControlsIfAllowed()
         
-        // Controls should still be visible
+        // Controls should still be visible because loading state prevents auto-hide
         XCTAssertTrue(autoHideManager.areControlsVisible, "Controls should remain visible when auto-hide is not allowed")
     }
     
@@ -233,13 +233,13 @@ final class AutoHideControlsManagerTests: XCTestCase {
             imageGalleryViewModel: viewModel
         )
         
-        // Start slideshow to prevent auto-hide
-        slideShowViewModel.startSlideShow(interval: 1.0)
+        // Set loading state to prevent auto-hide (slideshow now allows auto-hide)
+        viewModel.isLoading = true
         
-        // Mock override says allow, but real logic should say no
+        // Mock override says allow, but real logic should say no because of loading state
         mockManager.mockShouldAllowAutoHide = true
         XCTAssertTrue(mockManager.shouldAllowAutoHide()) // Mock override
-        XCTAssertFalse(mockManager.simulateAutoHideCheck()) // Real logic
+        XCTAssertFalse(mockManager.simulateAutoHideCheck()) // Real logic checks loading state
     }
     
     // MARK: - Timer Cleanup Tests
@@ -308,10 +308,10 @@ final class AutoHideControlsManagerTests: XCTestCase {
         viewModel.errorMessage = "Error"
         XCTAssertFalse(autoHideManager.shouldAllowAutoHide(), "Should not allow auto-hide when error exists")
         
-        // Start slideshow
+        // Start slideshow - now allows auto-hide for better UX
         viewModel.errorMessage = nil
         slideShowViewModel.startSlideShow(interval: 1.0)
-        XCTAssertFalse(autoHideManager.shouldAllowAutoHide(), "Should not allow auto-hide when slideshow running")
+        XCTAssertTrue(autoHideManager.shouldAllowAutoHide(), "Should allow auto-hide during slideshow for cleaner viewing")
     }
     
     // MARK: - Helper Methods

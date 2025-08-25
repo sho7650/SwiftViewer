@@ -120,6 +120,7 @@ final class ImageGalleryViewModelTests: XCTestCase {
     
     func test_navigateToNext_wrapsAroundAtEnd() async {
         await setupWithImages(count: 3)
+        mockSettingsManager.repeatEnabled = true  // Enable repeat for wrap-around
         sut.currentIndex = 2  // Move to last image
         
         await sut.navigateToNext()
@@ -140,6 +141,7 @@ final class ImageGalleryViewModelTests: XCTestCase {
     
     func test_navigateToPrevious_wrapsAroundAtBeginning() async {
         await setupWithImages(count: 3)
+        mockSettingsManager.repeatEnabled = true  // Enable repeat for wrap-around
         sut.currentIndex = 0  // Start at first image
         
         await sut.navigateToPrevious()
