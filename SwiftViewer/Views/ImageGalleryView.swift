@@ -217,35 +217,40 @@ struct ImageGalleryView: View {
                     isSpaceKeyPressed: isSpaceKeyPressed,
                     isRightKeyPressed: isRightKeyPressed,
                     onPrevious: {
-                        autoHideManager.registerActivity()
                         Task { @MainActor in
-                            await viewModel.navigateToPrevious()
-                            slideShowViewModel.restartSlideShowIfRunning()
+                            await performUserAction {
+                                await viewModel.navigateToPrevious()
+                                slideShowViewModel.restartSlideShowIfRunning()
+                            }
                         }
                     },
                     onToggleSlideShow: {
-                        autoHideManager.registerActivity()
-                        slideShowViewModel.toggleSlideShow()
+                        performUserAction {
+                            slideShowViewModel.toggleSlideShow()
+                        }
                     },
                     onNext: {
-                        autoHideManager.registerActivity()
                         Task { @MainActor in
-                            await viewModel.navigateToNext()
-                            slideShowViewModel.restartSlideShowIfRunning()
+                            await performUserAction {
+                                await viewModel.navigateToNext()
+                                slideShowViewModel.restartSlideShowIfRunning()
+                            }
                         }
                     },
                     onToggleRepeat: {
-                        autoHideManager.registerActivity()
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            slideShowViewModel.isRepeatEnabled.toggle()
+                        performUserAction {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                slideShowViewModel.isRepeatEnabled.toggle()
+                            }
+                            NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                         }
-                        NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                     },
                     onProgressTapped: { index in
-                        autoHideManager.registerActivity()
                         Task { @MainActor in
-                            await viewModel.navigateToIndex(index)
-                            slideShowViewModel.restartSlideShowIfRunning()
+                            await performUserAction {
+                                await viewModel.navigateToIndex(index)
+                                slideShowViewModel.restartSlideShowIfRunning()
+                            }
                         }
                     }
                 )
@@ -256,6 +261,23 @@ struct ImageGalleryView: View {
         .padding()
     }
     
+    
+    // MARK: - User Action Handling
+    
+    /// Executes a user action while automatically registering activity for auto-hide controls
+    /// - Parameter action: The synchronous action to perform
+    private func performUserAction(_ action: @escaping () -> Void) {
+        autoHideManager.registerActivity()
+        action()
+    }
+    
+    /// Executes an async user action while automatically registering activity for auto-hide controls
+    /// - Parameter action: The async action to perform
+    /// - Returns: The result of the action
+    private func performUserAction<T>(_ action: @escaping () async throws -> T) async rethrows -> T {
+        autoHideManager.registerActivity()
+        return try await action()
+    }
     
     // MARK: - Input Handling
     
