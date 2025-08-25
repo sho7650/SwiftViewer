@@ -385,6 +385,9 @@ final class MockImageGalleryViewModel: ImageGalleryNavigationProtocol {
     var navigateToNextCallCount = 0
     var navigateToPreviousCallCount = 0
     
+    var currentIndex: Int = 0
+    var imageFiles: [ImageFile] = []
+    
     func navigateToNext() async {
         navigateToNextCallCount += 1
     }

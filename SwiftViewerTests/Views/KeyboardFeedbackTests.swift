@@ -89,7 +89,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: false,
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
-            onNext: { nextCalled = true }
+            onNext: { nextCalled = true },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(normalView.body)
@@ -107,7 +108,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: false,
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
-            onNext: { nextCalled = true }
+            onNext: { nextCalled = true },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(leftPressedView.body)
@@ -125,7 +127,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: false,
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
-            onNext: { nextCalled = true }
+            onNext: { nextCalled = true },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(spacePressedView.body)
@@ -144,7 +147,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: true,
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
-            onNext: { nextCalled = true }
+            onNext: { nextCalled = true },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(rightPressedView.body)
@@ -164,7 +168,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: true,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(multiKeyView.body)
@@ -185,7 +190,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: false,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(beginningView.body)
@@ -202,7 +208,8 @@ final class KeyboardFeedbackTests: XCTestCase {
             isRightKeyPressed: true, // Should still show feedback even if disabled
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertNotNil(endView.body)

@@ -16,6 +16,7 @@ final class SlideShowControlsViewTests: XCTestCase {
         var previousCalled = false
         var toggleCalled = false
         var nextCalled = false
+        var repeatCalled = false
         
         let controlsView = SlideShowControlsView(
             isSlideShowRunning: false,
@@ -23,7 +24,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 10,
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
-            onNext: { nextCalled = true }
+            onNext: { nextCalled = true },
+            onToggleRepeat: { repeatCalled = true }
         )
         
         XCTAssertNotNil(controlsView)
@@ -52,6 +54,7 @@ final class SlideShowControlsViewTests: XCTestCase {
             onPrevious: { previousCalled = true },
             onToggleSlideShow: { toggleCalled = true },
             onNext: { nextCalled = true },
+            onToggleRepeat: { },
             onProgressTapped: { index in progressTappedIndex = index }
         )
         
@@ -72,7 +75,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 8,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         let body = controlsView.body
@@ -86,7 +90,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 5,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertTrue(runningView.isSlideShowRunning)
@@ -100,7 +105,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 5,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertFalse(pausedView.isSlideShowRunning)
@@ -115,7 +121,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             isLeftKeyPressed: true,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertTrue(view.isLeftKeyPressed)
@@ -131,7 +138,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             isSpaceKeyPressed: true,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertFalse(view.isLeftKeyPressed)
@@ -147,7 +155,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             isRightKeyPressed: true,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertFalse(view.isLeftKeyPressed)
@@ -165,7 +174,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             isRightKeyPressed: true,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         
         XCTAssertTrue(view.isLeftKeyPressed)
@@ -181,7 +191,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 5,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         XCTAssertNotNil(beginningView.body)
         
@@ -192,7 +203,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 5,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         XCTAssertNotNil(endView.body)
         
@@ -203,7 +215,8 @@ final class SlideShowControlsViewTests: XCTestCase {
             totalCount: 1,
             onPrevious: { },
             onToggleSlideShow: { },
-            onNext: { }
+            onNext: { },
+            onToggleRepeat: { }
         )
         XCTAssertNotNil(singleView.body)
     }
@@ -218,6 +231,7 @@ final class SlideShowControlsViewTests: XCTestCase {
             onPrevious: { },
             onToggleSlideShow: { },
             onNext: { },
+            onToggleRepeat: { },
             onProgressTapped: { index in tappedIndex = index }
         )
         
