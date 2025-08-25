@@ -125,3 +125,57 @@ final class Logger {
         return "\(level.prefix) [\(fileName):\(line)] \(function): \(message)"
     }
 }
+
+// MARK: - Logger Extensions for Future Structured Logging
+
+extension Logger {
+    
+    /// Structured logging support for future metadata enhancement
+    /// Following Swift-Log best practices from apple/swift-log
+    func info(
+        _ message: String,
+        metadata: [String: String],
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line
+    ) {
+        // For now, format metadata as key=value pairs in the message
+        // Future: Integrate with Swift-Log's Logger.Metadata for structured output
+        let metadataString = metadata.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+        let enrichedMessage = metadata.isEmpty ? message : "\(message) [\(metadataString)]"
+        info(enrichedMessage, file: file, function: function, line: line)
+    }
+    
+    func debug(
+        _ message: String,
+        metadata: [String: String],
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line
+    ) {
+        let metadataString = metadata.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+        let enrichedMessage = metadata.isEmpty ? message : "\(message) [\(metadataString)]"
+        debug(enrichedMessage, file: file, function: function, line: line)
+    }
+    
+    func error(
+        _ message: String,
+        error: Error?,
+        metadata: [String: String],
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line
+    ) {
+        let metadataString = metadata.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+        let baseMessage = metadata.isEmpty ? message : "\(message) [\(metadataString)]"
+        self.error(baseMessage, error: error, file: file, function: function, line: line)
+    }
+    
+    /// Context-aware logger for specific view components
+    /// Following Swift-Log value semantics pattern
+    static func viewLogger(for viewName: String) -> Logger {
+        // Future: Create logger instance with embedded context metadata
+        // For now, return shared instance (maintains current behavior)
+        return Logger.shared
+    }
+}
