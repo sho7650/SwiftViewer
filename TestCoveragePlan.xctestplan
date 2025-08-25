@@ -4,15 +4,30 @@
       "id" : "ECD85F27-68B5-4227-8143-BEEE52664421",
       "name" : "Configuration 1",
       "options" : {
-
+        "codeCoverage" : true,
+        "testTimeoutsEnabled" : true
       }
     }
   ],
   "defaultOptions" : {
-    "testTimeoutsEnabled" : true
+    "testTimeoutsEnabled" : true,
+    "codeCoverage" : true
   },
   "testTargets" : [
-
+    {
+      "target" : {
+        "containerPath" : "container:SwiftViewer.xcodeproj",
+        "identifier" : "CABC922D2E56D25B001A43C1",
+        "name" : "SwiftViewerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:SwiftViewer.xcodeproj",
+        "identifier" : "CABC92372E56D25B001A43C1",
+        "name" : "SwiftViewerUITests"
+      }
+    }
   ],
   "version" : 1
 }
