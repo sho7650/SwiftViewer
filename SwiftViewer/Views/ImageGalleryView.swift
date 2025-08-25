@@ -9,7 +9,7 @@ import SwiftUI
 import AppKit
 
 struct ImageGalleryView: View {
-    @State private var viewModel: ImageGalleryViewModel
+    let viewModel: ImageGalleryViewModel
     @State private var slideShowViewModel: SlideShowViewModel
     @State private var autoHideManager: AutoHideControlsManager
     @FocusState private var isFocused: Bool
@@ -27,11 +27,11 @@ struct ImageGalleryView: View {
             imageNavigator: viewModel,
             settingsManager: dependencies.settingsManager
         )
-        self.slideShowViewModel = slideShowVM
-        self.autoHideManager = AutoHideControlsManager(
+        self._slideShowViewModel = State(initialValue: slideShowVM)
+        self._autoHideManager = State(initialValue: AutoHideControlsManager(
             slideShowViewModel: slideShowVM,
             imageGalleryViewModel: viewModel
-        )
+        ))
     }
     
     var body: some View {
