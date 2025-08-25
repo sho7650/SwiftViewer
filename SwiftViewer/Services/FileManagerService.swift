@@ -32,88 +32,41 @@ extension FileManagerServiceProtocol {
 
 final class FileManagerService: FileManagerServiceProtocol {
     private let fileManager: FileManager
-    private let bookmarkManagerService: BookmarkManagerServiceProtocol
     private let logger = Logger.shared
     
-    init(
-        fileManager: FileManager = .default,
-        bookmarkManagerService: BookmarkManagerServiceProtocol = BookmarkManagerService()
-    ) {
+    init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
-        self.bookmarkManagerService = bookmarkManagerService
     }
     
     func getImageFiles(from url: URL, sortBy: SortType = .name(ascending: true)) async throws -> [ImageFile] {
         return try await Task {
-            do {
-                // Try to restore access using bookmark if available, otherwise use original URL
-                let accessibleURL = try bookmarkManagerService.restoreAccessIfNeeded(for: url)
-                
-                // Use security-scoped resource access if URL was resolved from bookmark
-                if accessibleURL != url {
-                    return try bookmarkManagerService.withSecurityScopedResource(accessibleURL) { securedURL in
-                        try getImageFilesWithDirectAccess(from: securedURL, sortBy: sortBy)
-                    }
-                } else {
-                    // First-time access or no bookmark - use direct access
-                    return try getImageFilesWithDirectAccess(from: url, sortBy: sortBy)
-                }
-                
-            } catch let error as BookmarkManagerError {
-                logger.error("Bookmark error for \(url.path): \(error.localizedDescription)")
-                // Fallback to direct access for bookmark errors
-                return try getImageFilesWithDirectAccess(from: url, sortBy: sortBy)
-            } catch {
-                logger.error("Failed to get image files from \(url.path)", error: error)
-                throw FileManagerServiceError.readError(error)
-            }
-        }.value
-    }
-    
-    private func getImageFilesWithDirectAccess(from url: URL, sortBy: SortType) throws -> [ImageFile] {
-        // For external volumes, try with a brief delay to allow permission establishment
-        let contents: [URL]
-        if url.path.starts(with: "/Volumes/") {
-            contents = try getDirectoryContentsWithRetry(url: url)
-        } else {
-            contents = try fileManager.contentsOfDirectory(
+            let contents = try fileManager.contentsOfDirectory(
                 at: url,
                 includingPropertiesForKeys: [.fileSizeKey, .creationDateKey],
                 options: [.skipsHiddenFiles]
             )
-        }
-        
-        let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
-            let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
             
-            let fileName = fileURL.lastPathComponent
-            let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
-            let createdDate = (attributes[.creationDate] as? Date) ?? Date()
+            let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
+                let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
+                
+                let fileName = fileURL.lastPathComponent
+                let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
+                let createdDate = (attributes[.creationDate] as? Date) ?? Date()
+                
+                let imageFile = ImageFile(
+                    url: fileURL,
+                    fileName: fileName,
+                    fileSize: fileSize,
+                    createdDate: createdDate
+                )
+                
+                return imageFile.isValidImageFormat ? imageFile : nil
+            }
             
-            let imageFile = ImageFile(
-                url: fileURL,
-                fileName: fileName,
-                fileSize: fileSize,
-                createdDate: createdDate
-            )
-            
-            return imageFile.isValidImageFormat ? imageFile : nil
-        }
-        
-        return sortImageFiles(imageFiles, by: sortBy)
+            return sortImageFiles(imageFiles, by: sortBy)
+        }.value
     }
     
-    private func getDirectoryContentsWithRetry(url: URL) throws -> [URL] {
-        // For external volumes, brief delay to allow permission establishment
-        // Based on best practices research: avoid complex retry loops for timing issues
-        Thread.sleep(forTimeInterval: 0.05) // 50ms delay
-        
-        return try fileManager.contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: [.fileSizeKey, .creationDateKey],
-            options: [.skipsHiddenFiles]
-        )
-    }
     
     private func sortImageFiles(_ files: [ImageFile], by sortType: SortType) -> [ImageFile] {
         switch sortType {
@@ -140,7 +93,6 @@ final class MockFileManagerService: FileManagerServiceProtocol {
     var shouldThrowError = false
     var errorToThrow: Error = FileManagerServiceError.directoryNotFound
     var lastUsedSortType: SortType?
-    private let mockBookmarkService = MockBookmarkManagerService()
     
     func getImageFiles(from url: URL, sortBy: SortType) async throws -> [ImageFile] {
         lastUsedSortType = sortBy

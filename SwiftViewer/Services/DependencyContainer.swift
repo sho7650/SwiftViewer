@@ -11,7 +11,6 @@ protocol DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol { get }
     var imageLoaderService: ImageLoaderServiceProtocol { get }
     var settingsManager: SettingsManagerProtocol { get }
-    var bookmarkManagerService: BookmarkManagerServiceProtocol { get }
     @MainActor var slideShowService: SlideShowServiceProtocol { get }
 }
 
@@ -21,7 +20,7 @@ final class DependencyContainer: DependencyContainerProtocol {
     private init() {}
     
     lazy var fileManagerService: FileManagerServiceProtocol = {
-        FileManagerService(bookmarkManagerService: bookmarkManagerService)
+        FileManagerService()
     }()
     
     lazy var imageLoaderService: ImageLoaderServiceProtocol = {
@@ -32,9 +31,6 @@ final class DependencyContainer: DependencyContainerProtocol {
         SettingsManager()
     }()
     
-    lazy var bookmarkManagerService: BookmarkManagerServiceProtocol = {
-        BookmarkManagerService()
-    }()
     
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         SlideShowService()
@@ -45,7 +41,6 @@ final class MockDependencyContainer: DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol
     var imageLoaderService: ImageLoaderServiceProtocol
     var settingsManager: SettingsManagerProtocol
-    var bookmarkManagerService: BookmarkManagerServiceProtocol
     
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         MockSlideShowService()
@@ -54,12 +49,10 @@ final class MockDependencyContainer: DependencyContainerProtocol {
     init(
         fileManagerService: FileManagerServiceProtocol = MockFileManagerService(),
         imageLoaderService: ImageLoaderServiceProtocol = MockImageLoaderService(),
-        settingsManager: SettingsManagerProtocol = MockSettingsManager(),
-        bookmarkManagerService: BookmarkManagerServiceProtocol = MockBookmarkManagerService()
+        settingsManager: SettingsManagerProtocol = MockSettingsManager()
     ) {
         self.fileManagerService = fileManagerService
         self.imageLoaderService = imageLoaderService
         self.settingsManager = settingsManager
-        self.bookmarkManagerService = bookmarkManagerService
     }
 }

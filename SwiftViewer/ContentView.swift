@@ -17,12 +17,9 @@ struct ContentView: View {
     
     @Environment(MenuState.self) private var menuState
     
-    private let bookmarkManagerService: BookmarkManagerServiceProtocol
-    
     init() {
         let dependencies = DependencyContainer.shared
         self._imageGalleryViewModel = State(initialValue: ImageGalleryViewModel(dependencies: dependencies))
-        self.bookmarkManagerService = dependencies.bookmarkManagerService
     }
     
     var body: some View {
@@ -93,9 +90,6 @@ struct ContentView: View {
         selectedFolderURL = url
         
         Task { @MainActor in
-            // Create persistent bookmark for future access
-            await createBookmarkForFolder(url)
-            
             // Load folder contents
             await imageGalleryViewModel.loadFolder(url)
             
@@ -108,25 +102,6 @@ struct ContentView: View {
         }
     }
     
-    private func createBookmarkForFolder(_ url: URL) async {
-        // For external volumes, try creating bookmark after a brief delay
-        // This allows the system permission to be fully established
-        if url.path.starts(with: "/Volumes/") {
-            // Small delay for external volume permission establishment
-            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
-        }
-        
-        do {
-            try bookmarkManagerService.createAndStoreBookmark(for: url)
-            Logger.shared.info("Successfully created bookmark for folder: \(url.path)")
-        } catch let error as BookmarkManagerError {
-            Logger.shared.warning("Could not create bookmark for folder: \(url.path). App will use temporary permissions.")
-            Logger.shared.debug("Bookmark creation failed: \(error.localizedDescription)")
-            // Don't prevent folder loading - temporary permissions from NSOpenPanel should still work
-        } catch {
-            Logger.shared.error("Unexpected error creating bookmark: \(url.path)", error: error)
-        }
-    }
     
     private func handleSortChange(_ sortType: SortType) {
         menuState.updateSortType(sortType)
