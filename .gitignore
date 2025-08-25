@@ -110,3 +110,4 @@ fastlane/test_output
 .mcp.json
 data/cipher*
 memAgent/
+.serena/

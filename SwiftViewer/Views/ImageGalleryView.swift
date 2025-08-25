@@ -11,6 +11,7 @@ import AppKit
 struct ImageGalleryView: View {
     @State private var viewModel: ImageGalleryViewModel
     @State private var slideShowViewModel: SlideShowViewModel
+    @State private var autoHideManager: AutoHideControlsManager
     @FocusState private var isFocused: Bool
     
     // Keyboard press states for visual feedback
@@ -21,10 +22,15 @@ struct ImageGalleryView: View {
     init(viewModel: ImageGalleryViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
-        self.slideShowViewModel = SlideShowViewModel(
+        let slideShowVM = SlideShowViewModel(
             slideShowService: dependencies.slideShowService,
             imageNavigator: viewModel,
             settingsManager: dependencies.settingsManager
+        )
+        self.slideShowViewModel = slideShowVM
+        self.autoHideManager = AutoHideControlsManager(
+            slideShowViewModel: slideShowVM,
+            imageGalleryViewModel: viewModel
         )
     }
     
@@ -54,13 +60,26 @@ struct ImageGalleryView: View {
                 // Slideshow controls overlay
                 if viewModel.hasImages && !viewModel.isLoading {
                     slideShowControlsOverlay
+                        .opacity(autoHideManager.areControlsVisible ? 1.0 : 0.0)
+                        .allowsHitTesting(autoHideManager.areControlsVisible)
                 }
             }
         }
         .focusable()
         .focused($isFocused)
+        .onContinuousHover { phase in
+            switch phase {
+            case .active:
+                autoHideManager.registerActivity()
+            case .ended:
+                // Don't hide immediately when mouse leaves, let timer handle it
+                break
+            }
+        }
         .onAppear {
             isFocused = true
+            // Start with controls visible and reset timer
+            autoHideManager.showControlsAndResetTimer()
         }
         .onKeyPress { keyPress in
             handleKeyPress(keyPress.key)
@@ -68,6 +87,7 @@ struct ImageGalleryView: View {
         }
         .onDisappear {
             slideShowViewModel.stopSlideShow()
+            autoHideManager.cleanupTimer()
         }
         .onReceive(NotificationCenter.default.publisher(for: .slideShowIntervalChanged)) { _ in
             slideShowViewModel.updateIntervalIfRunning()
@@ -197,27 +217,32 @@ struct ImageGalleryView: View {
                     isSpaceKeyPressed: isSpaceKeyPressed,
                     isRightKeyPressed: isRightKeyPressed,
                     onPrevious: {
+                        autoHideManager.registerActivity()
                         Task { @MainActor in
                             await viewModel.navigateToPrevious()
                             slideShowViewModel.restartSlideShowIfRunning()
                         }
                     },
                     onToggleSlideShow: {
+                        autoHideManager.registerActivity()
                         slideShowViewModel.toggleSlideShow()
                     },
                     onNext: {
+                        autoHideManager.registerActivity()
                         Task { @MainActor in
                             await viewModel.navigateToNext()
                             slideShowViewModel.restartSlideShowIfRunning()
                         }
                     },
                     onToggleRepeat: {
+                        autoHideManager.registerActivity()
                         withAnimation(.easeInOut(duration: 0.2)) {
                             slideShowViewModel.isRepeatEnabled.toggle()
                         }
                         NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                     },
                     onProgressTapped: { index in
+                        autoHideManager.registerActivity()
                         Task { @MainActor in
                             await viewModel.navigateToIndex(index)
                             slideShowViewModel.restartSlideShowIfRunning()
@@ -231,9 +256,13 @@ struct ImageGalleryView: View {
         .padding()
     }
     
+    
     // MARK: - Input Handling
     
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
+        // Show controls and reset timer on any keyboard activity
+        autoHideManager.registerActivity()
+        
         Task { @MainActor in
             switch key {
             case .leftArrow, .upArrow:
