@@ -69,7 +69,7 @@ final class SettingsManagerTests: XCTestCase {
     }
     
     func test_slideShowInterval_acceptsValidRange() {
-        let testValues: [TimeInterval] = [0.5, 1.0, 5.0, 10.0, 30.0, 60.0]
+        let testValues: [TimeInterval] = [1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 1200.0, 1800.0]
         
         for value in testValues {
             sut.slideShowInterval = value
@@ -78,15 +78,15 @@ final class SettingsManagerTests: XCTestCase {
     }
     
     func test_slideShowInterval_validatesMinimumValue() {
-        sut.slideShowInterval = 0.1
+        sut.slideShowInterval = 0.5
         
-        XCTAssertEqual(sut.slideShowInterval, 0.5, "Should clamp to minimum 0.5 seconds")
+        XCTAssertEqual(sut.slideShowInterval, 1.0, "Should clamp to minimum 1.0 seconds")
     }
     
     func test_slideShowInterval_validatesMaximumValue() {
-        sut.slideShowInterval = 120.0
+        sut.slideShowInterval = 2000.0
         
-        XCTAssertEqual(sut.slideShowInterval, 60.0, "Should clamp to maximum 60 seconds")
+        XCTAssertEqual(sut.slideShowInterval, 1800.0, "Should clamp to maximum 1800 seconds")
     }
     
     // MARK: - Other Settings Independence Tests
@@ -127,6 +127,108 @@ final class SettingsManagerTests: XCTestCase {
         XCTAssertEqual(interval, 12.5, "Should read directly modified UserDefaults value")
     }
     
+    // MARK: - Phase 1 New Properties Tests
+    
+    func test_autoHideDelay_returnsDefaultValue() {
+        XCTAssertEqual(sut.autoHideDelay, 3.0, "Should return default 3.0 seconds")
+    }
+    
+    func test_autoHideDelay_persistsValue() {
+        sut.autoHideDelay = 5.0
+        
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        XCTAssertEqual(newSettings.autoHideDelay, 5.0)
+    }
+    
+    func test_autoHideDelay_validatesRange() {
+        sut.autoHideDelay = 0.5
+        XCTAssertEqual(sut.autoHideDelay, 1.0, "Should clamp to minimum")
+        
+        sut.autoHideDelay = 100.0
+        XCTAssertEqual(sut.autoHideDelay, 60.0, "Should clamp to maximum")
+    }
+    
+    func test_animationDurations_returnsDefaultValues() {
+        let durations = sut.animationDurations
+        XCTAssertEqual(durations[.control], 0.3)
+        XCTAssertEqual(durations[.transition], 0.2)
+        XCTAssertEqual(durations[.feedback], 0.1)
+    }
+    
+    func test_animationDurations_persistsValues() {
+        let custom: [AnimationType: TimeInterval] = [
+            .control: 0.5,
+            .transition: 0.4,
+            .feedback: 0.2
+        ]
+        sut.animationDurations = custom
+        
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        XCTAssertEqual(newSettings.animationDurations[.control], 0.5)
+        XCTAssertEqual(newSettings.animationDurations[.transition], 0.4)
+        XCTAssertEqual(newSettings.animationDurations[.feedback], 0.2)
+    }
+    
+    func test_blurRadius_returnsDefaultValue() {
+        XCTAssertEqual(sut.blurRadius, 20.0)
+    }
+    
+    func test_blurRadius_validatesRange() {
+        sut.blurRadius = -10.0
+        XCTAssertEqual(sut.blurRadius, 0.0, "Should clamp to minimum")
+        
+        sut.blurRadius = 100.0
+        XCTAssertEqual(sut.blurRadius, 50.0, "Should clamp to maximum")
+    }
+    
+    func test_blurOpacity_returnsDefaultValue() {
+        XCTAssertEqual(sut.blurOpacity, 0.8)
+    }
+    
+    func test_blurOpacity_validatesRange() {
+        sut.blurOpacity = -0.5
+        XCTAssertEqual(sut.blurOpacity, 0.0, "Should clamp to minimum")
+        
+        sut.blurOpacity = 1.5
+        XCTAssertEqual(sut.blurOpacity, 1.0, "Should clamp to maximum")
+    }
+    
+    func test_blurOpacity_handlesZeroCorrectly() {
+        sut.blurOpacity = 0.0
+        XCTAssertEqual(sut.blurOpacity, 0.0, "Should allow setting to 0.0")
+        
+        // Create new instance should still get 0.0
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        XCTAssertEqual(newSettings.blurOpacity, 0.0, "Should persist 0.0 value")
+    }
+    
+    func test_loggingLevel_returnsDefaultValue() {
+        XCTAssertEqual(sut.loggingLevel, .info)
+    }
+    
+    func test_loggingLevel_persistsValue() {
+        sut.loggingLevel = .debug
+        
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        XCTAssertEqual(newSettings.loggingLevel, .debug)
+    }
+    
+    func test_windowPosition_returnsDefaultValue() {
+        XCTAssertEqual(sut.windowPosition, .normal)
+    }
+    
+    func test_windowPosition_persistsValue() {
+        sut.windowPosition = .alwaysOnTop
+        
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        XCTAssertEqual(newSettings.windowPosition, .alwaysOnTop)
+    }
+    
+    func test_slideShowPresetIntervals_returnsCorrectValues() {
+        let expected: [TimeInterval] = [1, 2, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800]
+        XCTAssertEqual(sut.slideShowPresetIntervals, expected)
+    }
+    
     // MARK: - Mock Settings Manager Tests
     
     func test_mockSettingsManager_hasCorrectDefaultInterval() {
@@ -141,5 +243,17 @@ final class SettingsManagerTests: XCTestCase {
         mockSettings.slideShowInterval = 20.0
         
         XCTAssertEqual(mockSettings.slideShowInterval, 20.0, "Mock should allow interval modification")
+    }
+    
+    func test_mockSettingsManager_hasCorrectDefaultNewProperties() {
+        let mockSettings = MockSettingsManager()
+        
+        XCTAssertEqual(mockSettings.autoHideDelay, 3.0)
+        XCTAssertEqual(mockSettings.animationDurations[.control], 0.3)
+        XCTAssertEqual(mockSettings.blurRadius, 20.0)
+        XCTAssertEqual(mockSettings.blurOpacity, 0.8)
+        XCTAssertEqual(mockSettings.loggingLevel, .info)
+        XCTAssertEqual(mockSettings.windowPosition, .normal)
+        XCTAssertEqual(mockSettings.slideShowPresetIntervals.count, 13)
     }
 }

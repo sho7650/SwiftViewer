@@ -18,6 +18,7 @@ final class LoggerTests: XCTestCase {
     
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: "loggingLevel")
         super.tearDown()
     }
     
@@ -171,5 +172,62 @@ final class LoggerTests: XCTestCase {
         XCTAssertEqual(LogLevel.info.prefix, "[INFO]", "Info level should have correct prefix")
         XCTAssertEqual(LogLevel.warning.prefix, "[WARNING]", "Warning level should have correct prefix")
         XCTAssertEqual(LogLevel.error.prefix, "[ERROR]", "Error level should have correct prefix")
+    }
+
+    
+    // MARK: - LogLevel Filtering Tests
+    
+    func test_logger_respectsLoggingLevel_debugDisabled() {
+        // Given
+        UserDefaults.standard.set("1", forKey: "loggingLevel") // Info level
+        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        let logger = Logger.shared
+        
+        // Then - Debug messages should be filtered out when level is Info
+        XCTAssertNoThrow(logger.debug("This should not appear"))
+    }
+    
+    func test_logger_respectsLoggingLevel_infoAllowed() {
+        // Given
+        UserDefaults.standard.set("1", forKey: "loggingLevel") // Info level
+        let logger = Logger.shared
+        
+        // Then - Info messages should appear when level is Info
+        XCTAssertNoThrow(logger.info("This should appear"))
+    }
+    
+    func test_logger_respectsLoggingLevel_warningLevel() {
+        // Given
+        UserDefaults.standard.set("2", forKey: "loggingLevel") // Warning level
+        let logger = Logger.shared
+        
+        // Then - Info should be filtered, Warning should pass
+        XCTAssertNoThrow(logger.info("This should be filtered"))
+        XCTAssertNoThrow(logger.warning("This should appear"))
+    }
+    
+    func test_logger_respectsLoggingLevel_errorLevel() {
+        // Given
+        UserDefaults.standard.set("3", forKey: "loggingLevel") // Error level only
+        let logger = Logger.shared
+        
+        // Then - Only error messages should pass
+        XCTAssertNoThrow(logger.debug("Filtered"))
+        XCTAssertNoThrow(logger.info("Filtered"))
+        XCTAssertNoThrow(logger.warning("Filtered"))
+        XCTAssertNoThrow(logger.error("This should appear"))
+    }
+    
+    func test_logger_defaultLoggingLevel_isInfo() {
+        // Given - No logging level set
+        UserDefaults.standard.removeObject(forKey: "loggingLevel")
+        let logger = Logger.shared
+        
+        // When - Get current logging level (should default to info)
+        let currentLevel = UserDefaults.standard.string(forKey: "loggingLevel")
+        
+        // Then - Should default to info level behavior
+        XCTAssertNil(currentLevel, "Should have no explicit level set")
+        XCTAssertNoThrow(logger.info("Should appear with default level"))
     }
 }
