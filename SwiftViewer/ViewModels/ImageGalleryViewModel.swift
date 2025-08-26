@@ -145,7 +145,12 @@ final class ImageGalleryViewModel {
     // MARK: - Private Methods
     
     private func loadImageAtCurrentIndex() async {
-        guard currentIndex < imageFiles.count else { return }
+        guard !imageFiles.isEmpty,
+              currentIndex >= 0,
+              currentIndex < imageFiles.count else { 
+            logger.warning("Cannot load image: invalid index \(currentIndex) for \(imageFiles.count) images")
+            return 
+        }
         
         let imageFile = imageFiles[currentIndex]
         currentImageFile = imageFile

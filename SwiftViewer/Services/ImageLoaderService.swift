@@ -39,6 +39,17 @@ final class MockImageLoaderService: ImageLoaderServiceProtocol {
         if shouldThrowError {
             throw ImageLoaderError.invalidImage
         }
-        return mockImage ?? NSImage()
+        
+        if let mockImage = mockImage {
+            return mockImage
+        }
+        
+        // Create a guaranteed valid test image
+        let testImage = NSImage(size: NSSize(width: 100, height: 100))
+        testImage.lockFocus()
+        NSColor.gray.set()
+        NSRect(origin: .zero, size: NSSize(width: 100, height: 100)).fill()
+        testImage.unlockFocus()
+        return testImage
     }
 }
