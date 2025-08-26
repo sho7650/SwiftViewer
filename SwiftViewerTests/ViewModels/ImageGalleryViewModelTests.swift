@@ -90,20 +90,14 @@ final class ImageGalleryViewModelTests: XCTestCase {
         mockFileManagerService.shouldThrowError = true
         mockFileManagerService.errorToThrow = FileManagerServiceError.directoryNotFound
         
-        withKnownIssue("FileManager error handling produces expected error logging output") {
+        await withKnownIssue("FileManager error handling produces expected error logging output") {
             await sut.loadFolder(testURL)
             
             XCTAssertNotNil(sut.errorMessage)
             XCTAssertTrue(sut.imageFiles.isEmpty)
             XCTAssertNil(sut.currentImage)
             
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "filemanager_error_log",
-                data: Data("[ERROR] ImageGalleryViewModel error when loading folder: directoryNotFound".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
+            // Log capture validation can be extended here if needed
         }
     }
     
@@ -208,19 +202,13 @@ final class ImageGalleryViewModelTests: XCTestCase {
         await setupWithImages(count: 3)
         mockImageLoaderService.shouldThrowError = true
         
-        withKnownIssue("ImageLoader error handling produces expected error logging output") {
+        await withKnownIssue("ImageLoader error handling produces expected error logging output") {
             await sut.navigateToIndex(1)
             
             XCTAssertNotNil(sut.errorMessage)
             XCTAssertNil(sut.currentImage)
             
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "imageloader_error_log",
-                data: Data("[ERROR] ImageGalleryViewModel error when loading image at index 1".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
+            // Log capture validation can be extended here if needed
         }
     }
     

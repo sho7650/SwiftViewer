@@ -39,12 +39,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.error("Error selecting folder", error: testError))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "contentview_error_log",
-                data: Data("[ERROR] ViewLoggingIntegrationTests.swift:37 test_contentView_should_log_folder_selection_errors(): Error selecting folder Error: Folder not found".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -60,12 +54,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.info("Display mode changed to: \(displayMode)"))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "displaymode_change_log",
-                data: Data("[INFO] ViewLoggingIntegrationTests.swift:48 test_contentView_should_log_display_mode_changes(): Display mode changed to: fit".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -86,12 +74,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.debug("Folder selected: \(testPath)"))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "folder_selection_debug_log",
-                data: Data("[DEBUG] ViewLoggingIntegrationTests.swift:61 test_folderSelectionView_should_log_folder_selection(): Folder selected: /Users/test/Pictures".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -113,12 +95,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.debug("Preview: Toggle repeat"))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "slideshow_preview_logs",
-                data: Data("Multiple DEBUG log entries for preview actions".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -139,12 +115,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.error(message)) // Also test without error parameter
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "error_method_signature_logs",
-                data: Data("[ERROR] logs for method signature validation".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -162,12 +132,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.warning("Test warning message"))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "basic_logging_methods",
-                data: Data("Multiple log level entries for method validation".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -191,12 +155,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.debug("Debug message from view with logging enabled"))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "debug_integration_log",
-                data: Data("[DEBUG] ViewLoggingIntegrationTests.swift:123 test_debug_logging_integration_with_views(): Debug message from view with logging enabled".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -215,12 +173,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.error(message, error: nilError))
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "nil_error_handling_log",
-                data: Data("[ERROR] ViewLoggingIntegrationTests.swift:137 test_logger_handles_nil_error_gracefully(): Error occurred".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -237,12 +189,6 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             XCTAssertNoThrow(logger.error("Special chars: 日本語 🎉 @#$%")) // Unicode and special chars
             
             // Record structured log data for validation
-            let attachment = Attachment(
-                name: "edge_case_messages_log",
-                data: Data("Multiple log entries with edge case message formats".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
 }

@@ -15,7 +15,7 @@ struct LogCapture {
     private var isCapturing = false
     
     struct LogEntry {
-        let level: Logger.LogLevel
+        let level: LogLevel
         let message: String
         let timestamp: Date
         let category: String
@@ -34,7 +34,7 @@ struct LogCapture {
     }
     
     /// Record a log entry (called by Logger extensions)
-    mutating func recordLog(level: Logger.LogLevel, message: String, category: String) {
+    mutating func recordLog(level: LogLevel, message: String, category: String) {
         guard isCapturing else { return }
         capturedLogs.append(LogEntry(
             level: level,
@@ -45,7 +45,7 @@ struct LogCapture {
     }
     
     /// Validate that specific log patterns were captured
-    func validateLogPattern(_ pattern: String, level: Logger.LogLevel? = nil) -> Bool {
+    func validateLogPattern(_ pattern: String, level: LogLevel? = nil) -> Bool {
         return capturedLogs.contains { entry in
             let levelMatches = level == nil || entry.level == level
             let messageMatches = entry.message.contains(pattern)
@@ -53,21 +53,15 @@ struct LogCapture {
         }
     }
     
-    /// Create test attachment for captured logs
-    func createAttachment(name: String = "captured_logs") -> Attachment {
-        let logContent = capturedLogs.map { entry in
+    /// Get formatted log output for debugging
+    func getFormattedLogs(name: String = "captured_logs") -> String {
+        return capturedLogs.map { entry in
             "[\(entry.timestamp)] [\(entry.level)] [\(entry.category)] \(entry.message)"
         }.joined(separator: "\n")
-        
-        return Attachment(
-            name: name,
-            data: Data(logContent.utf8),
-            type: .text
-        )
     }
     
     /// Filter logs by level
-    func logs(atLevel level: Logger.LogLevel) -> [LogEntry] {
+    func logs(atLevel level: LogLevel) -> [LogEntry] {
         return capturedLogs.filter { $0.level == level }
     }
     

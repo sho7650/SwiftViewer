@@ -41,15 +41,8 @@ final class LoggerTests: XCTestCase {
         let testMessage = "Test debug message"
         
         withKnownIssue("Debug logging produces expected console output in test environment") {
+            // Verify debug logging doesn't crash and works when enabled
             XCTAssertNoThrow(logger.debug(testMessage))
-            
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "debug_log_output",
-                data: Data("[DEBUG] LoggerTests.swift:41 test_logger_logsDebugMessage_whenDebugLoggingEnabled(): \(testMessage)".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -81,15 +74,8 @@ final class LoggerTests: XCTestCase {
         let testMessage = "Test info message"
         
         withKnownIssue("Info logging produces expected console output in test environment") {
+            // Verify info logging doesn't crash
             XCTAssertNoThrow(logger.info(testMessage))
-            
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "info_log_output",
-                data: Data("[INFO] LoggerTests.swift:75 test_logger_logsInfoMessage(): \(testMessage)".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -98,15 +84,8 @@ final class LoggerTests: XCTestCase {
         let testMessage = "Test warning message"
         
         withKnownIssue("Warning logging produces expected console output in test environment") {
+            // Verify warning logging doesn't crash
             XCTAssertNoThrow(logger.warning(testMessage))
-            
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "warning_log_output",
-                data: Data("[WARNING] LoggerTests.swift:87 test_logger_logsWarningMessage(): \(testMessage)".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -116,16 +95,8 @@ final class LoggerTests: XCTestCase {
         let testError = NSError(domain: "TestDomain", code: 1, userInfo: nil)
         
         withKnownIssue("Error logging produces expected console output in test environment") {
+            // Verify error logging doesn't crash with error object
             XCTAssertNoThrow(logger.error(testMessage, error: testError))
-            
-            // Record structured log data for validation
-            let expectedLogOutput = "[ERROR] LoggerTests.swift:97 test_logger_logsErrorMessage(): \(testMessage) Error: \(testError.localizedDescription)"
-            let attachment = Attachment(
-                name: "error_log_output",
-                data: Data(expectedLogOutput.utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
@@ -137,14 +108,6 @@ final class LoggerTests: XCTestCase {
         withKnownIssue("Error logging without error object produces expected console output") {
             // When - This should not crash
             XCTAssertNoThrow(logger.error(message))
-            
-            // Record structured log data for validation
-            let attachment = Attachment(
-                name: "error_without_object_log_output",
-                data: Data("[ERROR] LoggerTests.swift:108 test_logger_error_without_error_object(): \(message)".utf8),
-                type: .text
-            )
-            Issue.record(attachment)
         }
     }
     
