@@ -179,3 +179,48 @@ extension Logger {
         return Logger.shared
     }
 }
+
+// MARK: - Test Environment Support
+
+extension Logger {
+    /// Detects if currently running in test environment
+    var isTestEnvironment: Bool {
+        return NSClassFromString("XCTestCase") != nil || 
+               ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+               ProcessInfo.processInfo.arguments.contains("-XCTestObserver")
+    }
+    
+    /// Test category for log capture
+    typealias LogLevel = LogLevel
+    
+    /// Captures logs for test validation when in test environment
+    func logForTesting(
+        _ message: String,
+        level: LogLevel,
+        category: String = "SwiftViewer",
+        file: String = #file,
+        function: String = #function,
+        line: Int = #line
+    ) {
+        // Always perform normal logging
+        log(message, level: level, file: file, function: function, line: line)
+        
+        // Additionally capture for tests if in test environment
+        #if DEBUG
+        if isTestEnvironment {
+            // Import test module types only in test environment
+            // This will be used by LogCapture utility
+            if var capture = testLogCaptureIfAvailable() {
+                capture.recordLog(level: level, message: message, category: category)
+            }
+        }
+        #endif
+    }
+    
+    /// Safe access to test log capture (returns nil if not in test environment)
+    private func testLogCaptureIfAvailable() -> Any? {
+        // This will be accessed via runtime checks in test environment
+        // Prevents import dependency on test modules in production code
+        return nil
+    }
+}

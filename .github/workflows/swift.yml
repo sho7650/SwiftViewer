@@ -43,8 +43,11 @@ jobs:
           ONLY_ACTIVE_ARCH=NO \
           build
 
-    - name: Run Unit Tests
+    - name: Run Unit Tests with Known Issues Filtering
       run: |
+        set +e  # Don't exit on test failures - we'll handle them below
+        
+        # Run tests with output capture
         xcodebuild \
           -scheme SwiftViewer \
           -sdk macosx \
@@ -56,4 +59,59 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
-          test
+          test 2>&1 | tee test_output.log
+        
+        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        
+        # Process test output to separate Known Issues from real failures
+        echo "=== Processing Test Results ==="
+        
+        # Extract Known Issues (these are expected)
+        echo "=== Known Issues (Expected) ==="
+        grep -i "withKnownIssue\|Known Issue" test_output.log || echo "No Known Issues found"
+        
+        # Filter out known logging patterns that are intentional
+        echo "=== Filtering Test Output ==="
+        grep -v "\[DEBUG\]" test_output.log | \
+        grep -v "\[INFO\]" | \
+        grep -v "\[WARNING\]" | \
+        grep -v "\[ERROR\]" | \
+        grep -v "Logger.*test.*message" | \
+        grep -E "(FAIL|ERROR|Test.*failed)" > filtered_failures.log || true
+        
+        # Show real failures (if any)
+        if [ -s filtered_failures.log ]; then
+          echo "=== Real Test Failures (Needs Investigation) ==="
+          cat filtered_failures.log
+          echo "=== End Real Failures ==="
+        else
+          echo "=== No Real Test Failures Found ==="
+        fi
+        
+        # Show test summary
+        echo "=== Test Summary ==="
+        grep -E "(Test Suite|tests ran|failures|errors)" test_output.log || echo "No test summary available"
+        
+        # Exit with original test exit code
+        exit $TEST_EXIT_CODE
+
+    - name: Upload Test Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()  # Upload artifacts even if tests fail
+      with:
+        name: test-results
+        path: |
+          test_output.log
+          filtered_failures.log
+        retention-days: 30
+
+    - name: Upload Swift Testing Attachments
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: swift-testing-attachments
+        path: |
+          **/*log*.txt
+          **/*attachment*.txt
+        retention-days: 7
+        if-no-files-found: ignore
