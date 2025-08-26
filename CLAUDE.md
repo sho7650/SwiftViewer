@@ -9,11 +9,12 @@ SwiftViewer is a macOS photo viewer application built with Swift 6 and SwiftUI, 
 ## Build and Development Commands
 
 ### Building the Project
+
 ```bash
 # Build for Debug
 xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -configuration Debug build
 
-# Build for Release  
+# Build for Release
 xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -configuration Release build
 
 # Clean build folder
@@ -21,6 +22,7 @@ xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer clean
 ```
 
 ### Running Tests
+
 ```bash
 # Run all tests
 xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test
@@ -30,6 +32,7 @@ xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx -only-
 ```
 
 ### SwiftLint (when configured)
+
 ```bash
 # Run SwiftLint
 swiftlint
@@ -41,6 +44,7 @@ swiftlint --fix
 ## Architecture
 
 ### MVVM Pattern
+
 - **Views**: SwiftUI views in `SwiftViewer/Views/`
 - **ViewModels**: Observable objects managing view state and business logic
 - **Models**: Data structures representing domain objects
@@ -48,11 +52,13 @@ swiftlint --fix
 - **Services**: Reusable business logic components
 
 ### Dependency Injection
+
 - Protocol-based dependency injection for testability
 - Dependencies injected through initializers
 - Mock implementations for testing
 
 ### Key Components (To Be Implemented)
+
 - **ImageLoader**: Asynchronous image loading with NSImage/CGImage support
 - **ImageCache**: LRU cache with configurable memory limits
 - **FileManager Extension**: Directory browsing and file filtering
@@ -67,6 +73,7 @@ swiftlint --fix
 4. **Commit** with both test and implementation
 
 ### Test Organization
+
 - Unit tests: `SwiftViewerTests/`
 - UI tests: `SwiftViewerUITests/`
 - Test naming: `test_methodName_expectedBehavior_whenCondition()`
@@ -74,6 +81,7 @@ swiftlint --fix
 ## Git Workflow (GitHub Flow)
 
 ### Creating Features
+
 ```bash
 # Create feature branch
 git checkout -b feature/feature-name
@@ -85,6 +93,7 @@ git push -u origin feature/feature-name
 ```
 
 ### Pull Request Process
+
 1. Create PR with detailed description
 2. Ensure all tests pass
 3. Code coverage must be 75%+
@@ -93,6 +102,7 @@ git push -u origin feature/feature-name
 ## Cipher MCP Integration
 
 Use Cipher MCP to record:
+
 - Architecture decisions
 - Implementation plans
 - Test results
@@ -104,18 +114,21 @@ Session ID: `swiftviewer_project`
 ## Key Requirements
 
 ### Supported Image Formats
+
 - JPEG (.jpg, .jpeg)
 - HEIC (.heic)
 - GIF (.gif) with animation support
 - Future: RAW formats via plugin system
 
 ### Performance Targets
+
 - Support 10,000+ images in a folder
 - Cache response time: <10ms for cached images
 - Memory usage: User-configurable limits
 - Preload: 10-1000 images (configurable)
 
 ### UI/UX Features
+
 - Fullscreen mode (F key toggle)
 - Slideshow with configurable intervals (1-300 seconds)
 - Keyboard navigation (arrow keys)
@@ -124,6 +137,7 @@ Session ID: `swiftviewer_project`
 - Blur effect for non-image areas
 
 ### Entitlements Required
+
 - `com.apple.security.app-sandbox`
 - `com.apple.security.files.user-selected.read-only`
 - `com.apple.security.files.bookmarks.app-scope`
@@ -131,18 +145,21 @@ Session ID: `swiftviewer_project`
 ## Development Guidelines
 
 ### File Organization
+
 - One responsibility per file
 - Protocol definitions in separate files
 - Extensions grouped logically
 - Test files mirror source structure
 
 ### Code Style
+
 - Follow Swift API Design Guidelines
 - Use async/await for asynchronous operations
 - Prefer value types where appropriate
 - Document public APIs
 
 ### Error Handling
+
 - Use custom error types
 - Handle corrupted images gracefully
 - Request permissions for protected folders
@@ -151,9 +168,86 @@ Session ID: `swiftviewer_project`
 ## Debugging
 
 ### Enable Debug Logging
+
 Set UserDefaults key `debugLoggingEnabled` to true
 
 ### Common Issues
+
 - **Sandbox violations**: Check entitlements
 - **Memory issues**: Review cache configuration
 - **Performance**: Profile with Instruments
+
+## Claude Code Behavioral Rules
+
+### CRITICAL: Implementation Prevention Rules
+
+#### Mandatory Plan Mode Usage
+
+**ALWAYS use Plan Mode for these instruction types:**
+
+- "方法を提示" / "提案" / "手順を教え"
+- "どうすれば" / "アプローチを" / "戦略を"
+- Any request for proposals, methods, or approaches
+
+**Plan Mode Process:**
+
+1. Analyze the request thoroughly
+2. Present detailed plan with ExitPlanMode tool
+3. Wait for explicit user approval
+4. ONLY THEN proceed with implementation
+
+#### Absolute Prohibitions
+
+**NEVER do these without explicit user instruction:**
+
+- Automatic implementation after presenting methods
+- File modifications during planning phase
+- "While I'm at it" optimizations
+- Adding features not specifically requested
+
+#### Two-Phase Confirmation Required
+
+```
+Phase 1: Planning (Plan Mode MANDATORY)
+- Problem analysis
+- Solution proposal
+- Implementation steps
+- ExitPlanMode call → User approval required
+
+Phase 2: Implementation (ONLY after approval)
+- Execute approved plan exactly
+- No deviations from approved scope
+- No additional "improvements"
+```
+
+#### Emergency Stop Triggers
+
+**Immediately cease all activity when detecting:**
+
+- "勝手に" / "無断で" / "指示していない"
+- "やめろ" / "停止" / "待て" / "まて"
+
+#### Instruction Classification
+
+```
+Proposal-type (→ Plan Mode REQUIRED):
+- "方法を提示" → Planning phase
+- "手順を説明" → Planning phase
+- "アプローチを提案" → Planning phase
+
+Implementation-type (→ Direct execution OK):
+- "修正しろ" → Direct implementation
+- "実装しろ" → Direct implementation
+- "コミットしろ" → Direct implementation
+```
+
+#### Verification Checklist
+
+Before ANY file modification, verify:
+
+- ✓ User gave explicit implementation instruction?
+- ✓ Plan was approved via ExitPlanMode?
+- ✓ Change is within approved scope?
+- ✓ No unauthorized additions being made?
+
+**If ANY answer is NO → STOP immediately**

@@ -10,8 +10,8 @@
     }
   ],
   "defaultOptions" : {
-    "testTimeoutsEnabled" : true,
-    "codeCoverage" : true
+    "codeCoverage" : true,
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {

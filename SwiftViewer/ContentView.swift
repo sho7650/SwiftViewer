@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var imageGalleryViewModel: ImageGalleryViewModel
     @State private var isImageViewerActive = false
     @State private var isFullscreen = false
+    @FocusState private var isContentViewFocused: Bool
     
     @Environment(MenuState.self) private var menuState
     
@@ -32,6 +33,7 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .focusable()
+        .focused($isContentViewFocused)
         .focusedValue(\.openFolderAction) {
             openFolderPicker()
         }
@@ -46,6 +48,16 @@ struct ContentView: View {
         }
         .focusedValue(\.toggleRepeatAction) {
             toggleRepeat()
+        }
+        .onAppear {
+            // Ensure ContentView has focus for keyboard shortcuts
+            DispatchQueue.main.async {
+                isContentViewFocused = true
+            }
+        }
+        .onTapGesture {
+            // Restore focus when user interacts with the view
+            isContentViewFocused = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .sortTypeChanged)) { notification in
             if let sortType = notification.object as? SortType {

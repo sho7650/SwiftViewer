@@ -37,10 +37,6 @@ struct ImageGalleryView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background
-                Color.black
-                    .ignoresSafeArea()
-                
                 // Main content
                 if viewModel.isLoading {
                     loadingView
@@ -62,6 +58,14 @@ struct ImageGalleryView: View {
                     slideShowControlsOverlay
                         .opacity(autoHideManager.areControlsVisible ? 1.0 : 0.0)
                         .allowsHitTesting(autoHideManager.areControlsVisible)
+                }
+            }
+            .background {
+                // Background - Blurred image or solid black (isolated from main content layout)
+                if let currentImage = viewModel.currentImage {
+                    BlurredImageBackground(image: currentImage)
+                } else {
+                    Color.black
                 }
             }
         }
