@@ -251,3 +251,69 @@ Before ANY file modification, verify:
 - ✓ No unauthorized additions being made?
 
 **If ANY answer is NO → STOP immediately**
+
+## SwiftViewer Feature Extension Plan 2025
+
+### Implementation Strategy (4-Phase Approach)
+
+SwiftViewer will be enhanced through a systematic 4-phase implementation plan focusing on settings-driven configurability, plugin extensibility, and SwiftUI best practices compliance.
+
+#### Phase 1: Settings Foundation (Weeks 1-2)
+**Objective:** Expand settings system to support all planned features
+
+**Key Deliverables:**
+- Extend `SettingsManagerProtocol` with 7 new configuration properties
+- Update `SettingsView` UI for dynamic real-time configuration changes
+- Implement menu checkmarks for visual selection feedback
+- Ensure settings persistence and live application
+
+**New Settings:**
+- `autoHideDelay: TimeInterval` (1.0-60.0 seconds)
+- `animationDurations: [AnimationType: TimeInterval]`
+- `blurRadius: Double` and `blurOpacity: Double`
+- `loggingLevel: LogLevel`
+- `slideShowCustomIntervals: [TimeInterval]`
+- `windowPositioning: WindowPosition`
+
+#### Phase 2: Core UI Features (Weeks 3-4)
+**Objective:** Implement primary user experience improvements
+
+**Key Features:**
+- Configurable auto-hide controls (1-60 second delay)
+- Controller blur/opacity visual effects system
+- Debug mode conditional UI element visibility
+- Basic window positioning (Always on Top/Bottom)
+
+#### Phase 3: Advanced Features (Weeks 5-6)
+**Objective:** Fine-grained control and customization capabilities
+
+**Implementation Focus:**
+- Unified animation duration management system (13 `.easeInOut` locations)
+- Slideshow interval selection: [1,2,3,5,10,20,30,60,120,300,600,1200,1800] seconds
+- Window menu extensions: "Move & Resize", "Full Screen Tile"
+- Image display standardization (Fit mode only, remove resize options)
+
+#### Phase 4: Plugin Architecture (Weeks 7-8+)
+**Objective:** Future extensibility through plugin system
+
+**Architectural Components:**
+- Transition effects framework with plugin interface
+- Safe plugin loading mechanism
+- Built-in transition implementations
+- Plugin API specification for third-party extensions
+
+### Technical Standards
+- **Platform:** Swift 6, SwiftUI, macOS 14.0+
+- **Architecture:** MVVM + Dependency Injection (maintained)
+- **Testing:** TDD with 75%+ coverage requirement
+- **Performance:** Support 10,000+ images capability
+- **Compliance:** Full Context7 SwiftUI best practices adherence
+
+### Quality Gates
+Each phase requires:
+- Functional verification of all deliverables
+- Regression testing of existing functionality
+- Performance benchmark validation
+- Architecture compliance review
+
+This systematic approach ensures SwiftViewer evolves into a highly customizable, extensible macOS application while maintaining code quality and architectural integrity.
