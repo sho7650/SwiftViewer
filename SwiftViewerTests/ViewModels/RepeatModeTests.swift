@@ -15,6 +15,7 @@ final class RepeatModeTests: XCTestCase {
     var mockNavigator: MockImageNavigator!
     var slideShowViewModel: SlideShowViewModel!
     var imageViewerViewModel: ImageGalleryViewModel!
+    var contentViewModel: ContentViewModel!
     
     override func setUp() {
         super.setUp()
@@ -26,6 +27,7 @@ final class RepeatModeTests: XCTestCase {
             settingsManager: mockContainer.settingsManager
         )
         imageViewerViewModel = ImageGalleryViewModel(dependencies: mockContainer)
+        contentViewModel = ContentViewModel()
         
         // Reset shared settings to known state
         DependencyContainer.shared.settingsManager.repeatEnabled = false
@@ -39,6 +41,7 @@ final class RepeatModeTests: XCTestCase {
         imageViewerViewModel = nil
         mockNavigator = nil
         mockContainer = nil
+        contentViewModel = nil
         super.tearDown()
     }
     
@@ -163,34 +166,32 @@ final class RepeatModeTests: XCTestCase {
         // This is tested through the timer callback logic
     }
     
-    // MARK: - Menu State Tests
+    // MARK: - ContentViewModel Tests
     
-    func test_menuState_initializes_with_saved_repeat_setting() {
+    func test_contentViewModel_initializes_with_saved_repeat_setting() {
         // Set repeat in settings
         DependencyContainer.shared.settingsManager.repeatEnabled = true
         
-        // Create new menu state
-        let menuState = MenuState()
+        // Create new content view model
+        let newContentViewModel = ContentViewModel()
         
         // Should initialize with saved setting
-        XCTAssertTrue(menuState.isRepeatEnabled)
+        XCTAssertTrue(newContentViewModel.isRepeatEnabled)
     }
     
-    func test_menuState_toggleRepeat_updates_settings() {
-        let menuState = MenuState()
-        XCTAssertFalse(menuState.isRepeatEnabled)
+    func test_contentViewModel_toggleRepeat_updates_settings() {
+        XCTAssertFalse(contentViewModel.isRepeatEnabled)
         
-        menuState.toggleRepeat()
-        XCTAssertTrue(menuState.isRepeatEnabled)
+        contentViewModel.toggleRepeat()
+        XCTAssertTrue(contentViewModel.isRepeatEnabled)
         XCTAssertTrue(DependencyContainer.shared.settingsManager.repeatEnabled)
         
-        menuState.toggleRepeat()
-        XCTAssertFalse(menuState.isRepeatEnabled)
+        contentViewModel.toggleRepeat()
+        XCTAssertFalse(contentViewModel.isRepeatEnabled)
         XCTAssertFalse(DependencyContainer.shared.settingsManager.repeatEnabled)
     }
     
-    func test_menuState_toggleRepeat_posts_notification() {
-        let menuState = MenuState()
+    func test_contentViewModel_toggleRepeat_posts_notification() {
         let expectation = XCTestExpectation(description: "Repeat mode change notification")
         
         let observer = NotificationCenter.default.addObserver(
@@ -204,7 +205,7 @@ final class RepeatModeTests: XCTestCase {
             }
         }
         
-        menuState.toggleRepeat()
+        contentViewModel.toggleRepeat()
         
         // Add small delay for notification to be processed
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

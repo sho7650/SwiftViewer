@@ -29,6 +29,32 @@ struct RepeatToggleKey: FocusedValueKey {
     typealias Value = () -> Void
 }
 
+struct WindowPositionSelectionKey: FocusedValueKey {
+    typealias Value = (WindowPosition) -> Void
+}
+
+struct WindowMoveResizeKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
+struct WindowFullScreenTileKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
+// MARK: - State Focused Values
+
+struct CurrentSortTypeKey: FocusedValueKey {
+    typealias Value = SortType
+}
+
+struct CurrentWindowPositionKey: FocusedValueKey {
+    typealias Value = WindowPosition
+}
+
+struct CurrentDisplayModeKey: FocusedValueKey {
+    typealias Value = DisplayMode
+}
+
 extension FocusedValues {
     var openFolderAction: (() -> Void)? {
         get { self[FolderSelectionKey.self] }
@@ -54,6 +80,38 @@ extension FocusedValues {
         get { self[RepeatToggleKey.self] }
         set { self[RepeatToggleKey.self] = newValue }
     }
+    
+    var windowPositionAction: ((WindowPosition) -> Void)? {
+        get { self[WindowPositionSelectionKey.self] }
+        set { self[WindowPositionSelectionKey.self] = newValue }
+    }
+    
+    var windowMoveResizeAction: (() -> Void)? {
+        get { self[WindowMoveResizeKey.self] }
+        set { self[WindowMoveResizeKey.self] = newValue }
+    }
+    
+    var windowFullScreenTileAction: (() -> Void)? {
+        get { self[WindowFullScreenTileKey.self] }
+        set { self[WindowFullScreenTileKey.self] = newValue }
+    }
+    
+    // MARK: - State Accessors
+    
+    var currentSortType: SortType? {
+        get { self[CurrentSortTypeKey.self] }
+        set { self[CurrentSortTypeKey.self] = newValue }
+    }
+    
+    var currentWindowPosition: WindowPosition? {
+        get { self[CurrentWindowPositionKey.self] }
+        set { self[CurrentWindowPositionKey.self] = newValue }
+    }
+    
+    var currentDisplayMode: DisplayMode? {
+        get { self[CurrentDisplayModeKey.self] }
+        set { self[CurrentDisplayModeKey.self] = newValue }
+    }
 }
 
 // MARK: - Display Mode
@@ -72,6 +130,14 @@ struct MenuCommands: Commands {
     @FocusedValue(\.displayModeAction) var displayModeAction
     @FocusedValue(\.toggleFullscreenAction) var toggleFullscreenAction
     @FocusedValue(\.toggleRepeatAction) var toggleRepeatAction
+    @FocusedValue(\.windowPositionAction) var windowPositionAction
+    @FocusedValue(\.windowMoveResizeAction) var windowMoveResizeAction
+    @FocusedValue(\.windowFullScreenTileAction) var windowFullScreenTileAction
+    
+    // MARK: - State FocusedValues
+    @FocusedValue(\.currentSortType) var currentSortType
+    @FocusedValue(\.currentWindowPosition) var currentWindowPosition
+    @FocusedValue(\.currentDisplayMode) var currentDisplayMode
     
     var body: some Commands {
         // MARK: - File Menu
@@ -99,7 +165,7 @@ struct MenuCommands: Commands {
             
             Divider()
             
-            Button("Repeat Slideshow") {
+            Button("Toggle Repeat Slideshow") {
                 toggleRepeatAction?()
             }
             .keyboardShortcut("r", modifiers: .command)
@@ -126,15 +192,46 @@ struct MenuCommands: Commands {
             Divider()
         }
         
+        // MARK: - Window Menu
+        CommandGroup(after: .windowArrangement) {
+            Section("Position") {
+                Button(currentWindowPosition == .alwaysOnTop ? "✓ Always on Top" : "Always on Top") {
+                    windowPositionAction?(.alwaysOnTop)
+                }
+                .keyboardShortcut("t", modifiers: [.command, .control])
+                
+                Button(currentWindowPosition == .alwaysOnBottom ? "✓ Always on Bottom" : "Always on Bottom") {
+                    windowPositionAction?(.alwaysOnBottom)
+                }
+                .keyboardShortcut("b", modifiers: [.command, .control])
+                
+                Button(currentWindowPosition == .normal ? "✓ Normal Position" : "Normal Position") {
+                    windowPositionAction?(.normal)
+                }
+            }
+            
+            Divider()
+            
+            Button("Move & Resize") {
+                windowMoveResizeAction?()
+            }
+            .keyboardShortcut("m", modifiers: [.command, .control])
+            
+            Button("Full Screen Tile") {
+                windowFullScreenTileAction?()
+            }
+            .keyboardShortcut("g", modifiers: [.command, .control])
+        }
+        
         // MARK: - Sort Menu
         CommandMenu("Sort") {
             Section("By Name") {
-                Button("Ascending") {
+                Button(currentSortType == .name(ascending: true) ? "✓ Name (A-Z)" : "Name (A-Z)") {
                     sortSelectionAction?(.name(ascending: true))
                 }
                 .keyboardShortcut("1", modifiers: [.command, .option])
                 
-                Button("Descending") {
+                Button(currentSortType == .name(ascending: false) ? "✓ Name (Z-A)" : "Name (Z-A)") {
                     sortSelectionAction?(.name(ascending: false))
                 }
                 .keyboardShortcut("1", modifiers: [.command, .option, .shift])
@@ -143,12 +240,12 @@ struct MenuCommands: Commands {
             Divider()
             
             Section("By Date") {
-                Button("Ascending") {
+                Button(currentSortType == .date(ascending: true) ? "✓ Date (Oldest First)" : "Date (Oldest First)") {
                     sortSelectionAction?(.date(ascending: true))
                 }
                 .keyboardShortcut("2", modifiers: [.command, .option])
                 
-                Button("Descending") {
+                Button(currentSortType == .date(ascending: false) ? "✓ Date (Newest First)" : "Date (Newest First)") {
                     sortSelectionAction?(.date(ascending: false))
                 }
                 .keyboardShortcut("2", modifiers: [.command, .option, .shift])
@@ -157,12 +254,12 @@ struct MenuCommands: Commands {
             Divider()
             
             Section("By Size") {
-                Button("Ascending") {
+                Button(currentSortType == .size(ascending: true) ? "✓ Size (Smallest First)" : "Size (Smallest First)") {
                     sortSelectionAction?(.size(ascending: true))
                 }
                 .keyboardShortcut("3", modifiers: [.command, .option])
                 
-                Button("Descending") {
+                Button(currentSortType == .size(ascending: false) ? "✓ Size (Largest First)" : "Size (Largest First)") {
                     sortSelectionAction?(.size(ascending: false))
                 }
                 .keyboardShortcut("3", modifiers: [.command, .option, .shift])
@@ -170,7 +267,7 @@ struct MenuCommands: Commands {
             
             Divider()
             
-            Button("Random") {
+            Button(currentSortType == .random ? "✓ Random" : "Random") {
                 sortSelectionAction?(.random)
             }
             .keyboardShortcut("r", modifiers: [.command, .option])
@@ -178,45 +275,6 @@ struct MenuCommands: Commands {
     }
 }
 
-// MARK: - App State for Menu
-
-@Observable
-@MainActor
-final class MenuState {
-    var currentSortType: SortType = .name(ascending: true)
-    var currentDisplayMode: DisplayMode = .fit
-    var isFullscreen: Bool = false
-    var isRepeatEnabled: Bool = false
-    var hasRecentFolders: Bool = false
-    
-    init() {
-        let settingsManager = DependencyContainer.shared.settingsManager
-        self.currentSortType = settingsManager.sortType
-        self.isRepeatEnabled = settingsManager.repeatEnabled
-    }
-    
-    func updateSortType(_ sortType: SortType) {
-        currentSortType = sortType
-        DependencyContainer.shared.settingsManager.sortType = sortType
-        NotificationCenter.default.post(name: .sortTypeChanged, object: sortType)
-    }
-    
-    func updateDisplayMode(_ displayMode: DisplayMode) {
-        currentDisplayMode = displayMode
-        NotificationCenter.default.post(name: .displayModeChanged, object: displayMode)
-    }
-    
-    func toggleFullscreen() {
-        isFullscreen.toggle()
-        NotificationCenter.default.post(name: .fullscreenToggled, object: isFullscreen)
-    }
-    
-    func toggleRepeat() {
-        isRepeatEnabled.toggle()
-        DependencyContainer.shared.settingsManager.repeatEnabled = isRepeatEnabled
-        NotificationCenter.default.post(name: .repeatModeChanged, object: isRepeatEnabled)
-    }
-}
 
 // MARK: - Notification Names
 
@@ -225,4 +283,5 @@ extension Notification.Name {
     static let displayModeChanged = Notification.Name("displayModeChanged")
     static let fullscreenToggled = Notification.Name("fullscreenToggled")
     static let repeatModeChanged = Notification.Name("repeatModeChanged")
+    static let windowPositionChanged = Notification.Name("windowPositionChanged")
 }

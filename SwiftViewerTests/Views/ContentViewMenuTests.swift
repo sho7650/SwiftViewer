@@ -13,17 +13,17 @@ import SwiftUI
 final class ContentViewMenuTests: XCTestCase {
     
     var contentView: ContentView!
-    var menuState: MenuState!
+    var contentViewModel: ContentViewModel!
     
     override func setUp() {
         super.setUp()
-        menuState = MenuState()
+        contentViewModel = ContentViewModel()
         contentView = ContentView()
     }
     
     override func tearDown() {
         contentView = nil
-        menuState = nil
+        contentViewModel = nil
         super.tearDown()
     }
     
@@ -56,39 +56,39 @@ final class ContentViewMenuTests: XCTestCase {
         XCTAssertTrue(true)
     }
     
-    // MARK: - Menu Action Handler Tests
+    // MARK: - ContentViewModel Tests
     
-    func test_handleSortChange_updates_menuState() {
-        let initialSort = menuState.currentSortType
+    func test_handleSortChange_updates_contentViewModel() {
+        let initialSort = contentViewModel.currentSortType
         let newSort = SortType.date(ascending: true)
         
         // This would be called from the menu
-        menuState.updateSortType(newSort)
+        contentViewModel.updateSortType(newSort)
         
-        XCTAssertNotEqual(menuState.currentSortType, initialSort)
-        XCTAssertEqual(menuState.currentSortType, newSort)
+        XCTAssertNotEqual(contentViewModel.currentSortType, initialSort)
+        XCTAssertEqual(contentViewModel.currentSortType, newSort)
     }
     
-    func test_handleDisplayModeChange_updates_menuState() {
-        let initialMode = menuState.currentDisplayMode
+    func test_handleDisplayModeChange_updates_contentViewModel() {
+        let initialMode = contentViewModel.currentDisplayMode
         XCTAssertEqual(initialMode, .fit)
         
-        menuState.updateDisplayMode(.fill)
+        contentViewModel.updateDisplayMode(.fill)
         
-        XCTAssertNotEqual(menuState.currentDisplayMode, initialMode)
-        XCTAssertEqual(menuState.currentDisplayMode, .fill)
+        XCTAssertNotEqual(contentViewModel.currentDisplayMode, initialMode)
+        XCTAssertEqual(contentViewModel.currentDisplayMode, .fill)
     }
     
-    func test_toggleFullscreen_updates_menuState() {
-        XCTAssertFalse(menuState.isFullscreen)
+    func test_toggleFullscreen_updates_contentViewModel() {
+        XCTAssertFalse(contentViewModel.isFullscreen)
         
-        menuState.toggleFullscreen()
+        contentViewModel.toggleFullscreen()
         
-        XCTAssertTrue(menuState.isFullscreen)
+        XCTAssertTrue(contentViewModel.isFullscreen)
         
-        menuState.toggleFullscreen()
+        contentViewModel.toggleFullscreen()
         
-        XCTAssertFalse(menuState.isFullscreen)
+        XCTAssertFalse(contentViewModel.isFullscreen)
     }
     
     // MARK: - File Import Tests
@@ -109,8 +109,8 @@ final class ContentViewMenuTests: XCTestCase {
         let settingsManager = DependencyContainer.shared.settingsManager
         let initialSort = settingsManager.sortType
         
-        // Update sort through menu state
-        menuState.updateSortType(.size(ascending: false))
+        // Update sort through content view model
+        contentViewModel.updateSortType(.size(ascending: false))
         
         // Verify it's persisted in settings
         XCTAssertNotEqual(settingsManager.sortType, initialSort)
@@ -129,8 +129,8 @@ final class ContentViewMenuTests: XCTestCase {
         ]
         
         for sortType in sortTypes {
-            menuState.updateSortType(sortType)
-            XCTAssertEqual(menuState.currentSortType, sortType)
+            contentViewModel.updateSortType(sortType)
+            XCTAssertEqual(contentViewModel.currentSortType, sortType)
             
             // Verify persistence
             let settingsManager = DependencyContainer.shared.settingsManager
@@ -142,8 +142,8 @@ final class ContentViewMenuTests: XCTestCase {
         let modes: [DisplayMode] = [.fit, .fill, .actualSize]
         
         for mode in modes {
-            menuState.updateDisplayMode(mode)
-            XCTAssertEqual(menuState.currentDisplayMode, mode)
+            contentViewModel.updateDisplayMode(mode)
+            XCTAssertEqual(contentViewModel.currentDisplayMode, mode)
         }
     }
 }
