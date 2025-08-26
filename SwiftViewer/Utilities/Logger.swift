@@ -191,7 +191,6 @@ extension Logger {
     }
     
     /// Test category for log capture
-    typealias LogLevel = LogLevel
     
     /// Captures logs for test validation when in test environment
     func logForTesting(
@@ -205,22 +204,7 @@ extension Logger {
         // Always perform normal logging
         log(message, level: level, file: file, function: function, line: line)
         
-        // Additionally capture for tests if in test environment
-        #if DEBUG
-        if isTestEnvironment {
-            // Import test module types only in test environment
-            // This will be used by LogCapture utility
-            if var capture = testLogCaptureIfAvailable() {
-                capture.recordLog(level: level, message: message, category: category)
-            }
-        }
-        #endif
-    }
-    
-    /// Safe access to test log capture (returns nil if not in test environment)
-    private func testLogCaptureIfAvailable() -> Any? {
-        // This will be accessed via runtime checks in test environment
-        // Prevents import dependency on test modules in production code
-        return nil
+        // Test log capture integration will be handled by external test coordination
+        // This maintains separation between production code and test infrastructure
     }
 }

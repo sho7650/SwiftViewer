@@ -11,13 +11,23 @@ import SwiftUI
 
 final class ImageGalleryViewBlurTests: XCTestCase {
     
+    private var mockFileManagerService: MockFileManagerService!
+    private var mockImageLoaderService: MockImageLoaderService!
+    private var mockSettingsManager: MockSettingsManager!
     private var mockContainer: MockDependencyContainer!
     private var viewModel: ImageGalleryViewModel!
     private var testImage: NSImage!
     
     @MainActor override func setUpWithError() throws {
         super.setUp()
-        mockContainer = MockDependencyContainer()
+        mockFileManagerService = MockFileManagerService()
+        mockImageLoaderService = MockImageLoaderService()
+        mockSettingsManager = MockSettingsManager()
+        mockContainer = MockDependencyContainer(
+            fileManagerService: mockFileManagerService,
+            imageLoaderService: mockImageLoaderService,
+            settingsManager: mockSettingsManager
+        )
         viewModel = ImageGalleryViewModel(dependencies: mockContainer)
         
         // Create a test image
@@ -29,6 +39,9 @@ final class ImageGalleryViewBlurTests: XCTestCase {
     }
     
     override func tearDownWithError() throws {
+        mockFileManagerService = nil
+        mockImageLoaderService = nil
+        mockSettingsManager = nil
         mockContainer = nil
         viewModel = nil
         testImage = nil
@@ -50,9 +63,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the current image
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = testImage
-        }
+        mockImageLoaderService.mockImage = testImage
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -85,7 +96,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         XCTAssertTrue(true, "ImageGalleryView should not display blurred background when no image is loaded")
     }
     
-    @MainActor func test_ImageGalleryView_WhenImageChanges_ShouldUpdateBlurredBackground() throws {
+    @MainActor func test_ImageGalleryView_WhenImageChanges_ShouldUpdateBlurredBackground() async throws {
         // Given
         let imageFile1 = ImageFile(
             url: URL(fileURLWithPath: "/test/image1.jpg"),
@@ -111,19 +122,15 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the first image (will be overwritten for second test)
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = testImage
-        }
+        mockImageLoaderService.mockImage = testImage
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
         let hostingController = NSHostingController(rootView: imageGalleryView.frame(width: 800, height: 600))
         let view = hostingController.view
         
-        // Simulate navigation to next image
-        Task { @MainActor in
-            await viewModel.navigateToNext()
-        }
+        // Simulate navigation to next image - Fixed async call
+        await viewModel.navigateToNext()
         
         // Then
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
@@ -146,9 +153,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the current image
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = testImage
-        }
+        mockImageLoaderService.mockImage = testImage
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -300,9 +305,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
             viewModel.imageFiles = [imageFile]
             viewModel.currentIndex = 0
             
-            if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-                mockService.mockImage = testImage
-            }
+            mockImageLoaderService.mockImage = testImage
             
             // When: Displayed in standard window
             let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -334,9 +337,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the first image for testing (MockImageLoaderService only supports one image at a time)
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = testImage
-        }
+        mockImageLoaderService.mockImage = testImage
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
