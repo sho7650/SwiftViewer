@@ -26,6 +26,10 @@ struct ImageFile: Equatable, Identifiable {
         return validFormats.contains(fileExtension)
     }
     
+    var isAnimated: Bool {
+        return fileExtension == "gif"
+    }
+    
     var formattedFileSize: String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
