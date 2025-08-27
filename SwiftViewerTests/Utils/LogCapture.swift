@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Testing
+import XCTest
 @testable import SwiftViewer
 
 /// Utility for capturing and validating log output in tests

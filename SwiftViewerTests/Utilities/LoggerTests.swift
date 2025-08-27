@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import Testing
 @testable import SwiftViewer
 
 final class LoggerTests: XCTestCase {
@@ -41,10 +40,8 @@ final class LoggerTests: XCTestCase {
         let logger = Logger.shared
         let testMessage = "Test debug message"
         
-        withKnownIssue("Debug logging produces expected console output in test environment") {
-            // Verify debug logging doesn't crash and works when enabled
-            XCTAssertNoThrow(logger.debug(testMessage))
-        }
+        // Verify debug logging doesn't crash and works when enabled
+        XCTAssertNoThrow(logger.debug(testMessage))
     }
     
     func test_logger_doesNotLogDebugMessage_whenDebugLoggingDisabled() {
@@ -74,20 +71,16 @@ final class LoggerTests: XCTestCase {
         let logger = Logger.shared
         let testMessage = "Test info message"
         
-        withKnownIssue("Info logging produces expected console output in test environment") {
-            // Verify info logging doesn't crash
-            XCTAssertNoThrow(logger.info(testMessage))
-        }
+        // Verify info logging doesn't crash
+        XCTAssertNoThrow(logger.info(testMessage))
     }
     
     func test_logger_logsWarningMessage() {
         let logger = Logger.shared
         let testMessage = "Test warning message"
         
-        withKnownIssue("Warning logging produces expected console output in test environment") {
-            // Verify warning logging doesn't crash
-            XCTAssertNoThrow(logger.warning(testMessage))
-        }
+        // Verify warning logging doesn't crash
+        XCTAssertNoThrow(logger.warning(testMessage))
     }
     
     func test_logger_logsErrorMessage() {
@@ -95,10 +88,8 @@ final class LoggerTests: XCTestCase {
         let testMessage = "Test error message"
         let testError = NSError(domain: "TestDomain", code: 1, userInfo: nil)
         
-        withKnownIssue("Error logging produces expected console output in test environment") {
-            // Verify error logging doesn't crash with error object
-            XCTAssertNoThrow(logger.error(testMessage, error: testError))
-        }
+        // Verify error logging doesn't crash with error object
+        XCTAssertNoThrow(logger.error(testMessage, error: testError))
     }
     
     func test_logger_error_without_error_object() {
@@ -106,10 +97,8 @@ final class LoggerTests: XCTestCase {
         let logger = Logger.shared
         let message = "Something went wrong"
         
-        withKnownIssue("Error logging without error object produces expected console output") {
-            // When - This should not crash
-            XCTAssertNoThrow(logger.error(message))
-        }
+        // When - This should not crash
+        XCTAssertNoThrow(logger.error(message))
     }
     
     // MARK: - Message Formatting Tests

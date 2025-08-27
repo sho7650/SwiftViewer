@@ -7,7 +7,6 @@
 
 @testable import SwiftViewer
 import XCTest
-import Testing
 
 final class ViewLoggingIntegrationTests: XCTestCase {
     
@@ -34,12 +33,8 @@ final class ViewLoggingIntegrationTests: XCTestCase {
             NSLocalizedDescriptionKey: "Folder not found"
         ])
         
-        withKnownIssue("ContentView error logging produces expected console output") {
-            // Then - Should not crash when logging error with Error parameter
-            XCTAssertNoThrow(logger.error("Error selecting folder", error: testError))
-            
-            // Record structured log data for validation
-        }
+        // Then - Should not crash when logging error with Error parameter
+        XCTAssertNoThrow(logger.error("Error selecting folder", error: testError))
     }
     
     func test_contentView_should_log_display_mode_changes() {
@@ -49,12 +44,8 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // When - This tests that Logger.shared.info can be called for display mode changes
         let displayMode = "fit" // Simulating DisplayMode.rawValue
         
-        withKnownIssue("ContentView display mode logging produces expected console output") {
-            // Then - Should not crash when logging display mode changes
-            XCTAssertNoThrow(logger.info("Display mode changed to: \(displayMode)"))
-            
-            // Record structured log data for validation
-        }
+        // Then - Should not crash when logging display mode changes
+        XCTAssertNoThrow(logger.info("Display mode changed to: \(displayMode)"))
     }
     
     // MARK: - FolderSelectionView Logging Tests
@@ -66,15 +57,11 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // When - This tests that Logger.shared.debug can be called for folder selection
         let testPath = "/Users/test/Pictures"
         
-        withKnownIssue("FolderSelectionView debug logging produces expected console output when enabled") {
-            // Enable debug logging for this test
-            UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
-            
-            // Then - Should not crash when logging folder selection
-            XCTAssertNoThrow(logger.debug("Folder selected: \(testPath)"))
-            
-            // Record structured log data for validation
-        }
+        // Enable debug logging for this test
+        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        
+        // Then - Should not crash when logging folder selection
+        XCTAssertNoThrow(logger.debug("Folder selected: \(testPath)"))
     }
     
     // MARK: - SlideShowControlsView Preview Logging Tests
@@ -83,19 +70,15 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // Given
         let logger = Logger.shared
         
-        withKnownIssue("SlideShowControlsView preview logging produces expected console output when enabled") {
-            // Enable debug logging for this test
-            UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
-            
-            // When - This tests that Logger.shared.debug can be called for preview actions
-            // Then - Should not crash when logging various preview actions
-            XCTAssertNoThrow(logger.debug("Preview: Previous button tapped"))
-            XCTAssertNoThrow(logger.debug("Preview: Toggle slideshow"))
-            XCTAssertNoThrow(logger.debug("Preview: Next button tapped"))
-            XCTAssertNoThrow(logger.debug("Preview: Toggle repeat"))
-            
-            // Record structured log data for validation
-        }
+        // Enable debug logging for this test
+        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        
+        // When - This tests that Logger.shared.debug can be called for preview actions
+        // Then - Should not crash when logging various preview actions
+        XCTAssertNoThrow(logger.debug("Preview: Previous button tapped"))
+        XCTAssertNoThrow(logger.debug("Preview: Toggle slideshow"))
+        XCTAssertNoThrow(logger.debug("Preview: Next button tapped"))
+        XCTAssertNoThrow(logger.debug("Preview: Toggle repeat"))
     }
     
     // MARK: - Logger Method Signature Validation
@@ -109,13 +92,9 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         let message = "Test error message"
         let error: Error = NSError(domain: "TestDomain", code: 123, userInfo: nil)
         
-        withKnownIssue("Logger error method signature validation produces expected console output") {
-            // When & Then - Should compile and not crash
-            XCTAssertNoThrow(logger.error(message, error: error))
-            XCTAssertNoThrow(logger.error(message)) // Also test without error parameter
-            
-            // Record structured log data for validation
-        }
+        // When & Then - Should compile and not crash
+        XCTAssertNoThrow(logger.error(message, error: error))
+        XCTAssertNoThrow(logger.error(message)) // Also test without error parameter
     }
     
     func test_logger_supports_basic_logging_methods() {
@@ -124,15 +103,11 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // Given
         let logger = Logger.shared
         
-        withKnownIssue("Basic logging methods produce expected console output") {
-            // When & Then - Test current methods work
-            XCTAssertNoThrow(logger.info("Test info message"))
-            XCTAssertNoThrow(logger.debug("Test debug message"))
-            XCTAssertNoThrow(logger.error("Test error message"))
-            XCTAssertNoThrow(logger.warning("Test warning message"))
-            
-            // Record structured log data for validation
-        }
+        // When & Then - Test current methods work
+        XCTAssertNoThrow(logger.info("Test info message"))
+        XCTAssertNoThrow(logger.debug("Test debug message"))
+        XCTAssertNoThrow(logger.error("Test error message"))
+        XCTAssertNoThrow(logger.warning("Test warning message"))
     }
     
     // MARK: - Debug Mode Integration Tests
@@ -147,15 +122,11 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // When & Then - Debug calls should not crash (even if not logged)
         XCTAssertNoThrow(logger.debug("Debug message from view"))
         
-        withKnownIssue("Debug logging integration produces expected console output when enabled") {
-            // Given - Debug logging enabled
-            UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
-            
-            // When & Then - Debug calls should not crash
-            XCTAssertNoThrow(logger.debug("Debug message from view with logging enabled"))
-            
-            // Record structured log data for validation
-        }
+        // Given - Debug logging enabled
+        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        
+        // When & Then - Debug calls should not crash
+        XCTAssertNoThrow(logger.debug("Debug message from view with logging enabled"))
     }
     
     // MARK: - Error Integration Edge Cases
@@ -168,12 +139,8 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         let message = "Error occurred"
         let nilError: Error? = nil
         
-        withKnownIssue("Logger handles nil error gracefully and produces expected console output") {
-            // When & Then - Should handle nil error gracefully
-            XCTAssertNoThrow(logger.error(message, error: nilError))
-            
-            // Record structured log data for validation
-        }
+        // When & Then - Should handle nil error gracefully
+        XCTAssertNoThrow(logger.error(message, error: nilError))
     }
     
     func test_logger_handles_empty_messages_gracefully() {
@@ -182,13 +149,9 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // Given
         let logger = Logger.shared
         
-        withKnownIssue("Logger handles edge case messages and produces expected console output") {
-            // When & Then - Should handle edge cases gracefully
-            XCTAssertNoThrow(logger.info("")) // Empty message
-            XCTAssertNoThrow(logger.debug("   ")) // Whitespace message  
-            XCTAssertNoThrow(logger.error("Special chars: 日本語 🎉 @#$%")) // Unicode and special chars
-            
-            // Record structured log data for validation
-        }
+        // When & Then - Should handle edge cases gracefully
+        XCTAssertNoThrow(logger.info("")) // Empty message
+        XCTAssertNoThrow(logger.debug("   ")) // Whitespace message  
+        XCTAssertNoThrow(logger.error("Special chars: 日本語 🎉 @#$%")) // Unicode and special chars
     }
 }

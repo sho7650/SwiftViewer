@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import Testing
 import AppKit
 @testable import SwiftViewer
 
@@ -90,15 +89,11 @@ final class ImageGalleryViewModelTests: XCTestCase {
         mockFileManagerService.shouldThrowError = true
         mockFileManagerService.errorToThrow = FileManagerServiceError.directoryNotFound
         
-        await withKnownIssue("FileManager error handling produces expected error logging output") {
-            await sut.loadFolder(testURL)
-            
-            XCTAssertNotNil(sut.errorMessage)
-            XCTAssertTrue(sut.imageFiles.isEmpty)
-            XCTAssertNil(sut.currentImage)
-            
-            // Log capture validation can be extended here if needed
-        }
+        await sut.loadFolder(testURL)
+        
+        XCTAssertNotNil(sut.errorMessage)
+        XCTAssertTrue(sut.imageFiles.isEmpty)
+        XCTAssertNil(sut.currentImage)
     }
     
     func test_loadFolder_handlesEmptyFolder() async {
@@ -202,14 +197,10 @@ final class ImageGalleryViewModelTests: XCTestCase {
         await setupWithImages(count: 3)
         mockImageLoaderService.shouldThrowError = true
         
-        await withKnownIssue("ImageLoader error handling produces expected error logging output") {
-            await sut.navigateToIndex(1)
-            
-            XCTAssertNotNil(sut.errorMessage)
-            XCTAssertNil(sut.currentImage)
-            
-            // Log capture validation can be extended here if needed
-        }
+        await sut.navigateToIndex(1)
+        
+        XCTAssertNotNil(sut.errorMessage)
+        XCTAssertNil(sut.currentImage)
     }
     
     // MARK: - Sort Tests
