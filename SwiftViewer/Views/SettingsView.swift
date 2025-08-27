@@ -102,13 +102,10 @@ struct SettingsView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Interval:")
-                        .frame(width: 100, alignment: .leading)
-                    
                     Slider(value: $slideShowIntervalIndex, in: 0.0...Double(SlideshowIntervalHelper.intervals.count - 1), step: 1.0) {
                         Text("Slideshow Interval")
                     }
-                    .frame(maxWidth: 300)
+                    .frame(maxWidth: 500)
                     .onChange(of: slideShowIntervalIndex) { _, newIndex in
                         let snappedIndex = Int(round(newIndex))
                         let actualInterval = SlideshowIntervalHelper.intervalForIndex(snappedIndex)
@@ -127,18 +124,6 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.leading, 100)
-                
-                // Quick presets
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Quick Presets:")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    SlideShowPresetsView(
-                        selectedInterval: $slideShowInterval,
-                        intervals: settingsManager.slideShowPresetIntervals
-                    )
-                }
                 
                 Toggle("Repeat slideshow", isOn: Binding(
                     get: { settingsManager.repeatEnabled },
@@ -166,13 +151,10 @@ struct SettingsView: View {
                         .fontWeight(.medium)
                     
                     HStack {
-                        Text("Radius:")
-                            .frame(width: 60, alignment: .leading)
-                        
                         Slider(value: $blurRadius, in: 0.0...50.0, step: 1.0) {
                             Text("Blur Radius")
                         }
-                        .frame(maxWidth: 200)
+                        .frame(maxWidth: 500)
                         .onChange(of: blurRadius) { _, newValue in
                             settingsManager.blurRadius = newValue
                             NotificationCenter.default.post(name: .blurSettingsChanged, object: nil)
@@ -184,13 +166,10 @@ struct SettingsView: View {
                     }
                     
                     HStack {
-                        Text("Opacity:")
-                            .frame(width: 60, alignment: .leading)
-                        
                         Slider(value: $blurOpacity, in: 0.0...1.0, step: 0.1) {
                             Text("Blur Opacity")
                         }
-                        .frame(maxWidth: 200)
+                        .frame(maxWidth: 500)
                         .onChange(of: blurOpacity) { _, newValue in
                             settingsManager.blurOpacity = newValue
                             NotificationCenter.default.post(name: .blurSettingsChanged, object: nil)
@@ -210,9 +189,6 @@ struct SettingsView: View {
                     
                     ForEach(AnimationType.allCases, id: \.self) { type in
                         HStack {
-                            Text("\(type.displayName):")
-                                .frame(width: 90, alignment: .leading)
-                            
                             Slider(
                                 value: bindingForAnimationType(type),
                                 in: 0.1...1.0,
@@ -220,7 +196,7 @@ struct SettingsView: View {
                             ) {
                                 Text("\(type.displayName) Duration")
                             }
-                            .frame(maxWidth: 150)
+                            .frame(maxWidth: 500)
                             
                             Text(String(format: "%.1fs", animationDurations[type] ?? type.defaultDuration))
                                 .font(.system(.caption, design: .monospaced))
@@ -242,13 +218,10 @@ struct SettingsView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Auto-hide delay:")
-                        .frame(width: 120, alignment: .leading)
-                    
-                    Slider(value: $autoHideDelay, in: 1.0...60.0, step: 0.5) {
+                    Slider(value: $autoHideDelay, in: 1.0...60.0, step: 1.0) {
                         Text("Auto-hide Delay")
                     }
-                    .frame(maxWidth: 200)
+                    .frame(maxWidth: 500)
                     .onChange(of: autoHideDelay) { _, newValue in
                         settingsManager.autoHideDelay = newValue
                         NotificationCenter.default.post(name: .autoHideDelayChanged, object: nil)
