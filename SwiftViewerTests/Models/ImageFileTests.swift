@@ -141,4 +141,45 @@ final class ImageFileTests: XCTestCase {
         XCTAssertEqual(imageFile2.formattedFileSize, "1 MB")
         XCTAssertEqual(imageFile3.formattedFileSize, "1.07 GB")
     }
+    
+    // MARK: - Animation Tests
+    
+    func test_imageFile_isAnimated_gif() {
+        let gifImageFile = ImageFile(
+            url: URL(fileURLWithPath: "/path/to/animation.gif"),
+            fileName: "animation.gif",
+            fileSize: 1024,
+            createdDate: Date()
+        )
+        
+        XCTAssertTrue(gifImageFile.isAnimated, "GIF files should be identified as animated")
+    }
+    
+    func test_imageFile_isAnimated_nonGif() {
+        let nonAnimatedFormats = ["jpg", "jpeg", "heic", "png"]
+        
+        for format in nonAnimatedFormats {
+            let imageFile = ImageFile(
+                url: URL(fileURLWithPath: "/path/to/image.\(format)"),
+                fileName: "image.\(format)",
+                fileSize: 1024,
+                createdDate: Date()
+            )
+            XCTAssertFalse(imageFile.isAnimated, "Format \(format) should not be identified as animated")
+        }
+    }
+    
+    func test_imageFile_isAnimated_caseInsensitive() {
+        let gifVariations = ["gif", "GIF", "Gif", "gIf"]
+        
+        for format in gifVariations {
+            let imageFile = ImageFile(
+                url: URL(fileURLWithPath: "/path/to/animation.\(format)"),
+                fileName: "animation.\(format)",
+                fileSize: 1024,
+                createdDate: Date()
+            )
+            XCTAssertTrue(imageFile.isAnimated, "Format \(format) should be identified as animated (case insensitive)")
+        }
+    }
 }

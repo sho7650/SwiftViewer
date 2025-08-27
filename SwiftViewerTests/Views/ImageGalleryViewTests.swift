@@ -236,4 +236,147 @@ final class ImageGalleryViewTests: XCTestCase {
         // This tests the structural setup - the actual cleanup behavior
         // would be tested in integration tests with the actual slideshow service
     }
+    
+    // MARK: - GIF Animation Tests
+    
+    func test_imageGalleryView_displays_animated_gif() async {
+        // Test that animated GIF files are properly displayed
+        let gifFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/animation.gif"),
+            fileName: "animation.gif",
+            fileSize: 2048000,
+            createdDate: Date()
+        )
+        
+        viewModel.imageFiles = [gifFile]
+        await viewModel.navigateToIndex(0)
+        viewModel.isLoading = false
+        
+        let body = galleryView.body
+        XCTAssertNotNil(body)
+        
+        // Verify GIF is identified as animated
+        XCTAssertTrue(gifFile.isAnimated)
+        XCTAssertEqual(viewModel.currentImageFile?.isAnimated, true)
+    }
+    
+    func test_imageGalleryView_displays_static_image() async {
+        // Test that non-GIF files are displayed as static images
+        let jpgFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/photo.jpg"),
+            fileName: "photo.jpg",
+            fileSize: 1024000,
+            createdDate: Date()
+        )
+        
+        viewModel.imageFiles = [jpgFile]
+        await viewModel.navigateToIndex(0)
+        viewModel.isLoading = false
+        
+        let body = galleryView.body
+        XCTAssertNotNil(body)
+        
+        // Verify JPG is not identified as animated
+        XCTAssertFalse(jpgFile.isAnimated)
+        XCTAssertEqual(viewModel.currentImageFile?.isAnimated, false)
+    }
+    
+    func test_imageGalleryView_mixed_image_types() async {
+        // Test handling of mixed animated and static images
+        let gifFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/animation.gif"),
+            fileName: "animation.gif",
+            fileSize: 2048000,
+            createdDate: Date()
+        )
+        
+        let jpgFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/photo.jpg"),
+            fileName: "photo.jpg",
+            fileSize: 1024000,
+            createdDate: Date()
+        )
+        
+        let heicFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/photo.heic"),
+            fileName: "photo.heic",
+            fileSize: 1536000,
+            createdDate: Date()
+        )
+        
+        viewModel.imageFiles = [gifFile, jpgFile, heicFile]
+        viewModel.isLoading = false
+        
+        // Test GIF
+        await viewModel.navigateToIndex(0)
+        let gifBody = galleryView.body
+        XCTAssertNotNil(gifBody)
+        XCTAssertTrue(viewModel.currentImageFile?.isAnimated == true)
+        
+        // Test JPG
+        await viewModel.navigateToIndex(1)
+        let jpgBody = galleryView.body
+        XCTAssertNotNil(jpgBody)
+        XCTAssertTrue(viewModel.currentImageFile?.isAnimated == false)
+        
+        // Test HEIC
+        await viewModel.navigateToIndex(2)
+        let heicBody = galleryView.body
+        XCTAssertNotNil(heicBody)
+        XCTAssertTrue(viewModel.currentImageFile?.isAnimated == false)
+    }
+    
+    func test_imageGalleryView_gif_view_identification() {
+        // Test that GIF views are properly identified with unique IDs
+        let gif1 = ImageFile(
+            url: URL(fileURLWithPath: "/test/animation1.gif"),
+            fileName: "animation1.gif",
+            fileSize: 1024000,
+            createdDate: Date()
+        )
+        
+        let gif2 = ImageFile(
+            url: URL(fileURLWithPath: "/test/animation2.gif"),
+            fileName: "animation2.gif",
+            fileSize: 2048000,
+            createdDate: Date()
+        )
+        
+        viewModel.imageFiles = [gif1, gif2]
+        viewModel.isLoading = false
+        
+        // Test first GIF
+        viewModel.currentIndex = 0
+        let body1 = galleryView.body
+        XCTAssertNotNil(body1)
+        XCTAssertTrue(gif1.isAnimated)
+        
+        // Test second GIF
+        viewModel.currentIndex = 1
+        let body2 = galleryView.body
+        XCTAssertNotNil(body2)
+        XCTAssertTrue(gif2.isAnimated)
+        
+        // Verify different URLs result in different identification
+        XCTAssertNotEqual(gif1.url.absoluteString, gif2.url.absoluteString)
+    }
+    
+    func test_imageGalleryView_gif_case_sensitivity() {
+        // Test that GIF identification works with different case variations
+        let gifFiles = [
+            ImageFile(url: URL(fileURLWithPath: "/test/animation.gif"), fileName: "animation.gif", fileSize: 1024000, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/test/animation.GIF"), fileName: "animation.GIF", fileSize: 1024000, createdDate: Date()),
+            ImageFile(url: URL(fileURLWithPath: "/test/animation.Gif"), fileName: "animation.Gif", fileSize: 1024000, createdDate: Date())
+        ]
+        
+        for (index, gifFile) in gifFiles.enumerated() {
+            viewModel.imageFiles = [gifFile]
+            viewModel.currentIndex = 0
+            viewModel.isLoading = false
+            
+            let body = galleryView.body
+            XCTAssertNotNil(body)
+            XCTAssertTrue(gifFile.isAnimated, "GIF with extension '\(gifFile.fileExtension)' should be identified as animated")
+        }
+    }
 }

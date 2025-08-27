@@ -60,7 +60,16 @@ final class ContentViewMenuTests: XCTestCase {
     
     func test_handleSortChange_updates_contentViewModel() {
         let initialSort = contentViewModel.currentSortType
-        let newSort = SortType.date(ascending: true)
+        
+        // Choose a different sort type than the initial one
+        let newSort: SortType = switch initialSort {
+        case .date(ascending: true):
+            .name(ascending: false)
+        case .name(ascending: false):
+            .size(ascending: true)
+        default:
+            .date(ascending: false)
+        }
         
         // This would be called from the menu
         contentViewModel.updateSortType(newSort)
