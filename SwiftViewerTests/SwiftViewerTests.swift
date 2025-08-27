@@ -5,12 +5,12 @@
 //  Created by sho kisaragi on 2025/08/21.
 //
 
-import Testing
+import XCTest
 
-struct SwiftViewerTests {
+final class SwiftViewerTests: XCTestCase {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    func testExample() async throws {
+        // Write your test here and use APIs like `XCTAssert*(...)` to check expected conditions.
     }
 
 }
