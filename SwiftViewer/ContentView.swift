@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var isFullscreen = false
     @FocusState private var isContentViewFocused: Bool
     
-    @Environment(MenuState.self) private var menuState
+    @StateObject private var contentViewModel = ContentViewModel()
     
     init() {
         let dependencies = DependencyContainer.shared
@@ -38,6 +38,7 @@ struct ContentView: View {
             openFolderPicker()
         }
         .focusedValue(\.sortSelectionAction) { sortType in
+            contentViewModel.updateSortType(sortType)
             handleSortChange(sortType)
         }
         .focusedValue(\.displayModeAction) { displayMode in
@@ -49,6 +50,19 @@ struct ContentView: View {
         .focusedValue(\.toggleRepeatAction) {
             toggleRepeat()
         }
+        .focusedValue(\.windowPositionAction) { position in
+            contentViewModel.updateWindowPosition(position)
+        }
+        .focusedValue(\.windowMoveResizeAction) {
+            // Handle window move & resize
+        }
+        .focusedValue(\.windowFullScreenTileAction) {
+            // Handle full screen tile
+        }
+        // MARK: - State Providers
+        .focusedValue(\.currentSortType, contentViewModel.currentSortType)
+        .focusedValue(\.currentWindowPosition, contentViewModel.currentWindowPosition)
+        .focusedValue(\.currentDisplayMode, contentViewModel.currentDisplayMode)
         .onAppear {
             // Ensure ContentView has focus for keyboard shortcuts
             DispatchQueue.main.async {
@@ -116,18 +130,18 @@ struct ContentView: View {
     
     
     private func handleSortChange(_ sortType: SortType) {
-        menuState.updateSortType(sortType)
+        contentViewModel.updateSortType(sortType)
     }
     
     private func handleDisplayModeChange(_ displayMode: DisplayMode) {
         // Placeholder for Phase 6.1 implementation
-        menuState.updateDisplayMode(displayMode)
+        contentViewModel.updateDisplayMode(displayMode)
         Logger.shared.info("Display mode changed to: \(displayMode.rawValue)")
     }
     
     private func toggleFullscreen() {
         // Placeholder for Phase 4.2 implementation
-        menuState.toggleFullscreen()
+        contentViewModel.toggleFullscreen()
         
         if let window = NSApp.keyWindow {
             window.toggleFullScreen(nil)
@@ -135,7 +149,7 @@ struct ContentView: View {
     }
     
     private func toggleRepeat() {
-        menuState.toggleRepeat()
+        contentViewModel.toggleRepeat()
     }
 }
 

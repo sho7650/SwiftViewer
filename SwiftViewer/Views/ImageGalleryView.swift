@@ -19,6 +19,11 @@ struct ImageGalleryView: View {
     @State private var isRightKeyPressed = false
     @State private var isSpaceKeyPressed = false
     
+    /// Check if debug overlay is enabled from UserDefaults
+    private var isDebugModeEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+    }
+    
     init(viewModel: ImageGalleryViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
@@ -159,47 +164,52 @@ struct ImageGalleryView: View {
             HStack {
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 4) {
-                    if let currentImageFile = viewModel.currentImageFile {
-                        Text(currentImageFile.fileName)
-                            .font(.headline)
-                            .foregroundColor(.white)
+                // File info - only shown in debug mode
+                if isDebugModeEnabled {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        if let currentImageFile = viewModel.currentImageFile {
+                            Text(currentImageFile.fileName)
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Text("\(currentImageFile.formattedFileSize)")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                         
-                        Text("\(currentImageFile.formattedFileSize)")
+                        Text(viewModel.currentImageIndex)
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
                     }
-                    
-                    Text(viewModel.currentImageIndex)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.black.opacity(0.6))
+                    )
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.6))
-                )
             }
             
             Spacer()
             
-            // Navigation hints
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("← Previous")
-                        .opacity(viewModel.currentIndex > 0 ? 1.0 : 0.5)
-                    Text("→ Next")
-                        .opacity(viewModel.currentIndex < viewModel.imageFiles.count - 1 ? 1.0 : 0.5)
+            // Navigation hints - only shown in debug mode
+            if isDebugModeEnabled {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("← Previous")
+                            .opacity(viewModel.currentIndex > 0 ? 1.0 : 0.5)
+                        Text("→ Next")
+                            .opacity(viewModel.currentIndex < viewModel.imageFiles.count - 1 ? 1.0 : 0.5)
+                    }
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.black.opacity(0.6))
+                    )
+                    
+                    Spacer()
                 }
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.6))
-                )
-                
-                Spacer()
             }
         }
         .padding()

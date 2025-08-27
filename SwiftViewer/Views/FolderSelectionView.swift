@@ -14,6 +14,11 @@ struct FolderSelectionView: View {
     @State private var isDragOver = false
     @State private var isShowingFilePicker = false
     
+    /// Check if debug overlay is enabled from UserDefaults
+    private var isDebugModeEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+    }
+    
     var body: some View {
         VStack(spacing: 40) {
             // App icon/branding area
@@ -63,18 +68,21 @@ struct FolderSelectionView: View {
                 }
             }
             
-            // Help text
+            // Help text - conditional based on debug mode
             VStack(spacing: 8) {
                 Text("Supported formats: JPG, JPEG, HEIC, GIF")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                HStack(spacing: 16) {
-                    Label("Arrow keys to navigate", systemImage: "arrow.left.arrow.right")
-                    Label("F for fullscreen", systemImage: "arrow.up.left.and.arrow.down.right")
+                // Key tips - only shown in debug mode
+                if isDebugModeEnabled {
+                    HStack(spacing: 16) {
+                        Label("Arrow keys to navigate", systemImage: "arrow.left.arrow.right")
+                        Label("F for fullscreen", systemImage: "arrow.up.left.and.arrow.down.right")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

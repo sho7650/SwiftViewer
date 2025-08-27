@@ -38,13 +38,33 @@ final class Logger {
         UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
     }
     
+    /// Get the current logging level from UserDefaults, defaulting to .info
+    private var currentLoggingLevel: LogLevel {
+        if let levelString = UserDefaults.standard.string(forKey: "loggingLevel"),
+           let level = LogLevel(rawValue: Int(levelString) ?? 1) {
+            return level
+        }
+        return .info // Default to info level
+    }
+    
+    /// Check if a message should be logged based on current logging level
+    private func shouldLog(level: LogLevel) -> Bool {
+        // Special case for debug: requires both debugLoggingEnabled AND appropriate level
+        if level == .debug {
+            return isDebugLoggingEnabled && level.rawValue >= currentLoggingLevel.rawValue
+        }
+        
+        // For other levels, check against current logging level
+        return level.rawValue >= currentLoggingLevel.rawValue
+    }
+    
     func debug(
         _ message: String,
         file: String = #file,
         function: String = #function,
         line: Int = #line
     ) {
-        guard isDebugLoggingEnabled else { return }
+        guard shouldLog(level: .debug) else { return }
         log(message, level: .debug, file: file, function: function, line: line)
     }
     
@@ -54,6 +74,7 @@ final class Logger {
         function: String = #function,
         line: Int = #line
     ) {
+        guard shouldLog(level: .info) else { return }
         log(message, level: .info, file: file, function: function, line: line)
     }
     
@@ -63,6 +84,7 @@ final class Logger {
         function: String = #function,
         line: Int = #line
     ) {
+        guard shouldLog(level: .warning) else { return }
         log(message, level: .warning, file: file, function: function, line: line)
     }
     
@@ -73,6 +95,7 @@ final class Logger {
         function: String = #function,
         line: Int = #line
     ) {
+        guard shouldLog(level: .error) else { return }
         var fullMessage = message
         if let error = error {
             fullMessage += " Error: \(error.localizedDescription)"

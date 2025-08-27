@@ -10,7 +10,6 @@ import SwiftUI
 @main
 struct SwiftViewerApp: App {
     @State private var isShowingSettings = false
-    @State private var menuState = MenuState()
     
     var body: some Scene {
         WindowGroup {
@@ -18,7 +17,6 @@ struct SwiftViewerApp: App {
                 .sheet(isPresented: $isShowingSettings) {
                     SettingsView()
                 }
-                .environment(menuState)
         }
         .commands {
             MenuCommands()
