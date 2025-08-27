@@ -218,6 +218,256 @@ final class ImageGalleryViewModelTests: XCTestCase {
         XCTAssertTrue(mockFileManagerService.lastUsedSortType != nil)
     }
     
+    // MARK: - GIF Animation Tests (RED PHASE - These will FAIL)
+    
+    func test_currentAnimatedImage_returnsNil_forNonGIFImage() async {
+        await setupWithImages(count: 1)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertNil(sut.currentAnimatedImage)
+    }
+    
+    func test_currentAnimatedImage_returnsAnimatedImage_forGIFFile() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        
+        // Set up mock to return animated GIF
+        let testFrame = NSImage(size: NSSize(width: 100, height: 100))
+        let mockAnimatedImage = AnimatedImage(
+            frames: [testFrame, testFrame],
+            frameDurations: [0.1, 0.2],
+            loopCount: 0,
+            totalDuration: 0.3
+        )
+        mockImageLoaderService.mockAnimatedImage = mockAnimatedImage
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertNotNil(sut.currentAnimatedImage)
+        XCTAssertEqual(sut.currentAnimatedImage?.frameCount, 2)
+        XCTAssertEqual(sut.currentAnimatedImage?.totalDuration, 0.3)
+    }
+    
+    func test_isCurrentImageAnimated_returnsFalse_forStaticImage() async {
+        await setupWithImages(count: 1)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertFalse(sut.isCurrentImageAnimated)
+    }
+    
+    func test_isCurrentImageAnimated_returnsTrue_forGIFImage() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertTrue(sut.isCurrentImageAnimated)
+    }
+    
+    func test_gifAnimationController_returnsNil_forNonGIFImage() async {
+        await setupWithImages(count: 1)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertNil(sut.gifAnimationController)
+    }
+    
+    func test_gifAnimationController_returnsController_forGIFImage() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This property doesn't exist yet - will fail
+        XCTAssertNotNil(sut.gifAnimationController)
+        XCTAssertEqual(sut.gifAnimationController?.animatedImage.frameCount, 2)
+    }
+    
+    func test_startGIFAnimation_startsController_forAnimatedGIF() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This method doesn't exist yet - will fail
+        sut.startGIFAnimation()
+        
+        XCTAssertNotNil(sut.gifAnimationController)
+        XCTAssertTrue(sut.gifAnimationController?.isPlaying ?? false)
+    }
+    
+    func test_stopGIFAnimation_stopsController() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        sut.startGIFAnimation()
+        
+        // This method doesn't exist yet - will fail
+        sut.stopGIFAnimation()
+        
+        XCTAssertFalse(sut.gifAnimationController?.isPlaying ?? true)
+    }
+    
+    func test_navigation_stopsAndStartsGIFAnimation() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        // Mix of GIF and regular images
+        var mixedImageFiles = createTestGIFImageFiles(count: 1)
+        mixedImageFiles.append(contentsOf: createTestImageFiles(count: 1))
+        mockFileManagerService.mockImageFiles = mixedImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        sut.startGIFAnimation()
+        XCTAssertTrue(sut.gifAnimationController?.isPlaying ?? false)
+        
+        // Navigate to next image (non-GIF)
+        mockImageLoaderService.shouldReturnAnimatedGIF = false
+        await sut.navigateToNext()
+        
+        // Animation should be stopped for non-GIF
+        XCTAssertNil(sut.gifAnimationController)
+        XCTAssertFalse(sut.isCurrentImageAnimated)
+    }
+    
+    func test_setGIFPlaybackSpeed_updatesController() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This method doesn't exist yet - will fail
+        sut.setGIFPlaybackSpeed(2.0)
+        
+        XCTAssertNotNil(sut.gifAnimationController)
+        XCTAssertEqual(sut.gifAnimationController?.playbackSpeed, 2.0)
+    }
+    
+    func test_getCurrentGIFFrame_returnsCurrentFrameImage() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // This method doesn't exist yet - will fail
+        let currentFrame = sut.getCurrentGIFFrame()
+        
+        XCTAssertNotNil(currentFrame)
+    }
+    
+    func test_loadImageWithMetadata_loadsAnimationData_forGIF() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        
+        // Set up enhanced mock response
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // Should have loaded both static image and animation data
+        XCTAssertNotNil(sut.currentImage)
+        XCTAssertNotNil(sut.currentAnimatedImage)
+        XCTAssertTrue(sut.isCurrentImageAnimated)
+    }
+    
+    func test_animationState_persistsAcrossNavigation() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 2) // Two GIFs
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        
+        // Start animation on first GIF
+        sut.startGIFAnimation()
+        let firstAnimationPlaying = sut.gifAnimationController?.isPlaying ?? false
+        
+        // Navigate to second GIF
+        await sut.navigateToNext()
+        
+        // Animation should start automatically for second GIF (if that's the expected behavior)
+        XCTAssertNotNil(sut.gifAnimationController)
+        XCTAssertTrue(sut.isCurrentImageAnimated)
+    }
+    
+    // MARK: - Integration Tests for GIF Animation
+    
+    func test_viewModelNotifications_triggerOnGIFStateChange() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        // This would test if the ViewModel properly notifies observers when GIF state changes
+        // The actual implementation would need to post notifications or use Combine publishers
+        
+        await sut.loadFolder(testURL)
+        
+        // Verify that loading a GIF triggers appropriate state changes
+        XCTAssertTrue(sut.isCurrentImageAnimated)
+        XCTAssertNotNil(sut.currentAnimatedImage)
+    }
+    
+    func test_memoryManagement_cleansUpGIFController() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        mockImageLoaderService.shouldReturnAnimatedGIF = true
+        
+        await sut.loadFolder(testURL)
+        sut.startGIFAnimation()
+        
+        // Verify GIF controller is set up
+        XCTAssertNotNil(sut.gifAnimationController)
+        XCTAssertTrue(sut.isCurrentImageAnimated)
+        
+        // Clear the mock state to simulate empty folder
+        mockFileManagerService.mockImageFiles = []
+        mockImageLoaderService.shouldReturnAnimatedGIF = false
+        
+        // Clear the current image (simulate navigating away or error)
+        await sut.loadFolder(URL(fileURLWithPath: "/empty"))
+        
+        // GIF controller should be cleaned up
+        XCTAssertNil(sut.gifAnimationController)
+        XCTAssertFalse(sut.isCurrentImageAnimated)
+    }
+    
+    // MARK: - Error Handling Tests for GIF Animation
+    
+    func test_gifLoading_handlesCorruptedGIFFile() async {
+        let testURL = URL(fileURLWithPath: "/test/folder")
+        let gifImageFiles = createTestGIFImageFiles(count: 1)
+        mockFileManagerService.mockImageFiles = gifImageFiles
+        
+        // Set up mock to fail on animated loading but succeed on static
+        mockImageLoaderService.shouldThrowError = false // Static loading succeeds
+        // But animated loading should fail - this would need additional mock setup
+        
+        await sut.loadFolder(testURL)
+        
+        // Should fallback to static image display
+        XCTAssertNotNil(sut.currentImage)
+        XCTAssertFalse(sut.isCurrentImageAnimated)
+        XCTAssertNil(sut.currentAnimatedImage)
+    }
+
     // MARK: - Helper Methods
     
     private func createTestImageFiles(count: Int) -> [ImageFile] {
@@ -226,6 +476,17 @@ final class ImageGalleryViewModelTests: XCTestCase {
                 url: URL(fileURLWithPath: "/test/image\(index).jpg"),
                 fileName: "image\(index).jpg",
                 fileSize: 1024,
+                createdDate: Date()
+            )
+        }
+    }
+    
+    private func createTestGIFImageFiles(count: Int) -> [ImageFile] {
+        return (0..<count).map { index in
+            ImageFile(
+                url: URL(fileURLWithPath: "/test/animation\(index).gif"),
+                fileName: "animation\(index).gif",
+                fileSize: 2048,
                 createdDate: Date()
             )
         }

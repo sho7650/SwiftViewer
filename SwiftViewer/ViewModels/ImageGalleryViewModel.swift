@@ -22,6 +22,11 @@ final class ImageGalleryViewModel {
     var isLoading: Bool = false
     var errorMessage: String?
     
+    // MARK: - GIF Animation Properties
+    
+    var currentAnimatedImage: AnimatedImage?
+    var gifAnimationController: GIFAnimationController?
+    
     // MARK: - Dependencies
     
     private let fileManagerService: FileManagerServiceProtocol
@@ -56,6 +61,7 @@ final class ImageGalleryViewModel {
             } else {
                 currentImage = nil
                 currentImageFile = nil
+                cleanupGIFAnimation()
                 logger.warning("No image files found in folder: \(url.path)")
             }
             
@@ -105,8 +111,16 @@ final class ImageGalleryViewModel {
             return
         }
         
+        // Stop current GIF animation before navigating
+        stopGIFAnimation()
+        
         currentIndex = index
         await loadImageAtCurrentIndex()
+        
+        // Auto-start GIF animation if current image is animated
+        if isCurrentImageAnimated {
+            startGIFAnimation()
+        }
     }
     
     func refreshWithCurrentSort() async {
@@ -142,6 +156,32 @@ final class ImageGalleryViewModel {
         }
     }
     
+    // MARK: - GIF Animation Methods
+    
+    func startGIFAnimation() {
+        guard let controller = gifAnimationController else {
+            logger.debug("No GIF animation controller available")
+            return
+        }
+        
+        controller.play()
+        logger.debug("Started GIF animation")
+    }
+    
+    func stopGIFAnimation() {
+        gifAnimationController?.stop()
+        logger.debug("Stopped GIF animation")
+    }
+    
+    func setGIFPlaybackSpeed(_ speed: Double) {
+        gifAnimationController?.setPlaybackSpeed(speed)
+        logger.debug("Set GIF playback speed to: \(speed)")
+    }
+    
+    func getCurrentGIFFrame() -> NSImage? {
+        return gifAnimationController?.currentImage
+    }
+    
     // MARK: - Private Methods
     
     private func loadImageAtCurrentIndex() async {
@@ -158,13 +198,47 @@ final class ImageGalleryViewModel {
         
         do {
             logger.debug("Loading image: \(imageFile.fileName)")
-            currentImage = try await imageLoaderService.loadImage(from: imageFile.url)
+            
+            // Use enhanced image loading with metadata for potential GIF support
+            let result = try await imageLoaderService.loadImageWithMetadata(from: imageFile.url)
+            
+            // Set the static image
+            currentImage = result.image
+            
+            // Handle animated GIF if present
+            if result.isAnimated, let animatedImage = result.animatedImage {
+                currentAnimatedImage = animatedImage
+                setupGIFAnimationController(with: animatedImage)
+                logger.debug("Loaded animated GIF: \(imageFile.fileName) with \(animatedImage.frameCount) frames")
+            } else {
+                // Clean up any existing animation for non-GIF images
+                cleanupGIFAnimation()
+                logger.debug("Loaded static image: \(imageFile.fileName)")
+            }
             
         } catch {
             logger.error("Failed to load image: \(imageFile.fileName)", error: error)
             handleError(error)
             currentImage = nil
+            cleanupGIFAnimation()
         }
+    }
+    
+    private func setupGIFAnimationController(with animatedImage: AnimatedImage) {
+        do {
+            gifAnimationController = try GIFAnimationController(animatedImage: animatedImage)
+            logger.debug("Created GIF animation controller with \(animatedImage.frameCount) frames")
+        } catch {
+            logger.error("Failed to create GIF animation controller", error: error)
+            gifAnimationController = nil
+            currentAnimatedImage = nil
+        }
+    }
+    
+    private func cleanupGIFAnimation() {
+        stopGIFAnimation()
+        gifAnimationController = nil
+        currentAnimatedImage = nil
     }
     
     private func handleError(_ error: Error) {
@@ -192,5 +266,11 @@ final class ImageGalleryViewModel {
     
     var canNavigatePrevious: Bool {
         hasImages && currentIndex > 0
+    }
+    
+    // MARK: - GIF Animation Computed Properties
+    
+    var isCurrentImageAnimated: Bool {
+        return currentAnimatedImage != nil && gifAnimationController != nil
     }
 }

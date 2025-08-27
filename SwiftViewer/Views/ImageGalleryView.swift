@@ -153,10 +153,21 @@ struct ImageGalleryView: View {
     }
     
     private func imageDisplayView(_ image: NSImage) -> some View {
-        Image(nsImage: image)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .clipped()
+        Group {
+            if viewModel.isCurrentImageAnimated,
+               let gifController = viewModel.gifAnimationController {
+                // Context7-compliant animated GIF display
+                AnimatedGIFView(controller: gifController)
+                    .aspectRatio(contentMode: .fit)
+                    .clipped()
+            } else {
+                // Static image display
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .clipped()
+            }
+        }
     }
     
     private var imageInfoOverlay: some View {
