@@ -261,7 +261,7 @@ struct ImageGalleryView: View {
                     onToggleRepeat: {
                         performUserAction {
                             withAnimation(.easeInOut(duration: 0.2)) {
-                                slideShowViewModel.isRepeatEnabled.toggle()
+                                slideShowViewModel.toggleRepeatMode()
                             }
                             NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
                         }

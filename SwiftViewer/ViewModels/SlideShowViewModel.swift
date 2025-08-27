@@ -23,20 +23,20 @@ final class SlideShowViewModel {
     
     private let slideShowService: SlideShowServiceProtocol
     private let imageNavigator: ImageGalleryNavigationProtocol
-    private let settingsManager: SettingsManagerProtocol
+    private var settingsManager: SettingsManagerProtocol
     
     private var _isRunning: Bool = false
     
-    var defaultInterval: TimeInterval {
-        settingsManager.slideShowInterval
+    // Convert to stored property for @Observable reactivity
+    internal var isRepeatEnabled: Bool = false {
+        didSet {
+            // Update settings manager when property changes - use shared instance for consistency
+            DependencyContainer.shared.settingsManager.repeatEnabled = isRepeatEnabled
+        }
     }
     
-    var isRepeatEnabled: Bool {
-        get { settingsManager.repeatEnabled }
-        set { 
-            // SettingsManager handles persistence directly
-            DependencyContainer.shared.settingsManager.repeatEnabled = newValue
-        }
+    var defaultInterval: TimeInterval {
+        settingsManager.slideShowInterval
     }
     
     init(slideShowService: SlideShowServiceProtocol, 
@@ -45,6 +45,25 @@ final class SlideShowViewModel {
         self.slideShowService = slideShowService
         self.imageNavigator = imageNavigator
         self.settingsManager = settingsManager
+        
+        // Initialize repeat enabled from settings
+        self.isRepeatEnabled = settingsManager.repeatEnabled
+        
+        // Listen for repeat mode changes from Settings panel
+        NotificationCenter.default.addObserver(
+            forName: .repeatModeChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let newValue = notification.object as? Bool {
+                self?.isRepeatEnabled = newValue
+            }
+        }
+    }
+    
+    
+    func toggleRepeatMode() {
+        isRepeatEnabled.toggle()
     }
     
     var isRunning: Bool {
@@ -141,5 +160,6 @@ final class SlideShowViewModel {
     deinit {
         // Note: Cannot call async methods in deinit
         // Timer cleanup will be handled by SlideShowService's own deinit
+        NotificationCenter.default.removeObserver(self)
     }
 }
