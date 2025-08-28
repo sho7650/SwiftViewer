@@ -40,12 +40,12 @@ public actor PluginRegistry {
         
         // Check if plugin is already registered
         guard plugins[pluginId] == nil else {
-            return .failure(PluginError.pluginAlreadyRegistered(pluginId))
+            return .failure(PluginError.pluginAlreadyRegistered(id: pluginId))
         }
         
         // Verify plugin is properly initialized
         guard plugin.isActive else {
-            return .failure(PluginError.initializationFailed("Plugin is not active"))
+            return .failure(PluginError.initializationFailed(reason: "Plugin is not active"))
         }
         
         // Register the plugin
@@ -60,7 +60,7 @@ public actor PluginRegistry {
     /// - Returns: Result indicating success or failure
     public func deregisterPlugin(withId pluginId: String) -> Result<Void, Error> {
         guard let plugin = plugins[pluginId] else {
-            return .failure(PluginError.pluginNotFound(pluginId))
+            return .failure(PluginError.pluginNotFound(id: pluginId))
         }
         
         // Clean up the plugin
@@ -172,11 +172,11 @@ public actor PluginRegistry {
     /// - Returns: Result indicating success or failure
     public func setPluginEnabled(withId pluginId: String, enabled: Bool) -> Result<Void, Error> {
         guard plugins[pluginId] != nil else {
-            return .failure(PluginError.pluginNotFound(pluginId))
+            return .failure(PluginError.pluginNotFound(id: pluginId))
         }
         
         guard var state = pluginStates[pluginId] else {
-            return .failure(PluginError.pluginNotFound(pluginId))
+            return .failure(PluginError.pluginNotFound(id: pluginId))
         }
         
         state.isEnabled = enabled

@@ -2,38 +2,39 @@ import Foundation
 
 /// Comprehensive error types for plugin operations
 public enum PluginError: Error, LocalizedError {
-    /// Bundle-related errors
-    case bundleNotFound(String)
-    case invalidBundle(String)
-    case missingMetadata
-    case corruptedMetadata(String)
+    // MARK: - Bundle Errors
+    case bundleNotFound(path: String)
+    case invalidBundleStructure(reason: String)
+    case metadataParsingFailed(underlying: Error)
     
-    /// Loading errors
-    case missingExecutable
-    case loadingFailed(String)
+    // MARK: - Loading Errors
+    case loadingFailed(reason: String)
+    case initializationFailed(reason: String)
+    case dependencyNotFound(name: String)
     case incompatibleVersion(required: String, found: String)
-    case unsupportedCapability(String)
+    case missingExecutable(bundlePath: String)
     
-    /// Runtime errors
-    case initializationFailed(String)
-    case executionFailed(String)
-    case resourceLimitExceeded(String)
-    case securityViolation(String)
+    // MARK: - Runtime Errors
+    case executionFailed(reason: String)
+    case resourceLimitExceeded(resource: String, limit: String)
+    case timeoutExceeded(operation: String, timeout: TimeInterval)
+    case unexpectedBehavior(description: String)
     
-    /// Registry errors
-    case pluginAlreadyRegistered(String)
-    case pluginNotFound(String)
-    case dependencyMissing(String)
+    // MARK: - Registry Errors
+    case pluginAlreadyRegistered(id: String)
+    case pluginNotFound(id: String)
+    case registryCorrupted(reason: String)
     
-    /// Validation errors
-    case signatureValidationFailed
-    case integrityCheckFailed
-    case sandboxViolation(String)
+    // MARK: - Validation Errors
+    case invalidMetadata(field: String, reason: String)
+    case signatureVerificationFailed(reason: String)
+    case securityViolation(description: String)
     
-    /// System errors
-    case systemError(Error)
-    case permissionDenied(String)
-    case networkError(String)
+    // MARK: - System Errors
+    case fileSystemError(underlying: Error)
+    case permissionDenied(operation: String)
+    case networkError(underlying: Error)
+    case unknownError(underlying: Error)
     
     // MARK: - LocalizedError Implementation
     
@@ -42,72 +43,78 @@ public enum PluginError: Error, LocalizedError {
         // Bundle errors
         case .bundleNotFound(let path):
             return "Plugin bundle not found at path: \(path)"
-        case .invalidBundle(let reason):
-            return "Invalid plugin bundle: \(reason)"
-        case .missingMetadata:
-            return "Plugin metadata file (plugin.json) is missing"
-        case .corruptedMetadata(let reason):
-            return "Plugin metadata is corrupted: \(reason)"
+        case .invalidBundleStructure(let reason):
+            return "Invalid plugin bundle structure: \(reason)"
+        case .metadataParsingFailed(let underlying):
+            return "Failed to parse plugin metadata: \(underlying.localizedDescription)"
             
         // Loading errors
-        case .missingExecutable:
-            return "Plugin executable file is missing"
         case .loadingFailed(let reason):
             return "Failed to load plugin: \(reason)"
-        case .incompatibleVersion(let required, let found):
-            return "Plugin version incompatible. Required: \(required), Found: \(found)"
-        case .unsupportedCapability(let capability):
-            return "Unsupported plugin capability: \(capability)"
-            
-        // Runtime errors
         case .initializationFailed(let reason):
             return "Plugin initialization failed: \(reason)"
+        case .dependencyNotFound(let name):
+            return "Required dependency not found: \(name)"
+        case .incompatibleVersion(let required, let found):
+            return "Plugin version incompatible. Required: \(required), Found: \(found)"
+        case .missingExecutable(let bundlePath):
+            return "Plugin executable missing in bundle: \(bundlePath)"
+            
+        // Runtime errors
         case .executionFailed(let reason):
             return "Plugin execution failed: \(reason)"
-        case .resourceLimitExceeded(let resource):
-            return "Plugin exceeded resource limit: \(resource)"
-        case .securityViolation(let violation):
-            return "Security violation detected: \(violation)"
+        case .resourceLimitExceeded(let resource, let limit):
+            return "Plugin exceeded \(resource) limit of \(limit)"
+        case .timeoutExceeded(let operation, let timeout):
+            return "Plugin \(operation) operation timed out after \(timeout) seconds"
+        case .unexpectedBehavior(let description):
+            return "Plugin exhibited unexpected behavior: \(description)"
             
         // Registry errors
         case .pluginAlreadyRegistered(let id):
             return "Plugin already registered: \(id)"
         case .pluginNotFound(let id):
             return "Plugin not found: \(id)"
-        case .dependencyMissing(let dependency):
-            return "Required dependency missing: \(dependency)"
+        case .registryCorrupted(let reason):
+            return "Plugin registry corrupted: \(reason)"
             
         // Validation errors
-        case .signatureValidationFailed:
-            return "Plugin signature validation failed"
-        case .integrityCheckFailed:
-            return "Plugin integrity check failed"
-        case .sandboxViolation(let violation):
-            return "Plugin sandbox violation: \(violation)"
+        case .invalidMetadata(let field, let reason):
+            return "Invalid metadata field '\(field)': \(reason)"
+        case .signatureVerificationFailed(let reason):
+            return "Plugin signature verification failed: \(reason)"
+        case .securityViolation(let description):
+            return "Security violation detected: \(description)"
             
         // System errors
-        case .systemError(let error):
-            return "System error: \(error.localizedDescription)"
+        case .fileSystemError(let underlying):
+            return "File system error: \(underlying.localizedDescription)"
         case .permissionDenied(let operation):
             return "Permission denied for operation: \(operation)"
-        case .networkError(let reason):
-            return "Network error: \(reason)"
+        case .networkError(let underlying):
+            return "Network error: \(underlying.localizedDescription)"
+        case .unknownError(let underlying):
+            return "Unknown error occurred: \(underlying.localizedDescription)"
         }
     }
     
     public var failureReason: String? {
         switch self {
-        case .bundleNotFound, .invalidBundle, .missingMetadata, .corruptedMetadata:
-            return "The plugin bundle is invalid or cannot be accessed"
-        case .missingExecutable, .loadingFailed, .incompatibleVersion, .unsupportedCapability:
-            return "The plugin cannot be loaded due to compatibility issues"
-        case .initializationFailed, .executionFailed, .resourceLimitExceeded, .securityViolation:
-            return "The plugin failed to run properly"
-        case .pluginAlreadyRegistered, .pluginNotFound, .dependencyMissing:
+        case .bundleNotFound, .metadataParsingFailed:
+            return "The plugin bundle structure is invalid or cannot be accessed"
+        case .invalidBundleStructure:
+            return "The plugin bundle structure is invalid or corrupted"
+        case .loadingFailed, .dependencyNotFound, .incompatibleVersion, .missingExecutable:
+            return "The plugin cannot be loaded due to compatibility or dependency issues"
+        case .initializationFailed:
+            return "The plugin initialization failed due to configuration or setup issues"
+        case .executionFailed, .resourceLimitExceeded, .timeoutExceeded, .unexpectedBehavior:
+            return "The plugin failed during runtime execution"
+        case .pluginAlreadyRegistered, .pluginNotFound, .registryCorrupted:
             return "Plugin registry operation failed"
-        case .signatureValidationFailed, .integrityCheckFailed, .sandboxViolation:
-            return "Plugin security validation failed"
-        case .systemError, .permissionDenied, .networkError:
+        case .invalidMetadata, .signatureVerificationFailed, .securityViolation:
+            return "Plugin security or validation check failed"
+        case .fileSystemError, .permissionDenied, .networkError, .unknownError:
             return "System-level error occurred"
         }
     }
@@ -115,78 +122,211 @@ public enum PluginError: Error, LocalizedError {
     public var recoverySuggestion: String? {
         switch self {
         case .bundleNotFound:
-            return "Verify the plugin bundle exists and is accessible"
-        case .invalidBundle, .missingMetadata, .corruptedMetadata:
-            return "Check if the plugin bundle is properly formatted"
-        case .missingExecutable:
-            return "Ensure the plugin bundle contains a valid executable"
-        case .loadingFailed:
-            return "Check plugin compatibility with current application version"
+            return "Check that the plugin file exists and is accessible"
+        case .invalidBundleStructure, .metadataParsingFailed:
+            return "Verify the plugin bundle is properly formatted and contains valid metadata"
+        case .loadingFailed, .initializationFailed:
+            return "Try reinstalling the plugin or check compatibility"
+        case .dependencyNotFound:
+            return "Install the required dependencies and try again"
         case .incompatibleVersion:
             return "Update the plugin to a compatible version"
-        case .unsupportedCapability:
-            return "Use a plugin with supported capabilities"
-        case .initializationFailed, .executionFailed:
-            return "Check plugin configuration and try reloading"
+        case .missingExecutable:
+            return "Ensure the plugin bundle contains a valid executable file"
+        case .executionFailed:
+            return "Check plugin configuration and restart the application"
         case .resourceLimitExceeded:
-            return "Restart the application or increase resource limits"
-        case .securityViolation, .sandboxViolation:
-            return "Use a trusted plugin from a verified source"
+            return "Increase resource limits or restart the application"
+        case .timeoutExceeded:
+            return "Check system performance and try increasing timeout limits"
+        case .unexpectedBehavior:
+            return "Report this issue to the plugin developer"
         case .pluginAlreadyRegistered:
             return "Unregister the existing plugin before registering again"
         case .pluginNotFound:
-            return "Ensure the plugin is installed and registered"
-        case .dependencyMissing:
-            return "Install the required dependencies"
-        case .signatureValidationFailed, .integrityCheckFailed:
+            return "Ensure the plugin is installed and properly registered"
+        case .registryCorrupted:
+            return "Restart the application to reset the plugin registry"
+        case .invalidMetadata:
+            return "Check the plugin metadata file for correct formatting"
+        case .signatureVerificationFailed:
             return "Download the plugin from the official source"
-        case .permissionDenied:
-            return "Check application permissions and security settings"
-        case .systemError, .networkError:
-            return "Check system resources and network connectivity"
+        case .securityViolation:
+            return "Review plugin permissions and use trusted plugins only"
+        case .fileSystemError, .permissionDenied:
+            return "Check file permissions and application security settings"
+        case .networkError:
+            return "Check network connectivity and try again"
+        case .unknownError:
+            return "Restart the application and contact support if the issue persists"
         }
     }
     
     // MARK: - Error Classification
     
-    /// Whether this error is recoverable
-    public var isRecoverable: Bool {
-        switch self {
-        case .bundleNotFound, .invalidBundle, .missingMetadata, .corruptedMetadata,
-             .missingExecutable, .incompatibleVersion, .signatureValidationFailed,
-             .integrityCheckFailed:
-            return false
-        case .loadingFailed, .initializationFailed, .executionFailed,
-             .resourceLimitExceeded, .pluginNotFound, .dependencyMissing,
-             .permissionDenied, .networkError:
-            return true
-        case .unsupportedCapability, .securityViolation, .pluginAlreadyRegistered,
-             .sandboxViolation:
-            return false
-        case .systemError:
-            return true // Depends on underlying error, but assume recoverable
-        }
-    }
-    
     /// Error severity level
     public enum Severity {
-        case low, medium, high, critical
+        case low, medium, high
     }
     
     public var severity: Severity {
         switch self {
-        case .bundleNotFound, .pluginNotFound:
+        case .bundleNotFound, .pluginNotFound, .incompatibleVersion, .timeoutExceeded:
             return .low
-        case .invalidBundle, .missingMetadata, .corruptedMetadata, .missingExecutable,
-             .loadingFailed, .incompatibleVersion, .unsupportedCapability,
-             .initializationFailed, .executionFailed, .pluginAlreadyRegistered,
-             .dependencyMissing, .permissionDenied, .networkError:
+        case .loadingFailed, .initializationFailed, .dependencyNotFound, .executionFailed,
+             .resourceLimitExceeded, .pluginAlreadyRegistered, .missingExecutable,
+             .invalidBundleStructure, .metadataParsingFailed, .invalidMetadata,
+             .permissionDenied, .fileSystemError, .networkError, .unknownError:
             return .medium
-        case .resourceLimitExceeded, .systemError:
+        case .securityViolation, .signatureVerificationFailed, .registryCorrupted,
+             .unexpectedBehavior:
             return .high
-        case .securityViolation, .signatureValidationFailed, .integrityCheckFailed,
-             .sandboxViolation:
-            return .critical
         }
+    }
+    
+    /// Whether this error can be retried
+    public var isRetryable: Bool {
+        switch self {
+        case .timeoutExceeded, .resourceLimitExceeded, .networkError:
+            return true
+        case .securityViolation, .invalidMetadata, .signatureVerificationFailed:
+            return false
+        case .loadingFailed, .initializationFailed, .executionFailed, .fileSystemError,
+             .permissionDenied, .unknownError:
+            return true
+        case .bundleNotFound, .invalidBundleStructure, .metadataParsingFailed,
+             .dependencyNotFound, .incompatibleVersion, .missingExecutable,
+             .unexpectedBehavior, .pluginAlreadyRegistered, .pluginNotFound,
+             .registryCorrupted:
+            return false
+        }
+    }
+    
+    // MARK: - Error Category Classification
+    
+    public var isBundleError: Bool {
+        switch self {
+        case .bundleNotFound, .invalidBundleStructure, .metadataParsingFailed:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    public var isLoadingError: Bool {
+        switch self {
+        case .loadingFailed, .initializationFailed, .dependencyNotFound, .incompatibleVersion:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    public var isRuntimeError: Bool {
+        switch self {
+        case .executionFailed, .resourceLimitExceeded, .timeoutExceeded, .unexpectedBehavior:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    public var isRegistryError: Bool {
+        switch self {
+        case .pluginAlreadyRegistered, .pluginNotFound, .registryCorrupted:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    public var isValidationError: Bool {
+        switch self {
+        case .invalidMetadata, .missingExecutable, .signatureVerificationFailed, .securityViolation:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    public var isSystemError: Bool {
+        switch self {
+        case .fileSystemError, .permissionDenied, .networkError, .unknownError:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    // MARK: - User-Friendly Messages
+    
+    public var userFriendlyMessage: String {
+        switch self {
+        case .bundleNotFound:
+            return "The plugin could not be found. Please check that the plugin is properly installed."
+        case .invalidBundleStructure:
+            return "The plugin appears to be corrupted. Please reinstall the plugin."
+        case .metadataParsingFailed:
+            return "The plugin information could not be read. Please try reinstalling the plugin."
+        case .loadingFailed:
+            return "The plugin could not be loaded. Please check compatibility with your application version."
+        case .initializationFailed:
+            return "The plugin failed to start properly. Please try restarting the application."
+        case .dependencyNotFound:
+            return "The plugin requires additional components that are not installed."
+        case .incompatibleVersion:
+            return "This plugin version is not compatible with your application. Please update the plugin."
+        case .missingExecutable:
+            return "The plugin is incomplete and cannot run. Please reinstall the plugin."
+        case .executionFailed:
+            return "The plugin encountered an error while running. Please try again."
+        case .resourceLimitExceeded:
+            return "The plugin is using too many system resources. Please restart the application."
+        case .timeoutExceeded:
+            return "The plugin operation took too long to complete. Please try again."
+        case .unexpectedBehavior:
+            return "The plugin behaved unexpectedly. Please report this issue."
+        case .pluginAlreadyRegistered:
+            return "This plugin is already installed."
+        case .pluginNotFound:
+            return "The requested plugin is not installed."
+        case .registryCorrupted:
+            return "Plugin database is corrupted. Please restart the application."
+        case .invalidMetadata:
+            return "The plugin information is invalid. Please reinstall the plugin."
+        case .signatureVerificationFailed:
+            return "The plugin could not be verified as safe. Please download from official sources."
+        case .securityViolation:
+            return "The plugin attempted unauthorized actions and was blocked."
+        case .fileSystemError:
+            return "A file system error occurred. Please check disk space and permissions."
+        case .permissionDenied:
+            return "Permission denied. Please check application security settings."
+        case .networkError:
+            return "A network error occurred. Please check your internet connection."
+        case .unknownError:
+            return "An unexpected error occurred. Please try again or contact support."
+        }
+    }
+    
+    // MARK: - Analytics Data
+    
+    public var analyticsData: [String: Any] {
+        return [
+            "errorType": String(describing: self).components(separatedBy: "(").first ?? "unknown",
+            "severity": String(describing: severity),
+            "category": errorCategory,
+            "isRetryable": isRetryable
+        ]
+    }
+    
+    private var errorCategory: String {
+        if isBundleError { return "bundle" }
+        if isLoadingError { return "loading" }
+        if isRuntimeError { return "runtime" }
+        if isRegistryError { return "registry" }
+        if isValidationError { return "validation" }
+        if isSystemError { return "system" }
+        return "unknown"
     }
 }

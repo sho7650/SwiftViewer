@@ -1,5 +1,17 @@
 import Foundation
 
+/// Mock error for testing error propagation
+private enum MockError: Error, LocalizedError {
+    case invalidMetadata
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidMetadata:
+            return "Mock invalid metadata error"
+        }
+    }
+}
+
 /// Mock plugin implementation for testing
 public class MockPlugin: PluginProtocol {
     public let metadata: PluginMetadata
@@ -18,7 +30,7 @@ public class MockPlugin: PluginProtocol {
     
     public func initialize() async throws {
         if shouldFailInit {
-            throw PluginError.initializationFailed("Mock plugin configured to fail initialization")
+            throw PluginError.initializationFailed(reason: "Mock plugin configured to fail initialization")
         }
         isActive = true
     }
@@ -104,13 +116,13 @@ public class PluginLoader {
     private func validateBundleIntegrity(bundleInfo: PluginBundleInfo) throws {
         // Check if bundle directory exists
         guard fileManager.fileExists(atPath: bundleInfo.bundleURL.path) else {
-            throw PluginError.bundleNotFound(bundleInfo.bundleURL.path)
+            throw PluginError.bundleNotFound(path: bundleInfo.bundleURL.path)
         }
         
         // Validate metadata file
         let metadataFile = bundleInfo.bundleURL.appendingPathComponent("plugin.json")
         guard fileManager.fileExists(atPath: metadataFile.path) else {
-            throw PluginError.missingMetadata
+            throw PluginError.missingExecutable(bundlePath: bundleInfo.bundleURL.path)
         }
         
         // Check for required executable (for now, we'll create a mock)
@@ -128,7 +140,7 @@ public class PluginLoader {
             }
             
             if bundleInfo.metadata.id == "com.test.noexec" {
-                throw PluginError.missingExecutable
+                throw PluginError.missingExecutable(bundlePath: bundleInfo.bundleURL.path)
             }
         }
     }
@@ -140,7 +152,7 @@ public class PluginLoader {
         if fileManager.fileExists(atPath: heavyMarker.path) {
             // Simulate resource validation
             if resourceLimits.maxMemoryMB < 200 {
-                throw PluginError.resourceLimitExceeded("Memory requirement exceeds limit")
+                throw PluginError.resourceLimitExceeded(resource: "Memory", limit: "100MB")
             }
         }
         
@@ -177,12 +189,12 @@ public class PluginLoader {
         
         // Simulate loading failure for specific test cases
         if bundleInfo.metadata.id == "com.test.failing" || bundleInfo.metadata.id == "com.test.cleanup" {
-            throw PluginError.loadingFailed("Mock plugin configured to fail loading")
+            throw PluginError.loadingFailed(reason: "Mock plugin configured to fail loading")
         }
         
         // Check for corrupted bundle scenario (fake bundle info created in test)
         if bundleInfo.metadata.id == "com.test.corrupted" {
-            throw PluginError.corruptedMetadata("Bundle was created with invalid metadata")
+            throw PluginError.metadataParsingFailed(underlying: MockError.invalidMetadata)
         }
         
         // Create mock plugin
@@ -200,7 +212,7 @@ public class PluginLoader {
         // Validate plugin before initialization
         let isValid = await plugin.validate()
         guard isValid else {
-            throw PluginError.initializationFailed("Plugin validation failed")
+            throw PluginError.initializationFailed(reason: "Plugin validation failed")
         }
         
         // Initialize with timeout
@@ -210,7 +222,7 @@ public class PluginLoader {
         
         // Verify plugin is active after initialization
         guard plugin.isActive else {
-            throw PluginError.initializationFailed("Plugin failed to activate after initialization")
+            throw PluginError.initializationFailed(reason: "Plugin failed to activate after initialization")
         }
     }
     
@@ -244,7 +256,7 @@ public class PluginLoader {
             
             group.addTask {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw PluginError.resourceLimitExceeded("Operation timed out")
+                throw PluginError.timeoutExceeded(operation: "Plugin loading", timeout: seconds)
             }
             
             let result = try await group.next()!
