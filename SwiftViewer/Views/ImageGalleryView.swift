@@ -157,11 +157,13 @@ struct ImageGalleryView: View {
             if let currentImageFile = viewModel.currentImageFile, currentImageFile.isAnimated {
                 SimpleAnimatedImageView(url: currentImageFile.url)
                     .id(currentImageFile.url.absoluteString)
+                    .focusEffectDisabled()
             } else {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .clipped()
+                    .focusEffectDisabled()
             }
         }
     }

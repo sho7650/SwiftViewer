@@ -23,12 +23,14 @@ struct SimpleAnimatedImageView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .animation(.none, value: currentFrameIndex) // Disable SwiftUI animations
+                    .focusEffectDisabled()
             } else {
                 // Fallback for non-animated images
                 AsyncImage(url: url) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .focusEffectDisabled()
                 } placeholder: {
                     ProgressView()
                 }
