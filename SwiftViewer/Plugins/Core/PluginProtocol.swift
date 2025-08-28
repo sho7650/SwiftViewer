@@ -5,6 +5,9 @@ public enum PluginCapability: String, CaseIterable, Codable {
     /// Plugin provides transition effects between images
     case transitionEffect = "transition_effect"
     
+    /// Plugin provides transition animations (alias for compatibility)
+    case transition = "transition"
+    
     /// Plugin provides image filtering/processing
     case imageFilter = "image_filter"
     
