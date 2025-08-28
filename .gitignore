@@ -112,3 +112,4 @@ data/cipher*
 memAgent/
 .serena/
 temp/
+./*.log

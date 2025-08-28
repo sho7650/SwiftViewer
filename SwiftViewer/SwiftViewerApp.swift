@@ -17,6 +17,11 @@ struct SwiftViewerApp: App {
                 .sheet(isPresented: $isShowingSettings) {
                     SettingsView()
                 }
+                .onAppear {
+                    // Initialize window position from saved settings
+                    let savedPosition = DependencyContainer.shared.settingsManager.windowPosition
+                    WindowController.shared.setWindowLevel(savedPosition)
+                }
         }
         .commands {
             MenuCommands()

@@ -69,6 +69,10 @@ final class ContentViewModel: ObservableObject {
     func updateWindowPosition(_ position: WindowPosition) {
         currentWindowPosition = position
         settingsManager.windowPosition = position
+        
+        // Apply window level change immediately
+        WindowController.shared.setWindowLevel(position)
+        
         NotificationCenter.default.post(name: .windowPositionChanged, object: position)
     }
 }
