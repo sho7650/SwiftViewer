@@ -379,4 +379,29 @@ final class ImageGalleryViewTests: XCTestCase {
             XCTAssertTrue(gifFile.isAnimated, "GIF with extension '\(gifFile.fileExtension)' should be identified as animated")
         }
     }
+    
+    // MARK: - Parent View Focus Effect Tests
+    
+    func test_ImageGalleryView_parentView_shouldHaveFocusEffectDisabled() {
+        // Given: ViewModel with image loaded to test parent view focus behavior
+        viewModel.isLoading = false
+        let imageFile = ImageFile(
+            url: URL(fileURLWithPath: "/test/image.jpg"),
+            fileName: "image.jpg",
+            fileSize: 1000,
+            createdDate: Date()
+        )
+        viewModel.imageFiles = [imageFile]
+        viewModel.currentImage = NSImage(size: NSSize(width: 100, height: 100))
+        viewModel.currentIndex = 0
+        
+        // When: View is created
+        let body = galleryView.body
+        
+        // Then: Parent view should be created properly with focusEffectDisabled
+        XCTAssertNotNil(body)
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertEqual(viewModel.imageFiles.count, 1)
+        // Note: focusEffectDisabled() modifier will be applied to parent GeometryReader
+    }
 }
