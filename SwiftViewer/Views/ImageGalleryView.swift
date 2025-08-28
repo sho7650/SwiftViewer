@@ -76,6 +76,7 @@ struct ImageGalleryView: View {
         }
         .focusable()
         .focused($isFocused)
+        .focusEffectDisabled()
         .onContinuousHover { phase in
             switch phase {
             case .active:
