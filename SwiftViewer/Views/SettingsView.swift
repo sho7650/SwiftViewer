@@ -129,6 +129,8 @@ struct SettingsView: View {
                     get: { settingsManager.repeatEnabled },
                     set: { newValue in
                         settingsManager.repeatEnabled = newValue
+                        // Notify SlideShowViewModel of the change
+                        NotificationCenter.default.post(name: .repeatModeChanged, object: newValue)
                     }
                 ))
             }

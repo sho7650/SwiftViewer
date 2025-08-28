@@ -45,6 +45,50 @@ final class SlideShowViewModelTests: XCTestCase {
         XCTAssertEqual(sut.defaultInterval, 10.0)
     }
     
+    // MARK: - Repeat Mode Reactivity Tests
+    
+    func test_isRepeatEnabled_whenSettingsChange_shouldUpdateImmediately() {
+        // Given: Initial repeat is disabled
+        mockSettingsManager.repeatEnabled = false
+        XCTAssertFalse(sut.isRepeatEnabled)
+        
+        // When: Settings change via notification
+        mockSettingsManager.repeatEnabled = true
+        NotificationCenter.default.post(name: .repeatModeChanged, object: true)
+        
+        // Then: ViewModel reflects change immediately
+        XCTAssertTrue(sut.isRepeatEnabled)
+    }
+    
+    func test_isRepeatEnabled_whenToggled_shouldUpdateSettingsManager() {
+        // Given: Initial repeat is disabled
+        mockSettingsManager.repeatEnabled = false
+        DependencyContainer.shared.settingsManager.repeatEnabled = false
+        XCTAssertFalse(sut.isRepeatEnabled)
+        
+        // When: Toggle repeat mode
+        sut.toggleRepeatMode()
+        
+        // Then: Shared settings manager is updated (matching production behavior)
+        XCTAssertTrue(DependencyContainer.shared.settingsManager.repeatEnabled)
+        XCTAssertTrue(sut.isRepeatEnabled)
+    }
+    
+    func test_isRepeatEnabled_whenNotificationReceived_shouldReflectCorrectValue() {
+        // Given: Initial state
+        mockSettingsManager.repeatEnabled = false
+        
+        // When: Multiple notifications with different values
+        NotificationCenter.default.post(name: .repeatModeChanged, object: true)
+        XCTAssertTrue(sut.isRepeatEnabled)
+        
+        NotificationCenter.default.post(name: .repeatModeChanged, object: false)
+        XCTAssertFalse(sut.isRepeatEnabled)
+        
+        NotificationCenter.default.post(name: .repeatModeChanged, object: true)
+        XCTAssertTrue(sut.isRepeatEnabled)
+    }
+    
     // MARK: - Start Slideshow Tests
     
     func test_startSlideShow_withDefaultInterval_startsService() {
