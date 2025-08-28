@@ -12,6 +12,7 @@ protocol DependencyContainerProtocol {
     var imageLoaderService: ImageLoaderServiceProtocol { get }
     var settingsManager: SettingsManagerProtocol { get }
     @MainActor var slideShowService: SlideShowServiceProtocol { get }
+    @MainActor var pluginSettingsManager: PluginSettingsManager { get }
 }
 
 final class DependencyContainer: DependencyContainerProtocol {
@@ -35,6 +36,10 @@ final class DependencyContainer: DependencyContainerProtocol {
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         SlideShowService()
     }()
+    
+    @MainActor lazy var pluginSettingsManager: PluginSettingsManager = {
+        PluginSettingsManager(settingsManager: settingsManager)
+    }()
 }
 
 final class MockDependencyContainer: DependencyContainerProtocol {
@@ -44,6 +49,10 @@ final class MockDependencyContainer: DependencyContainerProtocol {
     
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         MockSlideShowService()
+    }()
+    
+    @MainActor lazy var pluginSettingsManager: PluginSettingsManager = {
+        PluginSettingsManager(settingsManager: settingsManager)
     }()
     
     init(

@@ -24,10 +24,12 @@ struct SettingsView: View {
     @State private var blurOpacity: Double
     @State private var loggingLevel: LogLevel
     @State private var debugLoggingEnabled: Bool
+    @ObservedObject private var pluginSettingsManager: PluginSettingsManager
     
     @Environment(\.dismiss) private var dismiss
     
-    init(settingsManager: SettingsManagerProtocol = DependencyContainer.shared.settingsManager) {
+    init(settingsManager: SettingsManagerProtocol = DependencyContainer.shared.settingsManager,
+         pluginSettingsManager: PluginSettingsManager? = nil) {
         self.settingsManager = settingsManager
         let interval = settingsManager.slideShowInterval
         self._slideShowInterval = State(initialValue: interval)
@@ -38,6 +40,7 @@ struct SettingsView: View {
         self._blurOpacity = State(initialValue: settingsManager.blurOpacity)
         self._loggingLevel = State(initialValue: settingsManager.loggingLevel)
         self._debugLoggingEnabled = State(initialValue: settingsManager.debugLoggingEnabled)
+        self.pluginSettingsManager = pluginSettingsManager ?? DependencyContainer.shared.pluginSettingsManager
     }
     
     var body: some View {
@@ -60,6 +63,13 @@ struct SettingsView: View {
                     Divider()
                     
                     debugSection
+                    
+                    // Plugin settings section - only show if there are plugins
+                    let pluginSettings = pluginSettingsManager.getAllPluginSettings()
+                    if !pluginSettings.isEmpty {
+                        Divider()
+                        pluginSettingsSection
+                    }
                 }
                 .padding(.vertical, 20)
             }
@@ -277,6 +287,12 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - Plugin Settings Section
+    
+    private var pluginSettingsSection: some View {
+        PluginSettingsSection(pluginSettingsManager: pluginSettingsManager)
+    }
+    
     // MARK: - Footer Section
     
     private var footerSection: some View {
@@ -344,5 +360,8 @@ struct SlideShowPresetsView: View {
 }
 
 #Preview {
-    SettingsView(settingsManager: MockSettingsManager())
+    SettingsView(
+        settingsManager: MockSettingsManager(),
+        pluginSettingsManager: PluginSettingsManager(settingsManager: MockSettingsManager())
+    )
 }
