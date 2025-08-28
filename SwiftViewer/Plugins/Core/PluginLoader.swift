@@ -12,6 +12,8 @@ public class MockPlugin: PluginProtocol {
         self.metadata = metadata
         self.shouldFailInit = shouldFailInit
         self.shouldFailValidation = shouldFailValidation
+        // For testing purposes, start as active unless configured to fail
+        self.isActive = !shouldFailInit
     }
     
     public func initialize() async throws {
