@@ -105,8 +105,8 @@ struct SlideShowControlsView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.8))
-                .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+                .fill(Color.white.opacity(0.2))
+                .shadow(color: .white.opacity(0.6), radius: 8, x: 0, y: 4)
         )
     }
 }
