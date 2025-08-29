@@ -11,7 +11,7 @@ import Foundation
 /// Protocol defining transition effects for plugin system
 /// Extends PluginProtocol to provide transition-specific functionality
 @MainActor
-protocol TransitionPluginProtocol: PluginProtocol {
+public protocol TransitionPluginProtocol: PluginProtocol {
     /// Creates a SwiftUI transition with the given parameters
     /// - Parameter parameters: Configuration for the transition animation
     /// - Returns: A SwiftUI AnyTransition that can be applied to views
@@ -19,7 +19,7 @@ protocol TransitionPluginProtocol: PluginProtocol {
 }
 
 /// Configuration parameters for transition animations
-struct TransitionParameters: Equatable, Sendable {
+public struct TransitionParameters: Equatable, Sendable {
     /// Duration of the transition in seconds
     let duration: TimeInterval
     
@@ -29,7 +29,7 @@ struct TransitionParameters: Equatable, Sendable {
     /// Custom values for plugin-specific configuration
     let customValues: [String: String]?
     
-    init(
+    public init(
         duration: TimeInterval = 0.25,
         curve: TransitionCurve = .easeInOut,
         customValues: [String: String]? = nil
@@ -39,7 +39,7 @@ struct TransitionParameters: Equatable, Sendable {
         self.customValues = customValues
     }
     
-    static func == (lhs: TransitionParameters, rhs: TransitionParameters) -> Bool {
+    public static func == (lhs: TransitionParameters, rhs: TransitionParameters) -> Bool {
         lhs.duration == rhs.duration &&
         lhs.curve == rhs.curve &&
         lhs.customValues == rhs.customValues
@@ -47,7 +47,7 @@ struct TransitionParameters: Equatable, Sendable {
 }
 
 /// Animation curves supported by transition plugins
-enum TransitionCurve: String, CaseIterable, Sendable {
+public enum TransitionCurve: String, CaseIterable, Sendable {
     case linear
     case easeIn
     case easeOut
@@ -57,7 +57,7 @@ enum TransitionCurve: String, CaseIterable, Sendable {
     /// Converts the curve to a SwiftUI Animation
     /// - Parameter duration: Duration for the animation
     /// - Returns: SwiftUI Animation with the specified curve and duration
-    func swiftUIAnimation(duration: TimeInterval) -> Animation {
+    public func swiftUIAnimation(duration: TimeInterval) -> Animation {
         switch self {
         case .linear:
             return .linear(duration: duration)
