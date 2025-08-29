@@ -4,14 +4,14 @@ import AppKit
 import os
 
 /// Errors specific to animation system operations
-public enum AnimationSystemError: Error, LocalizedError, Equatable {
+enum AnimationSystemError: Error, LocalizedError, Equatable {
     case pluginNotFound(String)
     case transitionFailed(reason: String)
     case invalidConfiguration(reason: String)
     case timingError(reason: String)
     case concurrencyError(reason: String)
     
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .pluginNotFound(let pluginId):
             return "Transition plugin not found: \(pluginId)"
@@ -26,7 +26,7 @@ public enum AnimationSystemError: Error, LocalizedError, Equatable {
         }
     }
     
-    public static func == (lhs: AnimationSystemError, rhs: AnimationSystemError) -> Bool {
+    static func == (lhs: AnimationSystemError, rhs: AnimationSystemError) -> Bool {
         switch (lhs, rhs) {
         case (.pluginNotFound(let id1), .pluginNotFound(let id2)):
             return id1 == id2
@@ -86,15 +86,22 @@ extension TransitionPluginProtocol {
 }
 
 /// SwiftUI view that animates between two images using a transition
-struct TransitionAnimationView: View {
-    let fromImage: NSImage
-    let toImage: NSImage
-    let transition: AnyTransition
-    let duration: TimeInterval
+public struct TransitionAnimationView: View {
+    public let fromImage: NSImage
+    public let toImage: NSImage
+    public let transition: AnyTransition
+    public let duration: TimeInterval
     
     @State private var showToImage = false
     
-    var body: some View {
+    public init(fromImage: NSImage, toImage: NSImage, transition: AnyTransition, duration: TimeInterval) {
+        self.fromImage = fromImage
+        self.toImage = toImage
+        self.transition = transition
+        self.duration = duration
+    }
+    
+    public var body: some View {
         ZStack {
             if !showToImage {
                 Image(nsImage: fromImage)
@@ -118,7 +125,7 @@ struct TransitionAnimationView: View {
 
 /// Manages integration of plugin animations with the slideshow system
 @MainActor
-public final class AnimationSystemIntegration {
+final class AnimationSystemIntegration {
     
     // MARK: - Properties
     
@@ -129,7 +136,7 @@ public final class AnimationSystemIntegration {
     
     // MARK: - Initialization
     
-    public init(slideShowController: SlideShowControllerProtocol? = nil) {
+    init(slideShowController: SlideShowControllerProtocol? = nil) {
         self.logger = Logger()
         self.slideShowController = slideShowController
         logger.info("AnimationSystemIntegration initialized")
@@ -139,7 +146,7 @@ public final class AnimationSystemIntegration {
     
     /// Register a transition plugin
     /// - Parameter plugin: The transition plugin to register
-    public func registerTransitionPlugin(_ plugin: TransitionPluginProtocol) {
+    func registerTransitionPlugin(_ plugin: TransitionPluginProtocol) {
         let pluginId = plugin.metadata.id
         logger.debug("Registering transition plugin: \(pluginId)")
         
@@ -150,7 +157,7 @@ public final class AnimationSystemIntegration {
     
     /// Unregister a transition plugin
     /// - Parameter pluginId: ID of the plugin to unregister
-    public func unregisterTransitionPlugin(pluginId: String) {
+    func unregisterTransitionPlugin(pluginId: String) {
         logger.debug("Unregistering transition plugin: \(pluginId)")
         
         // Cancel any active transitions for this plugin
@@ -167,19 +174,19 @@ public final class AnimationSystemIntegration {
     /// Get a registered transition plugin
     /// - Parameter pluginId: ID of the plugin
     /// - Returns: The transition plugin if registered, nil otherwise
-    public func getTransitionPlugin(for pluginId: String) -> TransitionPluginProtocol? {
+    func getTransitionPlugin(for pluginId: String) -> TransitionPluginProtocol? {
         return registeredPlugins[pluginId]
     }
     
     /// Check if a plugin is registered
     /// - Parameter pluginId: ID of the plugin to check
     /// - Returns: True if registered, false otherwise
-    public func hasRegisteredPlugin(_ pluginId: String) -> Bool {
+    func hasRegisteredPlugin(_ pluginId: String) -> Bool {
         return registeredPlugins[pluginId] != nil
     }
     
     /// Get the count of registered plugins
-    public var registeredPluginCount: Int {
+    var registeredPluginCount: Int {
         return registeredPlugins.count
     }
     
@@ -194,7 +201,7 @@ public final class AnimationSystemIntegration {
     ///   - configuration: Optional configuration parameters
     /// - Returns: SwiftUI view containing the transition animation
     /// - Throws: AnimationSystemError if transition fails
-    public func applyTransition(
+    func applyTransition(
         pluginId: String,
         fromImage: NSImage,
         toImage: NSImage,
@@ -234,7 +241,7 @@ public final class AnimationSystemIntegration {
                 await MainActor.run {
                     activeTransitions.removeValue(forKey: pluginId)
                 }
-                throw AnimationSystemError.transitionFailed(reason: error.localizedDescription)
+                throw error
             }
         }
         
@@ -248,7 +255,7 @@ public final class AnimationSystemIntegration {
     // MARK: - Slideshow Integration
     
     /// Integrate the animation system with the slideshow controller
-    public func integrateWithSlideshow() {
+    func integrateWithSlideshow() {
         logger.debug("Integrating animation system with slideshow")
         
         guard let controller = slideShowController else {
@@ -282,7 +289,7 @@ public final class AnimationSystemIntegration {
     // MARK: - Animation Management
     
     /// Cancel all active transitions
-    public func cancelAllTransitions() {
+    func cancelAllTransitions() {
         logger.debug("Cancelling all active transitions")
         
         for (pluginId, task) in activeTransitions {
@@ -295,14 +302,14 @@ public final class AnimationSystemIntegration {
     }
     
     /// Get the count of active transitions
-    public var activeTransitionCount: Int {
+    var activeTransitionCount: Int {
         return activeTransitions.count
     }
     
     /// Check if a specific plugin has an active transition
     /// - Parameter pluginId: ID of the plugin
     /// - Returns: True if the plugin has an active transition
-    public func hasActiveTransition(for pluginId: String) -> Bool {
+    func hasActiveTransition(for pluginId: String) -> Bool {
         return activeTransitions[pluginId] != nil
     }
     
@@ -317,7 +324,7 @@ public final class AnimationSystemIntegration {
 // MARK: - SlideShow Controller Protocol
 
 /// Protocol for slideshow controllers that can integrate with animation system
-public protocol SlideShowControllerProtocol: AnyObject {
+protocol SlideShowControllerProtocol: AnyObject {
     /// Set the transition handler for slideshow transitions
     /// - Parameter handler: Handler function that creates transition views
     func setTransitionHandler(_ handler: @escaping (NSImage, NSImage, TimeInterval) async throws -> AnyView)
@@ -328,14 +335,14 @@ public protocol SlideShowControllerProtocol: AnyObject {
 extension AnimationSystemIntegration {
     /// Get all registered plugin IDs
     /// - Returns: Array of registered plugin IDs
-    public func getRegisteredPluginIds() -> [String] {
+    func getRegisteredPluginIds() -> [String] {
         return Array(registeredPlugins.keys).sorted()
     }
     
     /// Get all plugins supporting a specific capability
     /// - Parameter capability: The capability to filter by
     /// - Returns: Array of plugins that support the capability
-    public func getPlugins(supporting capability: PluginCapability) -> [TransitionPluginProtocol] {
+    func getPlugins(supporting capability: PluginCapability) -> [TransitionPluginProtocol] {
         return registeredPlugins.values.filter { plugin in
             plugin.metadata.capabilities.contains(capability)
         }
@@ -347,7 +354,7 @@ extension AnimationSystemIntegration {
     ///   - configuration: Configuration to validate
     /// - Returns: True if configuration is valid
     /// - Throws: AnimationSystemError if configuration is invalid
-    public func validateConfiguration(for pluginId: String, configuration: [String: Any]) throws -> Bool {
+    func validateConfiguration(for pluginId: String, configuration: [String: Any]) throws -> Bool {
         guard registeredPlugins[pluginId] != nil else {
             throw AnimationSystemError.pluginNotFound(pluginId)
         }
