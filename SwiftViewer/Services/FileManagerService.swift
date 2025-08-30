@@ -104,11 +104,23 @@ final class MockFileManagerService: FileManagerServiceProtocol {
     var errorToThrow: Error = FileManagerServiceError.directoryNotFound
     var lastUsedSortType: SortType?
     
+    // Test helper properties
+    var shouldReturnCorruptedImage = false
+    var simulateLowMemory = false
+    
     func getImageFiles(from url: URL, sortBy: SortType) async throws -> [ImageFile] {
         lastUsedSortType = sortBy
         if shouldThrowError {
             throw errorToThrow
         }
+        
+        // For specific memory pressure test only
+        if url.path.contains("/test") && url.path.contains("memory-pressure") && mockImageFiles.count < 100 {
+            mockImageFiles = Array(1...100).map { 
+                ImageFile(url: URL(fileURLWithPath: "/test/image\($0).jpg"), fileName: "image\($0).jpg", fileSize: 1024, createdDate: Date())
+            }
+        }
+        
         return mockImageFiles
     }
 }

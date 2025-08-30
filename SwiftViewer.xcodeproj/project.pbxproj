@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CA71D4702E631E4B00A38DC5 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CABC922F2E56D25B001A43C1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = SwiftViewer;
 			packageProductDependencies = (
+				CA71D4702E631E4B00A38DC5 /* Kingfisher */,
 			);
 			productName = SwiftViewer;
 			productReference = CABC92202E56D25A001A43C1 /* SwiftViewer.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = CABC92172E56D25A001A43C1;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CABC92212E56D25A001A43C1 /* Products */;
 			projectDirPath = "";
@@ -595,6 +604,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CA71D4702E631E4B00A38DC5 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CABC92182E56D25A001A43C1 /* Project object */;
 }
