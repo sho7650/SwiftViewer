@@ -33,14 +33,6 @@ struct WindowPositionSelectionKey: FocusedValueKey {
     typealias Value = (WindowPosition) -> Void
 }
 
-struct WindowMoveResizeKey: FocusedValueKey {
-    typealias Value = () -> Void
-}
-
-struct WindowFullScreenTileKey: FocusedValueKey {
-    typealias Value = () -> Void
-}
-
 // MARK: - State Focused Values
 
 struct CurrentSortTypeKey: FocusedValueKey {
@@ -86,16 +78,6 @@ extension FocusedValues {
         set { self[WindowPositionSelectionKey.self] = newValue }
     }
     
-    var windowMoveResizeAction: (() -> Void)? {
-        get { self[WindowMoveResizeKey.self] }
-        set { self[WindowMoveResizeKey.self] = newValue }
-    }
-    
-    var windowFullScreenTileAction: (() -> Void)? {
-        get { self[WindowFullScreenTileKey.self] }
-        set { self[WindowFullScreenTileKey.self] = newValue }
-    }
-    
     // MARK: - State Accessors
     
     var currentSortType: SortType? {
@@ -131,8 +113,6 @@ struct MenuCommands: Commands {
     @FocusedValue(\.toggleFullscreenAction) var toggleFullscreenAction
     @FocusedValue(\.toggleRepeatAction) var toggleRepeatAction
     @FocusedValue(\.windowPositionAction) var windowPositionAction
-    @FocusedValue(\.windowMoveResizeAction) var windowMoveResizeAction
-    @FocusedValue(\.windowFullScreenTileAction) var windowFullScreenTileAction
     
     // MARK: - State FocusedValues
     @FocusedValue(\.currentSortType) var currentSortType
@@ -209,18 +189,6 @@ struct MenuCommands: Commands {
                     windowPositionAction?(.normal)
                 }
             }
-            
-            Divider()
-            
-            Button("Move & Resize") {
-                windowMoveResizeAction?()
-            }
-            .keyboardShortcut("m", modifiers: [.command, .control])
-            
-            Button("Full Screen Tile") {
-                windowFullScreenTileAction?()
-            }
-            .keyboardShortcut("g", modifiers: [.command, .control])
         }
         
         // MARK: - Sort Menu

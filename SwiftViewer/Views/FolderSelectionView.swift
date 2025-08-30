@@ -126,6 +126,11 @@ struct FolderSelectionView: View {
         panel.canChooseFiles = false
         panel.canCreateDirectories = false
         
+        // Inherit window level from main window for proper layering
+        if let mainWindow = NSApp.keyWindow {
+            panel.level = mainWindow.level
+        }
+        
         panel.begin { response in
             if response == .OK, let url = panel.url {
                 onFolderSelected(url)
