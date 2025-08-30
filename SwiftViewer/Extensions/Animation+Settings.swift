@@ -34,19 +34,24 @@ extension Animation {
 }
 
 extension View {
-    /// Apply settings-based animation to view changes
-    /// - Parameter type: The type of animation to use
-    /// - Returns: View with the configured animation
-    func settingsAnimation(_ type: AnimationType) -> some View {
-        self.animation(.fromSettings(type))
-    }
-    
-    /// Apply settings-based animation with a value binding
+    /// Apply settings-based animation with a value binding (Modern API)
     /// - Parameters:
     ///   - type: The type of animation to use
     ///   - value: The value to watch for changes
     /// - Returns: View with the configured animation
     func settingsAnimation<V: Equatable>(_ type: AnimationType, value: V) -> some View {
         self.animation(.fromSettings(type), value: value)
+    }
+}
+
+/// Modern animation helpers for state changes
+extension View {
+    /// Wrap state changes with settings-based animation
+    /// - Parameters:
+    ///   - type: The type of animation to use
+    ///   - action: The state change action to animate
+    /// - Returns: The result of the action
+    func withSettingsAnimation<Result>(_ type: AnimationType, _ action: () throws -> Result) rethrows -> Result {
+        return try withAnimation(.fromSettings(type), action)
     }
 }
