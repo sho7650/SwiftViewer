@@ -17,6 +17,10 @@ final class KingfisherAdaptiveImageCacheTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockFileManager = MockFileManagerService()
+        // Set up sufficient test data for Kingfisher tests
+        mockFileManager.mockImageFiles = Array(1...100).map { 
+            ImageFile(url: URL(fileURLWithPath: "/test/image\($0).jpg"), fileName: "image\($0).jpg", fileSize: 1024, createdDate: Date())
+        }
         mockSettingsManager = MockSettingsManager()
         sut = KingfisherAdaptiveImageCache(fileManager: mockFileManager, settings: mockSettingsManager)
     }

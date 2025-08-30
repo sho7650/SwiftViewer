@@ -142,6 +142,9 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
                 case .success(let value):
                     if let image = value.image {
                         // Kingfisher on macOS returns NSImage directly
+                        Task {
+                            await self.cacheTracker.addKey(url.absoluteString)
+                        }
                         continuation.resume(returning: image)
                     } else {
                         // Load from disk if not cached

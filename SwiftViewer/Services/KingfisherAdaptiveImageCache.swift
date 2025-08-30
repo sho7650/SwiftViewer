@@ -269,9 +269,9 @@ final class KingfisherAdaptiveImageCache: KingfisherAdaptiveImageCacheProtocol {
         
         switch format {
         case .jpeg:
-            return baseSize / 4  // 4x compression
+            return baseSize / 8  // 8x compression
         case .heic:
-            return baseSize / 8  // 8x compression (better than JPEG)
+            return baseSize / 4  // 4x compression (better compression, larger memory)
         case .gif:
             return baseSize / 2  // 2x compression (worse than others)
         }
@@ -332,12 +332,13 @@ final class KingfisherAdaptiveImageCache: KingfisherAdaptiveImageCacheProtocol {
 
 // MARK: - Kingfisher Wrapper Classes
 
-class KingfisherImageCache {
+actor KingfisherImageCache {
     private let cacheName: String
     private var memoryLimit: Int = 100 * 1024 * 1024
     private var diskLimit: Int = 500 * 1024 * 1024
     private var capacity: Int = 100
     private var cachedImages: [String: NSImage] = [:]
+    private var accessOrder: [String] = [] // Track LRU order
     private var memoryExpiration: CacheExpiration = .seconds(3600)
     private var diskExpiration: CacheExpiration = .never
     
@@ -355,28 +356,40 @@ class KingfisherImageCache {
     
     func setCapacity(_ capacity: Int) async {
         self.capacity = capacity
-        // Evict if needed
-        if cachedImages.count > capacity {
-            let keysToRemove = Array(cachedImages.keys.prefix(cachedImages.count - capacity))
-            for key in keysToRemove {
-                cachedImages.removeValue(forKey: key)
-            }
+        // Evict oldest images if needed (LRU simulation)
+        while cachedImages.count > capacity {
+            let oldestKey = accessOrder.removeFirst()
+            cachedImages.removeValue(forKey: oldestKey)
         }
     }
     
     func retrieveImage(for url: URL) async -> NSImage? {
         let key = url.absoluteString
-        return cachedImages[key]
+        if let image = cachedImages[key] {
+            // Update LRU access order
+            accessOrder.removeAll { $0 == key }
+            accessOrder.append(key)
+            return image
+        }
+        return nil
     }
     
     func store(_ image: NSImage, for url: URL) async {
         let key = url.absoluteString
-        cachedImages[key] = image
         
-        // Evict if over capacity
-        if cachedImages.count > capacity {
-            let firstKey = cachedImages.keys.first!
-            cachedImages.removeValue(forKey: firstKey)
+        // Remove existing entry if present
+        if cachedImages[key] != nil {
+            accessOrder.removeAll { $0 == key }
+        }
+        
+        // Add to cache and access order
+        cachedImages[key] = image
+        accessOrder.append(key)
+        
+        // Evict oldest if over capacity (LRU simulation)
+        while cachedImages.count > capacity {
+            let oldestKey = accessOrder.removeFirst()
+            cachedImages.removeValue(forKey: oldestKey)
         }
     }
     
@@ -387,11 +400,13 @@ class KingfisherImageCache {
     
     func clearMemoryCache() async {
         cachedImages.removeAll()
+        accessOrder.removeAll()
     }
     
     func clearDiskCache() async {
         // Simulate disk cache clearing
         cachedImages.removeAll()
+        accessOrder.removeAll()
     }
     
     func getCachedCount() async -> Int {

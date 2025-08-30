@@ -114,8 +114,8 @@ final class MockFileManagerService: FileManagerServiceProtocol {
             throw errorToThrow
         }
         
-        // For memory pressure test, generate enough images if needed
-        if url.path.contains("/test") && mockImageFiles.count < 100 {
+        // For specific memory pressure test only
+        if url.path.contains("/test") && url.path.contains("memory-pressure") && mockImageFiles.count < 100 {
             mockImageFiles = Array(1...100).map { 
                 ImageFile(url: URL(fileURLWithPath: "/test/image\($0).jpg"), fileName: "image\($0).jpg", fileSize: 1024, createdDate: Date())
             }
