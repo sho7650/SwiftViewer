@@ -7,6 +7,7 @@
 
 import Foundation
 import AppKit
+import SwiftUI
 import Observation
 
 @Observable
@@ -153,17 +154,26 @@ final class ImageGalleryViewModel {
         }
         
         let imageFile = imageFiles[currentIndex]
-        currentImageFile = imageFile
         clearError()
         
         do {
             logger.debug("Loading image: \(imageFile.fileName)")
-            currentImage = try await imageLoaderService.loadImage(from: imageFile.url)
+            let loadedImage = try await imageLoaderService.loadImage(from: imageFile.url)
+            
+            // Update Observable properties with animation context for smooth transitions
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    self.currentImageFile = imageFile
+                    self.currentImage = loadedImage
+                }
+            }
             
         } catch {
             logger.error("Failed to load image: \(imageFile.fileName)", error: error)
             handleError(error)
-            currentImage = nil
+            await MainActor.run {
+                self.currentImage = nil
+            }
         }
     }
     

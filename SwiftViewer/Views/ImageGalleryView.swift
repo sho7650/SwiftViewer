@@ -7,11 +7,14 @@
 
 import SwiftUI
 import AppKit
+import Observation
 
 struct ImageGalleryView: View {
-    let viewModel: ImageGalleryViewModel
+    var viewModel: ImageGalleryViewModel
     @State private var slideShowViewModel: SlideShowViewModel
     @State private var autoHideManager: AutoHideControlsManager
+    @State private var transitionManager: TransitionManager
+    @State private var currentTransitionType: TransitionType
     @FocusState private var isFocused: Bool
     
     // Keyboard press states for visual feedback
@@ -37,6 +40,8 @@ struct ImageGalleryView: View {
             slideShowViewModel: slideShowVM,
             imageGalleryViewModel: viewModel
         ))
+        self._transitionManager = State(initialValue: TransitionManager())
+        self._currentTransitionType = State(initialValue: dependencies.settingsManager.transitionType)
     }
     
     var body: some View {
@@ -102,6 +107,11 @@ struct ImageGalleryView: View {
         .onReceive(NotificationCenter.default.publisher(for: .slideShowIntervalChanged)) { _ in
             slideShowViewModel.updateIntervalIfRunning()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .transitionTypeChanged)) { notification in
+            if let newTransitionType = notification.object as? TransitionType {
+                currentTransitionType = newTransitionType
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -163,8 +173,10 @@ struct ImageGalleryView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .clipped()
+                    .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
             }
         }
+        .transition(transitionManager.createTransition(for: currentTransitionType, duration: 0.3))
     }
     
     private var imageInfoOverlay: some View {
@@ -315,6 +327,7 @@ struct ImageGalleryView: View {
                     isLeftKeyPressed = true
                 }
                 
+                // Navigate with transition
                 await viewModel.navigateToPrevious()
                 slideShowViewModel.restartSlideShowIfRunning()
                 
@@ -331,6 +344,7 @@ struct ImageGalleryView: View {
                     isRightKeyPressed = true
                 }
                 
+                // Navigate with transition
                 await viewModel.navigateToNext()
                 slideShowViewModel.restartSlideShowIfRunning()
                 

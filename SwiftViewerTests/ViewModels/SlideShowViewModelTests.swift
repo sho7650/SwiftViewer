@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import Observation
 @testable import SwiftViewer
 
 @MainActor
@@ -424,6 +425,7 @@ final class SlideShowViewModelTests: XCTestCase {
 
 // MARK: - Mock ImageGalleryViewModel
 
+@Observable
 @MainActor
 final class MockImageGalleryViewModel: ImageGalleryNavigationProtocol {
     var navigateToNextCallCount = 0

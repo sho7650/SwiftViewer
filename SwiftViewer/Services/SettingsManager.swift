@@ -22,6 +22,9 @@ protocol SettingsManagerProtocol {
     var loggingLevel: LogLevel { get set }
     var windowPosition: WindowPosition { get set }
     var slideShowPresetIntervals: [TimeInterval] { get }
+    
+    // Image transition support
+    var transitionType: TransitionType { get set }
 }
 
 final class SettingsManager: SettingsManagerProtocol {
@@ -202,6 +205,19 @@ final class SettingsManager: SettingsManagerProtocol {
         // Read-only property
         return [1, 2, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800]
     }
+    
+    var transitionType: TransitionType {
+        get {
+            if let transitionString = userDefaults.string(forKey: "transitionType"),
+               let type = TransitionType(rawValue: transitionString) {
+                return type
+            }
+            return .crossDissolve // Default
+        }
+        set {
+            userDefaults.set(newValue.rawValue, forKey: "transitionType")
+        }
+    }
 }
 
 final class MockSettingsManager: SettingsManagerProtocol {
@@ -222,6 +238,9 @@ final class MockSettingsManager: SettingsManagerProtocol {
     var loggingLevel: LogLevel = .info
     var windowPosition: WindowPosition = .normal
     var slideShowPresetIntervals: [TimeInterval] = [1, 2, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800]
+    
+    // Image transition support
+    var transitionType: TransitionType = .crossDissolve
     
     // Cache configuration properties for testing
     var customCacheMemoryLimit: Int? = nil

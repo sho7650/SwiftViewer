@@ -12,6 +12,7 @@ extension Notification.Name {
     static let autoHideDelayChanged = Notification.Name("autoHideDelayChanged")
     static let animationDurationsChanged = Notification.Name("animationDurationsChanged")
     static let blurSettingsChanged = Notification.Name("blurSettingsChanged")
+    static let transitionTypeChanged = Notification.Name("transitionTypeChanged")
 }
 
 struct SettingsView: View {
@@ -24,6 +25,7 @@ struct SettingsView: View {
     @State private var blurOpacity: Double
     @State private var loggingLevel: LogLevel
     @State private var debugLoggingEnabled: Bool
+    @State private var transitionType: TransitionType
     
     @Environment(\.dismiss) private var dismiss
     
@@ -38,6 +40,7 @@ struct SettingsView: View {
         self._blurOpacity = State(initialValue: settingsManager.blurOpacity)
         self._loggingLevel = State(initialValue: settingsManager.loggingLevel)
         self._debugLoggingEnabled = State(initialValue: settingsManager.debugLoggingEnabled)
+        self._transitionType = State(initialValue: settingsManager.transitionType)
     }
     
     var body: some View {
@@ -51,6 +54,9 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     slideshowSection
+                    Divider()
+                    
+                    transitionSection
                     Divider()
                     
                     visualEffectsSection
@@ -133,6 +139,41 @@ struct SettingsView: View {
                         NotificationCenter.default.post(name: .repeatModeChanged, object: newValue)
                     }
                 ))
+            }
+        }
+    }
+    
+    // MARK: - Transition Section
+    
+    private var transitionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("IMAGE TRANSITIONS")
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Transition Effect:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Picker("Transition Type", selection: $transitionType) {
+                        ForEach(TransitionType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(type)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(maxWidth: 300)
+                    .onChange(of: transitionType) { _, newValue in
+                        settingsManager.transitionType = newValue
+                        NotificationCenter.default.post(name: .transitionTypeChanged, object: newValue)
+                    }
+                }
+                
+                Text("Animation effect used when changing images manually or during slideshow")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 8)
             }
         }
     }
@@ -302,6 +343,7 @@ struct SettingsView: View {
         blurOpacity = settingsManager.blurOpacity
         loggingLevel = settingsManager.loggingLevel
         debugLoggingEnabled = settingsManager.debugLoggingEnabled
+        transitionType = settingsManager.transitionType
     }
     
     private func bindingForAnimationType(_ type: AnimationType) -> Binding<Double> {
