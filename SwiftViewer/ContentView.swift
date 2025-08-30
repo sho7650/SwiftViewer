@@ -53,20 +53,19 @@ struct ContentView: View {
         .focusedValue(\.windowPositionAction) { position in
             contentViewModel.updateWindowPosition(position)
         }
-        .focusedValue(\.windowMoveResizeAction) {
-            // Handle window move & resize
-        }
-        .focusedValue(\.windowFullScreenTileAction) {
-            // Handle full screen tile
-        }
         // MARK: - State Providers
         .focusedValue(\.currentSortType, contentViewModel.currentSortType)
         .focusedValue(\.currentWindowPosition, contentViewModel.currentWindowPosition)
         .focusedValue(\.currentDisplayMode, contentViewModel.currentDisplayMode)
+        // Ensure focus is properly set
         .onAppear {
-            // Ensure ContentView has focus for keyboard shortcuts
-            DispatchQueue.main.async {
-                isContentViewFocused = true
+            // Set focus after a short delay to ensure window is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                if let window = NSApp.keyWindow {
+                    window.makeKeyAndOrderFront(nil)
+                    isContentViewFocused = true
+                    Logger.shared.debug("[ContentView] Focus set on appear")
+                }
             }
         }
         .onTapGesture {
@@ -99,15 +98,33 @@ struct ContentView: View {
     // MARK: - Actions
     
     private func openFolderPicker() {
+        // Debug log for ⌘O trigger
+        Logger.shared.debug("[ContentView] ⌘O triggered - keyWindow: \(NSApp.keyWindow != nil), isActive: \(NSApp.isActive)")
+        
+        // Ensure window is key before opening panel
+        if NSApp.keyWindow == nil {
+            Logger.shared.warning("[ContentView] No key window, attempting to make window key")
+            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+        }
+        
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = false
         
+        // Inherit window level from main window for proper layering
+        if let mainWindow = NSApp.keyWindow {
+            panel.level = mainWindow.level
+            Logger.shared.debug("[ContentView] Panel inheriting level: \(mainWindow.level.rawValue)")
+        } else {
+            Logger.shared.warning("[ContentView] No key window for panel level inheritance")
+        }
+        
         panel.begin { response in
             if response == .OK, let url = panel.url {
-                handleFolderSelection(url)
+                Logger.shared.info("[ContentView] Folder selected: \(url.path)")
+                self.handleFolderSelection(url)
             }
         }
     }
@@ -140,11 +157,35 @@ struct ContentView: View {
     }
     
     private func toggleFullscreen() {
-        // Placeholder for Phase 4.2 implementation
         contentViewModel.toggleFullscreen()
         
-        if let window = NSApp.keyWindow {
-            window.toggleFullScreen(nil)
+        // Debug log before fullscreen
+        WindowController.shared.debugState()
+        
+        // Prepare window level for fullscreen if needed
+        if WindowController.shared.prepareForFullscreen() {
+            if let window = NSApp.keyWindow {
+                // Check current fullscreen state (PhotoSlideshow pattern)
+                let isCurrentlyFullscreen = window.styleMask.contains(.fullScreen)
+                Logger.shared.info("[ContentView] Current fullscreen state: \(isCurrentlyFullscreen), toggling...")
+                
+                window.toggleFullScreen(nil)
+                
+                // Restore window level after fullscreen transition
+                if isCurrentlyFullscreen {
+                    // Exiting fullscreen - restore immediately
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        WindowController.shared.restoreAfterFullscreen()
+                    }
+                } else {
+                    // Entering fullscreen - restore after longer delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        WindowController.shared.restoreAfterFullscreen()
+                    }
+                }
+            } else {
+                Logger.shared.error("[ContentView] No key window for fullscreen")
+            }
         }
     }
     

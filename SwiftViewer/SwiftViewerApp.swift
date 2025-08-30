@@ -14,15 +14,25 @@ struct SwiftViewerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .windowFullScreenBehavior(.enabled)
                 .sheet(isPresented: $isShowingSettings) {
                     SettingsView()
                 }
                 .onAppear {
-                    // Initialize window position from saved settings
-                    let savedPosition = DependencyContainer.shared.settingsManager.windowPosition
-                    WindowController.shared.setWindowLevel(savedPosition)
+                    // Establish window reference and initialize window position
+                    DispatchQueue.main.async {
+                        if let window = NSApp.keyWindow ?? NSApp.windows.first {
+                            WindowController.shared.setWindow(window)
+                            let savedPosition = DependencyContainer.shared.settingsManager.windowPosition
+                            WindowController.shared.setWindowLevel(savedPosition)
+                            Logger.shared.info("[SwiftViewerApp] Window initialized with position: \(savedPosition)")
+                        } else {
+                            Logger.shared.warning("[SwiftViewerApp] No window available on startup")
+                        }
+                    }
                 }
         }
+        .windowManagerRole(.principal)
         .commands {
             MenuCommands()
             
