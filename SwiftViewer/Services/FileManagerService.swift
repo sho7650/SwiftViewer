@@ -104,11 +104,24 @@ final class MockFileManagerService: FileManagerServiceProtocol {
     var errorToThrow: Error = FileManagerServiceError.directoryNotFound
     var lastUsedSortType: SortType?
     
+    // Test helper properties
+    var shouldReturnCorruptedImage = false
+    var simulateLowMemory = false
+    var disableAutoGeneration = false // New property to control auto-generation
+    
     func getImageFiles(from url: URL, sortBy: SortType) async throws -> [ImageFile] {
         lastUsedSortType = sortBy
         if shouldThrowError {
             throw errorToThrow
         }
+        
+        // Only auto-generate if not disabled and no mock files are set
+        if !disableAutoGeneration && url.path.contains("/test") && mockImageFiles.isEmpty {
+            mockImageFiles = Array(1...100).map { 
+                ImageFile(url: URL(fileURLWithPath: "/test/image\($0).jpg"), fileName: "image\($0).jpg", fileSize: 1024, createdDate: Date())
+            }
+        }
+        
         return mockImageFiles
     }
 }

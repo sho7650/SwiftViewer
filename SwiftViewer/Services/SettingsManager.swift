@@ -222,4 +222,8 @@ final class MockSettingsManager: SettingsManagerProtocol {
     var loggingLevel: LogLevel = .info
     var windowPosition: WindowPosition = .normal
     var slideShowPresetIntervals: [TimeInterval] = [1, 2, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800]
+    
+    // AdaptiveImageCache properties
+    var customCacheMemoryLimit: Int?
+    var preloadImageCount: Int?
 }

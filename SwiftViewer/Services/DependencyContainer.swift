@@ -11,6 +11,7 @@ protocol DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol { get }
     var imageLoaderService: ImageLoaderServiceProtocol { get }
     var settingsManager: SettingsManagerProtocol { get }
+    var adaptiveImageCache: AdaptiveImageCacheProtocol { get }
     @MainActor var slideShowService: SlideShowServiceProtocol { get }
 }
 
@@ -31,6 +32,9 @@ final class DependencyContainer: DependencyContainerProtocol {
         SettingsManager()
     }()
     
+    lazy var adaptiveImageCache: AdaptiveImageCacheProtocol = {
+        AdaptiveImageCache(fileManager: fileManagerService, settings: settingsManager)
+    }()
     
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         SlideShowService()
@@ -41,6 +45,7 @@ final class MockDependencyContainer: DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol
     var imageLoaderService: ImageLoaderServiceProtocol
     var settingsManager: SettingsManagerProtocol
+    var adaptiveImageCache: AdaptiveImageCacheProtocol
     
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         MockSlideShowService()
@@ -54,5 +59,6 @@ final class MockDependencyContainer: DependencyContainerProtocol {
         self.fileManagerService = fileManagerService
         self.imageLoaderService = imageLoaderService
         self.settingsManager = settingsManager
+        self.adaptiveImageCache = AdaptiveImageCache(fileManager: fileManagerService, settings: settingsManager)
     }
 }
