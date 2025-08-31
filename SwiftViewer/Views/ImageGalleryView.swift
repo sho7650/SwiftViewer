@@ -69,6 +69,7 @@ struct ImageGalleryView: View {
                     slideShowControlsOverlay
                         .opacity(autoHideManager.areControlsVisible ? 1.0 : 0.0)
                         .allowsHitTesting(autoHideManager.areControlsVisible)
+                        .animation(.fromSettings(.transition), value: autoHideManager.areControlsVisible)
                 }
             }
             .background {
@@ -238,63 +239,66 @@ struct ImageGalleryView: View {
     }
     
     private var slideShowControlsOverlay: some View {
-        VStack {
-            Spacer()
-            
-            HStack {
+        GeometryReader { geometry in
+            VStack {
                 Spacer()
                 
-                GlassmorphismControlsView(
-                    isSlideShowRunning: slideShowViewModel.isRunning,
-                    currentIndex: viewModel.currentIndex,
-                    totalCount: viewModel.imageFiles.count,
-                    isRepeatEnabled: slideShowViewModel.isRepeatEnabled,
-                    isLeftKeyPressed: isLeftKeyPressed,
-                    isSpaceKeyPressed: isSpaceKeyPressed,
-                    isRightKeyPressed: isRightKeyPressed,
-                    onPrevious: {
-                        Task { @MainActor in
-                            await performUserAction {
-                                await viewModel.navigateToPrevious()
-                                slideShowViewModel.restartSlideShowIfRunning()
+                HStack {
+                    Spacer()
+                    
+                    GlassmorphismControlsView(
+                        isSlideShowRunning: slideShowViewModel.isRunning,
+                        currentIndex: viewModel.currentIndex,
+                        totalCount: viewModel.imageFiles.count,
+                        isRepeatEnabled: slideShowViewModel.isRepeatEnabled,
+                        isLeftKeyPressed: isLeftKeyPressed,
+                        isSpaceKeyPressed: isSpaceKeyPressed,
+                        isRightKeyPressed: isRightKeyPressed,
+                        onPrevious: {
+                            Task { @MainActor in
+                                await performUserAction {
+                                    await viewModel.navigateToPrevious()
+                                    slideShowViewModel.restartSlideShowIfRunning()
+                                }
+                            }
+                        },
+                        onToggleSlideShow: {
+                            performUserAction {
+                                slideShowViewModel.toggleSlideShow()
+                            }
+                        },
+                        onNext: {
+                            Task { @MainActor in
+                                await performUserAction {
+                                    await viewModel.navigateToNext()
+                                    slideShowViewModel.restartSlideShowIfRunning()
+                                }
+                            }
+                        },
+                        onToggleRepeat: {
+                            performUserAction {
+                                withAnimation(.fromSettings(.ui)) {
+                                    slideShowViewModel.toggleRepeatMode()
+                                }
+                                NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
+                            }
+                        },
+                        onProgressTapped: { index in
+                            Task { @MainActor in
+                                await performUserAction {
+                                    await viewModel.navigateToIndex(index)
+                                    slideShowViewModel.restartSlideShowIfRunning()
+                                }
                             }
                         }
-                    },
-                    onToggleSlideShow: {
-                        performUserAction {
-                            slideShowViewModel.toggleSlideShow()
-                        }
-                    },
-                    onNext: {
-                        Task { @MainActor in
-                            await performUserAction {
-                                await viewModel.navigateToNext()
-                                slideShowViewModel.restartSlideShowIfRunning()
-                            }
-                        }
-                    },
-                    onToggleRepeat: {
-                        performUserAction {
-                            withAnimation(.fromSettings(.ui)) {
-                                slideShowViewModel.toggleRepeatMode()
-                            }
-                            NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
-                        }
-                    },
-                    onProgressTapped: { index in
-                        Task { @MainActor in
-                            await performUserAction {
-                                await viewModel.navigateToIndex(index)
-                                slideShowViewModel.restartSlideShowIfRunning()
-                            }
-                        }
-                    }
-                )
-                
-                Spacer()
+                    )
+                    .frame(maxWidth: max(268, geometry.size.width / 4))
+                    
+                    Spacer()
+                }
             }
+            .padding()
         }
-        .padding()
     }
     
     

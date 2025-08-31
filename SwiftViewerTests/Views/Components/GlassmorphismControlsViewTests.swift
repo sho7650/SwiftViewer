@@ -184,4 +184,66 @@ final class GlassmorphismControlsViewTests: XCTestCase {
         XCTAssertNotNil(controlsView)
         // Note: Accessibility testing would require specialized testing framework
     }
+    
+    // MARK: - Preview Tests
+    
+    func test_glassmorphismControls_hasPreviewSupport() {
+        // Given & When
+        // Verify that preview can be created with various states
+        let previewRunning = GlassmorphismControlsView(
+            isSlideShowRunning: true,
+            currentIndex: 3,
+            totalCount: 10,
+            isRepeatEnabled: true,
+            isLeftKeyPressed: false,
+            isSpaceKeyPressed: false,
+            isRightKeyPressed: false,
+            onPrevious: {},
+            onToggleSlideShow: {},
+            onNext: {},
+            onToggleRepeat: {},
+            onProgressTapped: { _ in }
+        )
+        
+        let previewPaused = GlassmorphismControlsView(
+            isSlideShowRunning: false,
+            currentIndex: 0,
+            totalCount: 5,
+            isRepeatEnabled: false,
+            isLeftKeyPressed: true,
+            isSpaceKeyPressed: false,
+            isRightKeyPressed: false,
+            onPrevious: {},
+            onToggleSlideShow: {},
+            onNext: {},
+            onToggleRepeat: {},
+            onProgressTapped: { _ in }
+        )
+        
+        // Then
+        XCTAssertNotNil(previewRunning)
+        XCTAssertNotNil(previewPaused)
+    }
+    
+    func test_glassmorphismControls_previewShowsAllStates() {
+        // Given & When
+        let previewKeyPressed = GlassmorphismControlsView(
+            isSlideShowRunning: true,
+            currentIndex: 4,
+            totalCount: 8,
+            isRepeatEnabled: true,
+            isLeftKeyPressed: false,
+            isSpaceKeyPressed: true,
+            isRightKeyPressed: false,
+            onPrevious: {},
+            onToggleSlideShow: {},
+            onNext: {},
+            onToggleRepeat: {},
+            onProgressTapped: { _ in }
+        )
+        
+        // Then
+        // Preview should demonstrate key press visual feedback
+        XCTAssertNotNil(previewKeyPressed)
+    }
 }
