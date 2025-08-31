@@ -13,6 +13,8 @@ enum TransitionType: String, CaseIterable, Codable, Equatable {
     case zoomOut = "zoomOut"
     case zoomIn = "zoomIn"
     case none = "none"
+    case blurReplace = "blurReplace"
+    case blurReplaceUpUp = "blurReplaceUpUp"
     
     /// User-friendly display name for the transition type
     var displayName: String {
@@ -25,6 +27,10 @@ enum TransitionType: String, CaseIterable, Codable, Equatable {
             return "Zoom In"
         case .none:
             return "None"
+        case .blurReplace:
+            return "Blur Replace"
+        case .blurReplaceUpUp:
+            return "Blur Replace (Expand)"
         }
     }
 }

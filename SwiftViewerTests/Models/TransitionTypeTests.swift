@@ -15,11 +15,13 @@ final class TransitionTypeTests: XCTestCase {
     func test_transitionType_hasExpectedCases() {
         let allCases = TransitionType.allCases
         
-        XCTAssertEqual(allCases.count, 4)
+        XCTAssertEqual(allCases.count, 6)
         XCTAssertTrue(allCases.contains(.crossDissolve))
         XCTAssertTrue(allCases.contains(.zoomOut))
         XCTAssertTrue(allCases.contains(.zoomIn))
         XCTAssertTrue(allCases.contains(.none))
+        XCTAssertTrue(allCases.contains(.blurReplace))
+        XCTAssertTrue(allCases.contains(.blurReplaceUpUp))
     }
     
     func test_transitionType_rawValues_areCorrect() {
@@ -27,6 +29,8 @@ final class TransitionTypeTests: XCTestCase {
         XCTAssertEqual(TransitionType.zoomOut.rawValue, "zoomOut")
         XCTAssertEqual(TransitionType.zoomIn.rawValue, "zoomIn")
         XCTAssertEqual(TransitionType.none.rawValue, "none")
+        XCTAssertEqual(TransitionType.blurReplace.rawValue, "blurReplace")
+        XCTAssertEqual(TransitionType.blurReplaceUpUp.rawValue, "blurReplaceUpUp")
     }
     
     // MARK: - Display Name Tests
@@ -36,6 +40,8 @@ final class TransitionTypeTests: XCTestCase {
         XCTAssertEqual(TransitionType.zoomOut.displayName, "Zoom Out")
         XCTAssertEqual(TransitionType.zoomIn.displayName, "Zoom In")
         XCTAssertEqual(TransitionType.none.displayName, "None")
+        XCTAssertEqual(TransitionType.blurReplace.displayName, "Blur Replace")
+        XCTAssertEqual(TransitionType.blurReplaceUpUp.displayName, "Blur Replace (Expand)")
     }
     
     // MARK: - Codable Tests
@@ -79,7 +85,7 @@ final class TransitionTypeTests: XCTestCase {
     
     func test_transitionType_allCases_isComplete() {
         // Ensure we haven't missed any cases when adding new transitions
-        let expectedCount = 4
+        let expectedCount = 6
         XCTAssertEqual(TransitionType.allCases.count, expectedCount, 
                       "Update this test when adding new transition types")
     }
