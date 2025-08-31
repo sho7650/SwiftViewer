@@ -66,7 +66,7 @@ struct GlassmorphismControlsView: View {
                 Button(action: onToggleRepeat) {
                     Image(systemName: "repeat")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(isRepeatEnabled ? .blue : .white)
+                        .foregroundColor(isRepeatEnabled ? .accentColor : .white)
                 }
                 .buttonStyle(GlassButtonStyle())
             }
@@ -77,9 +77,9 @@ struct GlassmorphismControlsView: View {
             radius: 16,
             color: .white,
             material: .ultraThinMaterial,
-            gradientOpacity: 0.4,
+            gradientOpacity: 0.7,
             shadowColor: .black,
-            shadowOpacity: 0.3,
+            shadowOpacity: 0.4,
             shadowRadius: 8,
             shadowY: 4
         )
