@@ -234,7 +234,7 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
     }
     
     func getCountLimit() async -> Int {
-        return Int(kingfisherCache.memoryStorage.config.countLimit)
+        return kingfisherCache.memoryStorage.config.countLimit
     }
     
     // MARK: - Helper Methods
