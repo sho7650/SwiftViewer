@@ -69,12 +69,11 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
         // Create Kingfisher cache with custom name
         self.kingfisherCache = ImageCache(name: "SwiftViewer")
         
-        Task {
-            await configureKingfisherCache()
-        }
+        // Configure cache synchronously to ensure it's ready for tests
+        configureKingfisherCacheSync()
     }
     
-    private func configureKingfisherCache() async {
+    private func configureKingfisherCacheSync() {
         // Calculate and set memory limit (15% of system memory)
         let systemMemory = ProcessInfo.processInfo.physicalMemory
         let memoryLimit = Int(systemMemory * 15 / 100)
@@ -83,6 +82,10 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
         kingfisherCache.memoryStorage.config.totalCostLimit = memoryLimit
         kingfisherCache.memoryStorage.config.countLimit = 100
         kingfisherCache.diskStorage.config.sizeLimit = 500 * 1024 * 1024 // 500MB
+    }
+    
+    private func configureKingfisherCache() async {
+        configureKingfisherCacheSync()
     }
     
     // MARK: - AdaptiveImageCacheProtocol Implementation

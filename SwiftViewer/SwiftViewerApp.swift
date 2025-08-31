@@ -32,6 +32,7 @@ struct SwiftViewerApp: App {
                     }
                 }
         }
+        .windowStyle(.hiddenTitleBar)
         .windowManagerRole(.principal)
         .commands {
             MenuCommands()
