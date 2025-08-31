@@ -25,7 +25,9 @@ class TransitionManager: ObservableObject {
         self.transitionRegistry = [
             .crossDissolve: CrossDissolveTransition(),
             .zoomOut: ZoomOutTransition(),
-            .zoomIn: ZoomInTransition()
+            .zoomIn: ZoomInTransition(),
+            .blurReplace: BlurReplaceTransition(configuration: .downThenUp),
+            .blurReplaceUpUp: BlurReplaceTransition(configuration: .expandBoth)
         ]
     }
     
