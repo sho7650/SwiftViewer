@@ -162,7 +162,7 @@ final class ImageGalleryViewModel {
             
             // Update Observable properties with animation context for smooth transitions
             await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.fromSettings(.transition)) {
                     self.currentImageFile = imageFile
                     self.currentImage = loadedImage
                 }

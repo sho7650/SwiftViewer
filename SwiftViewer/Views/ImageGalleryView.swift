@@ -176,7 +176,7 @@ struct ImageGalleryView: View {
                     .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
             }
         }
-        .transition(transitionManager.createTransition(for: currentTransitionType, duration: 0.3))
+        .transition(transitionManager.createTransition(for: currentTransitionType, duration: DependencyContainer.shared.settingsManager.animationDurations[.transition] ?? 0.3))
     }
     
     private var imageInfoOverlay: some View {
