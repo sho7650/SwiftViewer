@@ -41,6 +41,7 @@ final class TransitionManagerTests: XCTestCase {
         XCTAssertTrue(availableTransitions.contains(.crossDissolve))
         XCTAssertTrue(availableTransitions.contains(.zoomOut))
         XCTAssertTrue(availableTransitions.contains(.zoomIn))
+        XCTAssertTrue(availableTransitions.contains(.none))
     }
     
     func test_transitionManager_availableTransitions_countMatchesTransitionTypes() {
@@ -71,6 +72,11 @@ final class TransitionManagerTests: XCTestCase {
     
     func test_transitionManager_createTransition_zoomIn_returnsValidTransition() {
         let transition = sut.createTransition(for: .zoomIn, duration: 0.3)
+        XCTAssertNotNil(transition)
+    }
+    
+    func test_transitionManager_createTransition_none_returnsIdentityTransition() {
+        let transition = sut.createTransition(for: .none, duration: 0.3)
         XCTAssertNotNil(transition)
     }
     

@@ -15,16 +15,18 @@ final class TransitionTypeTests: XCTestCase {
     func test_transitionType_hasExpectedCases() {
         let allCases = TransitionType.allCases
         
-        XCTAssertEqual(allCases.count, 3)
+        XCTAssertEqual(allCases.count, 4)
         XCTAssertTrue(allCases.contains(.crossDissolve))
         XCTAssertTrue(allCases.contains(.zoomOut))
         XCTAssertTrue(allCases.contains(.zoomIn))
+        XCTAssertTrue(allCases.contains(.none))
     }
     
     func test_transitionType_rawValues_areCorrect() {
         XCTAssertEqual(TransitionType.crossDissolve.rawValue, "crossDissolve")
         XCTAssertEqual(TransitionType.zoomOut.rawValue, "zoomOut")
         XCTAssertEqual(TransitionType.zoomIn.rawValue, "zoomIn")
+        XCTAssertEqual(TransitionType.none.rawValue, "none")
     }
     
     // MARK: - Display Name Tests
@@ -33,6 +35,7 @@ final class TransitionTypeTests: XCTestCase {
         XCTAssertEqual(TransitionType.crossDissolve.displayName, "Cross Dissolve")
         XCTAssertEqual(TransitionType.zoomOut.displayName, "Zoom Out")
         XCTAssertEqual(TransitionType.zoomIn.displayName, "Zoom In")
+        XCTAssertEqual(TransitionType.none.displayName, "None")
     }
     
     // MARK: - Codable Tests
@@ -76,7 +79,7 @@ final class TransitionTypeTests: XCTestCase {
     
     func test_transitionType_allCases_isComplete() {
         // Ensure we haven't missed any cases when adding new transitions
-        let expectedCount = 3
+        let expectedCount = 4
         XCTAssertEqual(TransitionType.allCases.count, expectedCount, 
                       "Update this test when adding new transition types")
     }

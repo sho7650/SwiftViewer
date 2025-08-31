@@ -12,6 +12,7 @@ enum TransitionType: String, CaseIterable, Codable, Equatable {
     case crossDissolve = "crossDissolve"
     case zoomOut = "zoomOut"
     case zoomIn = "zoomIn"
+    case none = "none"
     
     /// User-friendly display name for the transition type
     var displayName: String {
@@ -22,6 +23,8 @@ enum TransitionType: String, CaseIterable, Codable, Equatable {
             return "Zoom Out"
         case .zoomIn:
             return "Zoom In"
+        case .none:
+            return "None"
         }
     }
 }
