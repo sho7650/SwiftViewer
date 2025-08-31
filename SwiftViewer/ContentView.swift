@@ -138,7 +138,7 @@ struct ContentView: View {
             
             // Only show image viewer if we successfully loaded images
             if imageGalleryViewModel.hasImages && imageGalleryViewModel.errorMessage == nil {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.fromSettings(.control)) {
                     isImageViewerActive = true
                 }
             }

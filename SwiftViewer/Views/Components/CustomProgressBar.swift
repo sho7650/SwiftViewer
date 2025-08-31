@@ -37,7 +37,7 @@ struct CustomProgressBar: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.blue)
                         .frame(width: progressWidth(geometry.size.width), height: 8)
-                        .animation(.easeInOut(duration: 0.2), value: currentIndex)
+                        .animation(.fromSettings(.ui), value: currentIndex)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { location in

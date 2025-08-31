@@ -189,11 +189,11 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                     
-                    ForEach(AnimationType.allCases, id: \.self) { type in
+                    ForEach(AnimationType.allCases.filter { $0.isConfigurable }, id: \.self) { type in
                         HStack {
                             Slider(
                                 value: bindingForAnimationType(type),
-                                in: 0.1...1.0,
+                                in: type.configurableRange ?? 0.1...1.0,
                                 step: 0.1
                             ) {
                                 Text("\(type.displayName) Duration")
@@ -205,6 +205,11 @@ struct SettingsView: View {
                                 .frame(width: 40, alignment: .trailing)
                         }
                     }
+                    
+                    Text("Only transition duration is configurable (0.1 - 5.0 seconds)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 120)
                 }
             }
         }
@@ -327,7 +332,7 @@ struct SlideShowPresetsView: View {
             HStack(spacing: 8) {
                 ForEach(intervals, id: \.self) { interval in
                     Button(SlideshowIntervalHelper.formatInterval(interval)) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.fromSettings(.ui)) {
                             selectedInterval = interval
                         }
                     }

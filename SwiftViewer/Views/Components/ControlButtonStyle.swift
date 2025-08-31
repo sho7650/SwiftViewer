@@ -27,7 +27,7 @@ struct ControlButtonStyle: ButtonStyle {
                     .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.fromSettings(.feedback), value: configuration.isPressed)
     }
     
     private func foregroundColor(_ isPressed: Bool) -> Color {
