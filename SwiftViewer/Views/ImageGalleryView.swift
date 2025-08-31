@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import Observation
+import SwiftGlass
 
 struct ImageGalleryView: View {
     var viewModel: ImageGalleryViewModel
@@ -243,7 +244,7 @@ struct ImageGalleryView: View {
             HStack {
                 Spacer()
                 
-                SlideShowControlsView(
+                GlassmorphismControlsView(
                     isSlideShowRunning: slideShowViewModel.isRunning,
                     currentIndex: viewModel.currentIndex,
                     totalCount: viewModel.imageFiles.count,
