@@ -31,7 +31,10 @@ class TransitionManager: ObservableObject {
     
     /// Get all available transition types
     var availableTransitions: [TransitionType] {
-        return Array(transitionRegistry.keys).sorted { $0.rawValue < $1.rawValue }
+        // Include none transition which is handled specially
+        var transitions = Array(transitionRegistry.keys)
+        transitions.append(.none)
+        return transitions.sorted { $0.rawValue < $1.rawValue }
     }
     
     /// Create a SwiftUI transition for the specified type and duration
@@ -40,6 +43,11 @@ class TransitionManager: ObservableObject {
     ///   - duration: The duration of the transition animation
     /// - Returns: An AnyTransition that can be applied to SwiftUI views
     func createTransition(for type: TransitionType, duration: TimeInterval) -> AnyTransition {
+        // Handle none transition type - no animation effect
+        if type == .none {
+            return .identity
+        }
+        
         guard let transitionStrategy = transitionRegistry[type] else {
             // Fallback to default transition if type not found
             return transitionRegistry[Self.defaultTransitionType]?.createTransition(duration: duration) ?? .opacity
@@ -59,6 +67,10 @@ class TransitionManager: ObservableObject {
     /// - Parameter type: The transition type to check
     /// - Returns: True if the transition is available
     func isTransitionAvailable(_ type: TransitionType) -> Bool {
+        // None transition is always available (handled specially)
+        if type == .none {
+            return true
+        }
         return transitionRegistry[type] != nil
     }
 }
