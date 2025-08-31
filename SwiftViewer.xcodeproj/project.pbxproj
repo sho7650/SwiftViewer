@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CA71D4702E631E4B00A38DC5 /* Kingfisher */; };
+		CAC5D7482E645EBD00E32766 /* SwiftGlass in Frameworks */ = {isa = PBXBuildFile; productRef = CAC5D7472E645EBD00E32766 /* SwiftGlass */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */,
+				CAC5D7482E645EBD00E32766 /* SwiftGlass in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = SwiftViewer;
 			packageProductDependencies = (
 				CA71D4702E631E4B00A38DC5 /* Kingfisher */,
+				CAC5D7472E645EBD00E32766 /* SwiftGlass */,
 			);
 			productName = SwiftViewer;
 			productReference = CABC92202E56D25A001A43C1 /* SwiftViewer.app */;
@@ -203,6 +206,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CABC92212E56D25A001A43C1 /* Products */;
@@ -614,6 +618,14 @@
 				minimumVersion = 8.5.0;
 			};
 		};
+		CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/1998code/SwiftGlass.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.9.9;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -621,6 +633,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		CAC5D7472E645EBD00E32766 /* SwiftGlass */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */;
+			productName = SwiftGlass;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
