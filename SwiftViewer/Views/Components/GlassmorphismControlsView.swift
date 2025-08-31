@@ -195,3 +195,87 @@ struct GlassButtonStyle: ButtonStyle {
             .animation(.fromSettings(.feedback), value: configuration.isPressed)
     }
 }
+
+// MARK: - Preview
+
+#Preview("Running Slideshow") {
+    VStack(spacing: 40) {
+        // Running slideshow with repeat enabled
+        GlassmorphismControlsView(
+            isSlideShowRunning: true,
+            currentIndex: 3,
+            totalCount: 10,
+            isRepeatEnabled: true,
+            isLeftKeyPressed: false,
+            isSpaceKeyPressed: false,
+            isRightKeyPressed: false,
+            onPrevious: { print("Preview: Previous tapped") },
+            onToggleSlideShow: { print("Preview: Toggle slideshow") },
+            onNext: { print("Preview: Next tapped") },
+            onToggleRepeat: { print("Preview: Toggle repeat") },
+            onProgressTapped: { index in print("Preview: Progress tapped at \(index)") }
+        )
+        
+        // Paused slideshow with key press feedback
+        GlassmorphismControlsView(
+            isSlideShowRunning: false,
+            currentIndex: 0,
+            totalCount: 5,
+            isRepeatEnabled: false,
+            isLeftKeyPressed: true,
+            isSpaceKeyPressed: false,
+            isRightKeyPressed: false,
+            onPrevious: { print("Preview: Previous tapped") },
+            onToggleSlideShow: { print("Preview: Toggle slideshow") },
+            onNext: { print("Preview: Next tapped") },
+            onToggleRepeat: { print("Preview: Toggle repeat") },
+            onProgressTapped: { index in print("Preview: Progress tapped at \(index)") }
+        )
+    }
+    .padding()
+    .background(Color.black.opacity(0.8))
+}
+
+#Preview("Different States") {
+    VStack(spacing: 40) {
+        // Space key pressed state
+        GlassmorphismControlsView(
+            isSlideShowRunning: true,
+            currentIndex: 4,
+            totalCount: 8,
+            isRepeatEnabled: true,
+            isLeftKeyPressed: false,
+            isSpaceKeyPressed: true,
+            isRightKeyPressed: false,
+            onPrevious: { },
+            onToggleSlideShow: { },
+            onNext: { },
+            onToggleRepeat: { },
+            onProgressTapped: { _ in }
+        )
+        
+        // Right key pressed state
+        GlassmorphismControlsView(
+            isSlideShowRunning: false,
+            currentIndex: 7,
+            totalCount: 8,
+            isRepeatEnabled: false,
+            isLeftKeyPressed: false,
+            isSpaceKeyPressed: false,
+            isRightKeyPressed: true,
+            onPrevious: { },
+            onToggleSlideShow: { },
+            onNext: { },
+            onToggleRepeat: { },
+            onProgressTapped: { _ in }
+        )
+    }
+    .padding()
+    .background(
+        LinearGradient(
+            colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    )
+}
