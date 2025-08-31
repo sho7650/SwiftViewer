@@ -229,6 +229,49 @@ final class SettingsManagerTests: XCTestCase {
         XCTAssertEqual(sut.slideShowPresetIntervals, expected)
     }
     
+    // MARK: - Transition Type Tests
+    
+    func test_transitionType_returnsDefaultValue_whenNotSet() {
+        let transitionType = sut.transitionType
+        
+        XCTAssertEqual(transitionType, .crossDissolve, "Should return default transition type of crossDissolve")
+    }
+    
+    func test_transitionType_returnsStoredValue_whenSet() {
+        sut.transitionType = .zoomOut
+        
+        let transitionType = sut.transitionType
+        
+        XCTAssertEqual(transitionType, .zoomOut, "Should return stored transition type value")
+    }
+    
+    func test_transitionType_persistsValue_acrossSessions() {
+        sut.transitionType = .zoomIn
+        
+        // Create new instance with same UserDefaults
+        let newSettings = SettingsManager(userDefaults: mockUserDefaults)
+        
+        XCTAssertEqual(newSettings.transitionType, .zoomIn, "Should persist transition type across sessions")
+    }
+    
+    func test_transitionType_handlesAllTransitionTypes() {
+        let allTypes = TransitionType.allCases
+        
+        for type in allTypes {
+            sut.transitionType = type
+            XCTAssertEqual(sut.transitionType, type, "Should handle transition type: \(type)")
+        }
+    }
+    
+    func test_transitionType_fallsBackToDefault_withInvalidRawValue() {
+        // Manually set invalid raw value
+        mockUserDefaults.set("invalidTransitionType", forKey: "transitionType")
+        
+        let transitionType = sut.transitionType
+        
+        XCTAssertEqual(transitionType, .crossDissolve, "Should fall back to default when invalid raw value is stored")
+    }
+    
     // MARK: - Mock Settings Manager Tests
     
     func test_mockSettingsManager_hasCorrectDefaultInterval() {
@@ -255,5 +298,6 @@ final class SettingsManagerTests: XCTestCase {
         XCTAssertEqual(mockSettings.loggingLevel, .info)
         XCTAssertEqual(mockSettings.windowPosition, .normal)
         XCTAssertEqual(mockSettings.slideShowPresetIntervals.count, 13)
+        XCTAssertEqual(mockSettings.transitionType, .crossDissolve)
     }
 }
