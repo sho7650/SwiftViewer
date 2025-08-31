@@ -57,7 +57,7 @@ struct FolderSelectionView: View {
                 }
                 .buttonStyle(.plain)
                 .scaleEffect(isDragOver ? 1.05 : 1.0)
-                .animation(.easeInOut(duration: 0.2), value: isDragOver)
+                .animation(.fromSettings(.ui), value: isDragOver)
                 
                 // Drag and drop area
                 VStack(spacing: 12) {

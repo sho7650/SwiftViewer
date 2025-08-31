@@ -41,14 +41,14 @@ class AutoHideControlsManager {
     // MARK: - Public Methods
     
     func showControlsAndResetTimer() {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.fromSettings(.control)) {
             areControlsVisible = true
         }
         resetHideTimer()
     }
     
     func hideControlsImmediately() {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.fromSettings(.control)) {
             areControlsVisible = false
         }
         cleanupTimer()
@@ -90,7 +90,7 @@ class AutoHideControlsManager {
             return
         }
         
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.fromSettings(.control)) {
             areControlsVisible = false
         }
         cleanupTimer()

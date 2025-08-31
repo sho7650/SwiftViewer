@@ -12,8 +12,9 @@ import Foundation
 /// Types of animations used throughout the app
 enum AnimationType: String, CaseIterable, Codable, Equatable {
     case control = "control"         // Control show/hide animations
-    case transition = "transition"   // Image transition animations
+    case transition = "transition"   // Image transition animations  
     case feedback = "feedback"       // User interaction feedback animations
+    case ui = "ui"                   // General UI element animations
     
     var displayName: String {
         switch self {
@@ -23,6 +24,8 @@ enum AnimationType: String, CaseIterable, Codable, Equatable {
             return "Transitions"
         case .feedback:
             return "Feedback"
+        case .ui:
+            return "UI Elements"
         }
     }
     
@@ -31,9 +34,31 @@ enum AnimationType: String, CaseIterable, Codable, Equatable {
         case .control:
             return 0.3
         case .transition:
-            return 0.2
+            return 0.3  // Updated to match user specification
         case .feedback:
             return 0.1
+        case .ui:
+            return 0.2
+        }
+    }
+    
+    /// Whether this animation type can be configured by user
+    var isConfigurable: Bool {
+        switch self {
+        case .transition:
+            return true  // Only transition duration is user-configurable
+        case .control, .feedback, .ui:
+            return false // These remain fixed
+        }
+    }
+    
+    /// Valid range for user-configurable durations
+    var configurableRange: ClosedRange<TimeInterval>? {
+        switch self {
+        case .transition:
+            return 0.1...5.0  // User can configure from 0.1 to 5.0 seconds
+        case .control, .feedback, .ui:
+            return nil        // Not configurable
         }
     }
 }

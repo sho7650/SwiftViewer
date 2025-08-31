@@ -273,7 +273,7 @@ struct ImageGalleryView: View {
                     },
                     onToggleRepeat: {
                         performUserAction {
-                            withAnimation(.easeInOut(duration: 0.2)) {
+                            withAnimation(.fromSettings(.ui)) {
                                 slideShowViewModel.toggleRepeatMode()
                             }
                             NotificationCenter.default.post(name: .repeatModeChanged, object: slideShowViewModel.isRepeatEnabled)
@@ -323,7 +323,7 @@ struct ImageGalleryView: View {
             switch key {
             case .leftArrow, .upArrow:
                 // Show visual feedback
-                withAnimation(.easeInOut(duration: 0.1)) {
+                withAnimation(.fromSettings(.feedback)) {
                     isLeftKeyPressed = true
                 }
                 
@@ -333,14 +333,14 @@ struct ImageGalleryView: View {
                 
                 // Reset visual feedback
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
+                    withAnimation(.fromSettings(.feedback)) {
                         isLeftKeyPressed = false
                     }
                 }
                 
             case .rightArrow, .downArrow:
                 // Show visual feedback
-                withAnimation(.easeInOut(duration: 0.1)) {
+                withAnimation(.fromSettings(.feedback)) {
                     isRightKeyPressed = true
                 }
                 
@@ -350,14 +350,14 @@ struct ImageGalleryView: View {
                 
                 // Reset visual feedback
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
+                    withAnimation(.fromSettings(.feedback)) {
                         isRightKeyPressed = false
                     }
                 }
                 
             case .space:
                 // Show visual feedback
-                withAnimation(.easeInOut(duration: 0.1)) {
+                withAnimation(.fromSettings(.feedback)) {
                     isSpaceKeyPressed = true
                 }
                 
@@ -365,7 +365,7 @@ struct ImageGalleryView: View {
                 
                 // Reset visual feedback
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
+                    withAnimation(.fromSettings(.feedback)) {
                         isSpaceKeyPressed = false
                     }
                 }

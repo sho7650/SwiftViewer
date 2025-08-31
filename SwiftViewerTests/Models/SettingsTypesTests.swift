@@ -14,22 +14,25 @@ final class SettingsTypesTests: XCTestCase {
     
     func test_AnimationType_allCases_returnsAllTypes() {
         let allCases = AnimationType.allCases
-        XCTAssertEqual(allCases.count, 3)
+        XCTAssertEqual(allCases.count, 4)
         XCTAssertTrue(allCases.contains(.control))
         XCTAssertTrue(allCases.contains(.transition))
         XCTAssertTrue(allCases.contains(.feedback))
+        XCTAssertTrue(allCases.contains(.ui))
     }
     
     func test_AnimationType_displayName_returnsCorrectNames() {
         XCTAssertEqual(AnimationType.control.displayName, "Controls")
         XCTAssertEqual(AnimationType.transition.displayName, "Transitions")
         XCTAssertEqual(AnimationType.feedback.displayName, "Feedback")
+        XCTAssertEqual(AnimationType.ui.displayName, "UI Elements")
     }
     
     func test_AnimationType_defaultDuration_returnsCorrectValues() {
         XCTAssertEqual(AnimationType.control.defaultDuration, 0.3)
-        XCTAssertEqual(AnimationType.transition.defaultDuration, 0.2)
+        XCTAssertEqual(AnimationType.transition.defaultDuration, 0.3)
         XCTAssertEqual(AnimationType.feedback.defaultDuration, 0.1)
+        XCTAssertEqual(AnimationType.ui.defaultDuration, 0.2)
     }
     
     func test_AnimationType_codable_encodesAndDecodes() throws {
@@ -47,6 +50,7 @@ final class SettingsTypesTests: XCTestCase {
         XCTAssertEqual(AnimationType.control.rawValue, "control")
         XCTAssertEqual(AnimationType.transition.rawValue, "transition")
         XCTAssertEqual(AnimationType.feedback.rawValue, "feedback")
+        XCTAssertEqual(AnimationType.ui.rawValue, "ui")
     }
     
     // MARK: - WindowPosition Tests
