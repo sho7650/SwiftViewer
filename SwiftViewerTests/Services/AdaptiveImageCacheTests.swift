@@ -15,11 +15,14 @@ final class AdaptiveImageCacheTests: XCTestCase {
     var mockFileManager: MockFileManagerService!
     var mockSettingsManager: MockSettingsManager!
     
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         mockFileManager = MockFileManagerService()
         mockSettingsManager = MockSettingsManager()
         sut = AdaptiveImageCache(fileManager: mockFileManager, settings: mockSettingsManager)
+        
+        // Clear cache before each test to ensure clean state
+        await sut.clearCache()
     }
     
     override func tearDown() {
@@ -103,15 +106,21 @@ final class AdaptiveImageCacheTests: XCTestCase {
     }
     
     func test_getCachedImageCount_returnsCorrectCount() async throws {
-        // Given: Multiple cached images
+        // Given: Clear cache first to ensure clean state
+        await sut.clearCache()
+        
+        // Multiple cached images
         let urls = [
             URL(fileURLWithPath: "/test/image1.jpg"),
             URL(fileURLWithPath: "/test/image2.jpg"),
             URL(fileURLWithPath: "/test/image3.jpg")
         ]
         
+        // Cache images one by one and verify each is cached
         for url in urls {
             await sut.cacheImage(url: url)
+            let isCached = await sut.isImageCached(url: url)
+            XCTAssertTrue(isCached, "Image \(url.lastPathComponent) should be cached")
         }
         
         // When: Get cached count

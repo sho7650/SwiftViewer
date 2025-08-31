@@ -56,7 +56,9 @@ final class SlideShowViewModel {
             queue: .main
         ) { [weak self] notification in
             if let newValue = notification.object as? Bool {
-                self?.isRepeatEnabled = newValue
+                MainActor.assumeIsolated {
+                    self?.isRepeatEnabled = newValue
+                }
             }
         }
     }
