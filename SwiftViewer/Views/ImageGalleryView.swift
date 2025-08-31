@@ -112,6 +112,7 @@ struct ImageGalleryView: View {
                 currentTransitionType = newTransitionType
             }
         }
+        .ignoresSafeArea(.all)
     }
     
     // MARK: - Subviews
