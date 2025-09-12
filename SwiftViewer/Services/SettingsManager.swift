@@ -25,6 +25,12 @@ protocol SettingsManagerProtocol {
     
     // Image transition support
     var transitionType: TransitionType { get set }
+    
+    // Cache configuration properties
+    var cacheMemoryLimitPercentage: Double { get set } // 1-50% of system memory
+    var cacheDiskLimitMB: Int { get set } // Disk cache limit in MB
+    var cacheCountLimit: Int { get set } // Max number of cached images
+    var cachePreloadPercentage: Double { get set } // 10-100% of images to preload
 }
 
 final class SettingsManager: SettingsManagerProtocol {
@@ -218,6 +224,60 @@ final class SettingsManager: SettingsManagerProtocol {
             userDefaults.set(newValue.rawValue, forKey: "transitionType")
         }
     }
+    
+    // MARK: - Cache Configuration Properties
+    
+    var cacheMemoryLimitPercentage: Double {
+        get {
+            let percentage = userDefaults.double(forKey: "cacheMemoryLimitPercentage")
+            if percentage == 0 && !userDefaults.bool(forKey: "cacheMemoryLimitPercentageSet") {
+                return 15.0 // Default 15% of system memory
+            }
+            return max(1.0, min(50.0, percentage))
+        }
+        set {
+            let validatedValue = max(1.0, min(50.0, newValue))
+            userDefaults.set(validatedValue, forKey: "cacheMemoryLimitPercentage")
+            userDefaults.set(true, forKey: "cacheMemoryLimitPercentageSet")
+        }
+    }
+    
+    var cacheDiskLimitMB: Int {
+        get {
+            let limit = userDefaults.integer(forKey: "cacheDiskLimitMB")
+            return limit > 0 ? limit : 500 // Default 500MB
+        }
+        set {
+            let validatedValue = max(100, min(10000, newValue)) // 100MB to 10GB
+            userDefaults.set(validatedValue, forKey: "cacheDiskLimitMB")
+        }
+    }
+    
+    var cacheCountLimit: Int {
+        get {
+            let limit = userDefaults.integer(forKey: "cacheCountLimit")
+            return limit > 0 ? limit : 100 // Default 100 images
+        }
+        set {
+            let validatedValue = max(10, min(1000, newValue)) // 10 to 1000 images
+            userDefaults.set(validatedValue, forKey: "cacheCountLimit")
+        }
+    }
+    
+    var cachePreloadPercentage: Double {
+        get {
+            let percentage = userDefaults.double(forKey: "cachePreloadPercentage")
+            if percentage == 0 && !userDefaults.bool(forKey: "cachePreloadPercentageSet") {
+                return 20.0 // Default 20% preload
+            }
+            return max(10.0, min(100.0, percentage))
+        }
+        set {
+            let validatedValue = max(10.0, min(100.0, newValue))
+            userDefaults.set(validatedValue, forKey: "cachePreloadPercentage")
+            userDefaults.set(true, forKey: "cachePreloadPercentageSet")
+        }
+    }
 }
 
 final class MockSettingsManager: SettingsManagerProtocol {
@@ -242,7 +302,13 @@ final class MockSettingsManager: SettingsManagerProtocol {
     // Image transition support
     var transitionType: TransitionType = .crossDissolve
     
-    // Cache configuration properties for testing
+    // Cache configuration properties
+    var cacheMemoryLimitPercentage: Double = 15.0
+    var cacheDiskLimitMB: Int = 500
+    var cacheCountLimit: Int = 100
+    var cachePreloadPercentage: Double = 20.0
+    
+    // Legacy testing properties (deprecated)
     var customCacheMemoryLimit: Int? = nil
     var preloadImageCount: Int? = nil
 }

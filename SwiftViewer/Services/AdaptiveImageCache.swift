@@ -74,14 +74,22 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
     }
     
     private func configureKingfisherCacheSync() {
-        // Calculate and set memory limit (15% of system memory)
+        // Read user-configured cache limits from settings
         let systemMemory = ProcessInfo.processInfo.physicalMemory
-        let memoryLimit = Int(systemMemory * 15 / 100)
+        let memoryPercentage = settings.cacheMemoryLimitPercentage
+        let memoryLimit = Int(Double(systemMemory) * memoryPercentage / 100.0)
         
-        // Configure Kingfisher cache limits using real API
+        let diskLimitMB = settings.cacheDiskLimitMB
+        let diskLimit = UInt(diskLimitMB) * 1024 * 1024 // Convert MB to bytes
+        
+        let countLimit = settings.cacheCountLimit
+        
+        // Configure Kingfisher cache limits with user settings
         kingfisherCache.memoryStorage.config.totalCostLimit = memoryLimit
-        kingfisherCache.memoryStorage.config.countLimit = 100
-        kingfisherCache.diskStorage.config.sizeLimit = 500 * 1024 * 1024 // 500MB
+        kingfisherCache.memoryStorage.config.countLimit = countLimit
+        kingfisherCache.diskStorage.config.sizeLimit = diskLimit
+        
+        logger.info("Cache configured: Memory=\(memoryPercentage)% (\(memoryLimit/1024/1024)MB), Disk=\(diskLimitMB)MB, Count=\(countLimit)")
     }
     
     private func configureKingfisherCache() async {
@@ -96,11 +104,17 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
             let imageFiles = try await fileManager.getImageFiles(from: folderUrl, sortBy: .name(ascending: true))
             let imageCount = imageFiles.count
             
-            // Algorithm: For ≤100 images cache all, for >100 cache 20% (max 100)
+            // Use user-configured preload percentage
+            let preloadPercentage = settings.cachePreloadPercentage / 100.0
+            
+            // Algorithm: For ≤100 images cache all, for >100 cache configured percentage
             if imageCount <= 100 {
                 return imageCount
             } else {
-                return min(100, max(10, Int(Double(imageCount) * 0.2)))
+                let calculated = Int(Double(imageCount) * preloadPercentage)
+                // Respect the cache count limit from settings
+                let maxCount = settings.cacheCountLimit
+                return min(maxCount, max(10, calculated))
             }
         } catch {
             logger.error("Failed to calculate cache size for \(folderPath): \(error)")
@@ -109,6 +123,10 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
     }
     
     func preloadImages(from folderPath: String, count: Int) async {
+        // Cancel any existing prefetcher to prevent memory leaks
+        currentPrefetcher?.stop()
+        currentPrefetcher = nil
+        
         do {
             let folderUrl = URL(fileURLWithPath: folderPath)
             let imageFiles = try await fileManager.getImageFiles(from: folderUrl, sortBy: .name(ascending: true))
@@ -118,18 +136,32 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
             
             // Use real Kingfisher ImagePrefetcher with completion tracking
             await withCheckedContinuation { continuation in
-                currentPrefetcher = ImagePrefetcher(urls: urlsToPreload) { 
+                var prefetcherRef: ImagePrefetcher?
+                let prefetcher = ImagePrefetcher(urls: urlsToPreload) { [weak self]
                     skippedResources, failedResources, completedResources in
                     // Track successful preloads
                     Task {
+                        guard let self = self else { 
+                            continuation.resume()
+                            return 
+                        }
                         for resource in completedResources {
                             await self.cacheTracker.addKey(resource.downloadURL.absoluteString)
                         }
                         self.logger.info("Preloaded \(completedResources.count) images from \(folderPath)")
+                        
+                        // Clean up prefetcher reference after completion
+                        if let storedPrefetcher = prefetcherRef,
+                           self.currentPrefetcher === storedPrefetcher {
+                            self.currentPrefetcher = nil
+                        }
+                        
                         continuation.resume()
                     }
                 }
-                currentPrefetcher?.start()
+                prefetcherRef = prefetcher
+                currentPrefetcher = prefetcher
+                prefetcher.start()
             }
             
         } catch {
@@ -202,11 +234,27 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
     }
     
     func handleMemoryWarning() async {
+        // Cancel any ongoing prefetching to free resources
+        currentPrefetcher?.stop()
+        currentPrefetcher = nil
+        
+        // Clear memory cache first
         kingfisherCache.clearMemoryCache()
         await cacheTracker.removeAllKeys()
+        
+        // Clear disk cache as well
         await withCheckedContinuation { continuation in
             kingfisherCache.clearDiskCache { 
-                self.logger.info("Cleared cache due to memory pressure")
+                self.logger.warning("Cleared all caches due to memory pressure")
+                
+                // Post notification for UI to respond
+                Task { @MainActor in
+                    NotificationCenter.default.post(
+                        name: Notification.Name("CacheMemoryWarning"),
+                        object: nil
+                    )
+                }
+                
                 continuation.resume()
             }
         }

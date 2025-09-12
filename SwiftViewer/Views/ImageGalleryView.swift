@@ -16,6 +16,7 @@ struct ImageGalleryView: View {
     @State private var autoHideManager: AutoHideControlsManager
     @State private var transitionManager: TransitionManager
     @State private var currentTransitionType: TransitionType
+    @State private var currentDisplayMode: DisplayMode = .fit
     @FocusState private var isFocused: Bool
     
     // Keyboard press states for visual feedback
@@ -114,6 +115,13 @@ struct ImageGalleryView: View {
                 currentTransitionType = newTransitionType
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DisplayModeChanged"))) { notification in
+            if let newDisplayMode = notification.object as? DisplayMode {
+                withAnimation(.fromSettings(.transition)) {
+                    currentDisplayMode = newDisplayMode
+                }
+            }
+        }
         .ignoresSafeArea(.all)
     }
     
@@ -172,11 +180,25 @@ struct ImageGalleryView: View {
                 SimpleAnimatedImageView(url: currentImageFile.url)
                     .id(currentImageFile.url.absoluteString)
             } else {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .clipped()
-                    .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                switch currentDisplayMode {
+                case .fit:
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .clipped()
+                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                case .fill:
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .clipped()
+                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                case .actualSize:
+                    ScrollView([.horizontal, .vertical]) {
+                        Image(nsImage: image)
+                            .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                    }
+                }
             }
         }
         .transition(transitionManager.createTransition(for: currentTransitionType, duration: DependencyContainer.shared.settingsManager.animationDurations[.transition] ?? 0.3))
