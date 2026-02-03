@@ -24,6 +24,7 @@ final class SlideShowViewModel {
     private let slideShowService: SlideShowServiceProtocol
     private let imageNavigator: ImageGalleryNavigationProtocol
     private var settingsManager: SettingsManagerProtocol
+    private let logger = Logger.shared
     
     private var _isRunning: Bool = false
     
@@ -80,7 +81,7 @@ final class SlideShowViewModel {
         let actualInterval = interval ?? defaultInterval
         guard actualInterval > 0 else { return }
         
-        slideShowService.startTimer(interval: actualInterval) { [weak self] in
+        let result = slideShowService.startTimer(interval: actualInterval) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
                 // Check if we should stop at the last image
@@ -97,8 +98,12 @@ final class SlideShowViewModel {
         }
         
         // Only update state if service actually started
-        if slideShowService.isRunning {
+        switch result {
+        case .success:
             _isRunning = true
+        case .failure(let error):
+            logger.error("Failed to start slideshow: \(error.localizedDescription)")
+            _isRunning = false
         }
     }
     
@@ -106,7 +111,7 @@ final class SlideShowViewModel {
         if _isRunning {
             let currentInterval = slideShowService.currentInterval ?? defaultInterval
             slideShowService.stopTimer()
-            slideShowService.startTimer(interval: currentInterval) { [weak self] in
+            let result = slideShowService.startTimer(interval: currentInterval) { [weak self] in
                 guard let self = self else { return }
                 Task { @MainActor in
                     // Check if we should stop at the last image
@@ -121,6 +126,11 @@ final class SlideShowViewModel {
                     }
                 }
             }
+            
+            if case .failure(let error) = result {
+                logger.error("Failed to restart slideshow: \(error.localizedDescription)")
+                _isRunning = false
+            }
         }
     }
     
@@ -128,7 +138,7 @@ final class SlideShowViewModel {
         if _isRunning {
             let newInterval = defaultInterval
             slideShowService.stopTimer()
-            slideShowService.startTimer(interval: newInterval) { [weak self] in
+            let result = slideShowService.startTimer(interval: newInterval) { [weak self] in
                 guard let self = self else { return }
                 Task { @MainActor in
                     // Check if we should stop at the last image
@@ -142,6 +152,11 @@ final class SlideShowViewModel {
                         await self.imageNavigator.navigateToNext()
                     }
                 }
+            }
+            
+            if case .failure(let error) = result {
+                logger.error("Failed to update slideshow interval: \(error.localizedDescription)")
+                _isRunning = false
             }
         }
     }

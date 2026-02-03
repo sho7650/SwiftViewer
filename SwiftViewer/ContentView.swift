@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var imageGalleryViewModel: ImageGalleryViewModel
     @State private var isImageViewerActive = false
     @State private var isFullscreen = false
+    @State private var currentLoadingTaskID: UUID?
     @FocusState private var isContentViewFocused: Bool
     
     @StateObject private var contentViewModel = ContentViewModel()
@@ -132,17 +133,40 @@ struct ContentView: View {
     private func handleFolderSelection(_ url: URL) {
         selectedFolderURL = url
         
+        // Create a unique task ID to prevent race conditions
+        let taskID = UUID()
+        currentLoadingTaskID = taskID
+        
         Task { @MainActor in
             // Load folder contents
             await imageGalleryViewModel.loadFolder(url)
+            
+            // Check if this is still the current loading task (prevent race condition)
+            guard currentLoadingTaskID == taskID else {
+                Logger.shared.debug("[ContentView] Skipping UI update - newer folder load initiated")
+                return
+            }
             
             // Only show image viewer if we successfully loaded images
             if imageGalleryViewModel.hasImages && imageGalleryViewModel.errorMessage == nil {
                 withAnimation(.fromSettings(.control)) {
                     isImageViewerActive = true
                 }
+            } else if let error = imageGalleryViewModel.errorMessage {
+                // Show error alert to user
+                Logger.shared.error("[ContentView] Failed to load folder: \(error)")
+                showErrorAlert(message: error)
             }
         }
+    }
+    
+    private func showErrorAlert(message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Failed to Load Images"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
     
     
@@ -151,9 +175,14 @@ struct ContentView: View {
     }
     
     private func handleDisplayModeChange(_ displayMode: DisplayMode) {
-        // Placeholder for Phase 6.1 implementation
         contentViewModel.updateDisplayMode(displayMode)
         Logger.shared.info("Display mode changed to: \(displayMode.rawValue)")
+        
+        // Notify the gallery view to update its display mode
+        NotificationCenter.default.post(
+            name: Notification.Name("DisplayModeChanged"),
+            object: displayMode
+        )
     }
     
     private func toggleFullscreen() {
