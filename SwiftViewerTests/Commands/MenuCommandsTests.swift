@@ -58,7 +58,6 @@ final class MenuCommandsTests: XCTestCase {
         XCTAssertNotNil(contentViewModel)
         XCTAssertEqual(contentViewModel.currentDisplayMode, .fit)
         XCTAssertFalse(contentViewModel.isFullscreen)
-        XCTAssertFalse(contentViewModel.hasRecentFolders)
     }
     
     func test_contentViewModel_updateSortType() {

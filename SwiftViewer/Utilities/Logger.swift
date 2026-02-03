@@ -26,16 +26,34 @@ enum LogLevel: Int {
 
 final class Logger {
     static let shared = Logger()
-    
+
     private let subsystem = Bundle.main.bundleIdentifier ?? "oshiire.SwiftViewer"
     private let osLog: OSLog
-    
+
     init() {
         self.osLog = OSLog(subsystem: subsystem, category: "SwiftViewer")
     }
-    
+
     private var isDebugLoggingEnabled: Bool {
         UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+    }
+
+    // MARK: - Path Sanitization
+
+    /// Sanitizes file paths in log messages to prevent exposing sensitive directory structure.
+    /// Only shows the last two path components (parent directory + filename).
+    static func sanitizePath(_ path: String) -> String {
+        let components = (path as NSString).pathComponents
+        if components.count <= 2 {
+            return path
+        }
+        // Return only the last two components (parent/filename)
+        return components.suffix(2).joined(separator: "/")
+    }
+
+    /// Sanitizes a URL for safe logging
+    static func sanitizePath(_ url: URL) -> String {
+        sanitizePath(url.path)
     }
     
     /// Get the current logging level from UserDefaults, defaulting to .info

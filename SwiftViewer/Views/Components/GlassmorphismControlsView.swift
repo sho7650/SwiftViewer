@@ -209,13 +209,13 @@ struct GlassButtonStyle: ButtonStyle {
             isLeftKeyPressed: false,
             isSpaceKeyPressed: false,
             isRightKeyPressed: false,
-            onPrevious: { print("Preview: Previous tapped") },
-            onToggleSlideShow: { print("Preview: Toggle slideshow") },
-            onNext: { print("Preview: Next tapped") },
-            onToggleRepeat: { print("Preview: Toggle repeat") },
-            onProgressTapped: { index in print("Preview: Progress tapped at \(index)") }
+            onPrevious: { },
+            onToggleSlideShow: { },
+            onNext: { },
+            onToggleRepeat: { },
+            onProgressTapped: { _ in }
         )
-        
+
         // Paused slideshow with key press feedback
         GlassmorphismControlsView(
             isSlideShowRunning: false,
@@ -225,11 +225,11 @@ struct GlassButtonStyle: ButtonStyle {
             isLeftKeyPressed: true,
             isSpaceKeyPressed: false,
             isRightKeyPressed: false,
-            onPrevious: { print("Preview: Previous tapped") },
-            onToggleSlideShow: { print("Preview: Toggle slideshow") },
-            onNext: { print("Preview: Next tapped") },
-            onToggleRepeat: { print("Preview: Toggle repeat") },
-            onProgressTapped: { index in print("Preview: Progress tapped at \(index)") }
+            onPrevious: { },
+            onToggleSlideShow: { },
+            onNext: { },
+            onToggleRepeat: { },
+            onProgressTapped: { _ in }
         )
     }
     .padding()
