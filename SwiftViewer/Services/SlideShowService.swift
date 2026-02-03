@@ -16,9 +16,9 @@ protocol SlideShowServiceProtocol {
     func stopTimer()
 }
 
-enum SlideShowError: LocalizedError {
+enum SlideShowError: LocalizedError, Equatable {
     case invalidInterval(TimeInterval)
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidInterval(let interval):
@@ -110,19 +110,23 @@ final class SlideShowService: SlideShowServiceProtocol {
 final class MockSlideShowService: SlideShowServiceProtocol {
     var isRunning: Bool = false
     var currentInterval: TimeInterval?
-    
+
     private var mockAction: (() -> Void)?
     private var shouldFailStart: Bool = false
-    
+    /// For testing: allow intervals below 1.0 second
+    var allowShortIntervals: Bool = true
+
     func startTimer(interval: TimeInterval, action: @escaping () -> Void) -> Result<Void, SlideShowError> {
         guard !shouldFailStart else {
             return .failure(.invalidInterval(interval))
         }
-        
-        guard interval >= 1.0 && interval <= 1800.0 else {
+
+        // For testing: optionally skip the 1.0 minimum interval check
+        let minInterval: TimeInterval = allowShortIntervals ? 0.01 : 1.0
+        guard interval >= minInterval && interval <= 1800.0 else {
             return .failure(.invalidInterval(interval))
         }
-        
+
         isRunning = true
         currentInterval = interval
         mockAction = action
