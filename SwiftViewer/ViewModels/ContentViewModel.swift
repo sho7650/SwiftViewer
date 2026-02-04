@@ -17,7 +17,6 @@ final class ContentViewModel: ObservableObject {
     @Published var currentWindowPosition: WindowPosition = .normal
     @Published var isFullscreen: Bool = false
     @Published var isRepeatEnabled: Bool = false
-    @Published var hasRecentFolders: Bool = false
     
     // MARK: - Dependencies
     

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct FolderSelectionView: View {
     let onFolderSelected: (URL) -> Void

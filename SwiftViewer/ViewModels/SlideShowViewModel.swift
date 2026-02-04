@@ -80,23 +80,9 @@ final class SlideShowViewModel {
     func startSlideShow(interval: TimeInterval? = nil) {
         let actualInterval = interval ?? defaultInterval
         guard actualInterval > 0 else { return }
-        
-        let result = slideShowService.startTimer(interval: actualInterval) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                // Check if we should stop at the last image
-                let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
-                let isRepeatEnabled = self.settingsManager.repeatEnabled
-                
-                if isAtLastImage && !isRepeatEnabled {
-                    // Stop slideshow when reaching the last image without repeat
-                    self.stopSlideShow()
-                } else {
-                    await self.imageNavigator.navigateToNext()
-                }
-            }
-        }
-        
+
+        let result = slideShowService.startTimer(interval: actualInterval, action: makeTimerAction())
+
         // Only update state if service actually started
         switch result {
         case .success:
@@ -106,57 +92,49 @@ final class SlideShowViewModel {
             _isRunning = false
         }
     }
-    
+
     func restartSlideShowIfRunning() {
-        if _isRunning {
-            let currentInterval = slideShowService.currentInterval ?? defaultInterval
-            slideShowService.stopTimer()
-            let result = slideShowService.startTimer(interval: currentInterval) { [weak self] in
-                guard let self = self else { return }
-                Task { @MainActor in
-                    // Check if we should stop at the last image
-                    let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
-                    let isRepeatEnabled = self.settingsManager.repeatEnabled
-                    
-                    if isAtLastImage && !isRepeatEnabled {
-                        // Stop slideshow when reaching the last image without repeat
-                        self.stopSlideShow()
-                    } else {
-                        await self.imageNavigator.navigateToNext()
-                    }
-                }
-            }
-            
-            if case .failure(let error) = result {
-                logger.error("Failed to restart slideshow: \(error.localizedDescription)")
-                _isRunning = false
-            }
+        guard _isRunning else { return }
+
+        let currentInterval = slideShowService.currentInterval ?? defaultInterval
+        slideShowService.stopTimer()
+        let result = slideShowService.startTimer(interval: currentInterval, action: makeTimerAction())
+
+        if case .failure(let error) = result {
+            logger.error("Failed to restart slideshow: \(error.localizedDescription)")
+            _isRunning = false
         }
     }
-    
+
     func updateIntervalIfRunning() {
-        if _isRunning {
-            let newInterval = defaultInterval
-            slideShowService.stopTimer()
-            let result = slideShowService.startTimer(interval: newInterval) { [weak self] in
-                guard let self = self else { return }
-                Task { @MainActor in
-                    // Check if we should stop at the last image
-                    let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
-                    let isRepeatEnabled = self.settingsManager.repeatEnabled
-                    
-                    if isAtLastImage && !isRepeatEnabled {
-                        // Stop slideshow when reaching the last image without repeat
-                        self.stopSlideShow()
-                    } else {
-                        await self.imageNavigator.navigateToNext()
-                    }
+        guard _isRunning else { return }
+
+        let newInterval = defaultInterval
+        slideShowService.stopTimer()
+        let result = slideShowService.startTimer(interval: newInterval, action: makeTimerAction())
+
+        if case .failure(let error) = result {
+            logger.error("Failed to update slideshow interval: \(error.localizedDescription)")
+            _isRunning = false
+        }
+    }
+
+    // MARK: - Private Methods
+
+    /// Creates the timer action closure for slideshow navigation.
+    /// Handles repeat mode and stopping at the last image.
+    private func makeTimerAction() -> () -> Void {
+        return { [weak self] in
+            guard let self = self else { return }
+            Task { @MainActor in
+                let isAtLastImage = self.imageNavigator.currentIndex == self.imageNavigator.imageFiles.count - 1
+                let isRepeatEnabled = self.settingsManager.repeatEnabled
+
+                if isAtLastImage && !isRepeatEnabled {
+                    self.stopSlideShow()
+                } else {
+                    await self.imageNavigator.navigateToNext()
                 }
-            }
-            
-            if case .failure(let error) = result {
-                logger.error("Failed to update slideshow interval: \(error.localizedDescription)")
-                _isRunning = false
             }
         }
     }

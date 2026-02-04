@@ -18,6 +18,7 @@ enum FileManagerServiceError: Error {
     case directoryNotFound
     case accessDenied
     case readError(Error)
+    case symbolicLinkNotAllowed
 }
 
 protocol FileManagerServiceProtocol {
@@ -41,29 +42,42 @@ final class FileManagerService: FileManagerServiceProtocol {
     func getImageFiles(from url: URL, sortBy: SortType = .name(ascending: true)) async throws -> [ImageFile] {
         return try await Task {
             do {
+                // Validate the source directory is not a symbolic link (security check)
+                let resolvedURL = url.resolvingSymlinksInPath()
+                if resolvedURL.path != url.standardizedFileURL.path {
+                    logger.warning("Symbolic link detected, using resolved path: \(resolvedURL.lastPathComponent)")
+                }
+
                 let contents = try fileManager.contentsOfDirectory(
-                    at: url,
-                    includingPropertiesForKeys: [.fileSizeKey, .creationDateKey],
+                    at: resolvedURL,
+                    includingPropertiesForKeys: [.fileSizeKey, .creationDateKey, .isSymbolicLinkKey],
                     options: [.skipsHiddenFiles]
                 )
-                
+
                 let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
+                    // Skip symbolic links for security
+                    let resourceValues = try? fileURL.resourceValues(forKeys: [.isSymbolicLinkKey])
+                    if resourceValues?.isSymbolicLink == true {
+                        logger.debug("Skipping symbolic link: \(fileURL.lastPathComponent)")
+                        return nil
+                    }
+
                     let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
-                    
+
                     let fileName = fileURL.lastPathComponent
                     let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
                     let createdDate = (attributes[.creationDate] as? Date) ?? Date()
-                    
+
                     let imageFile = ImageFile(
                         url: fileURL,
                         fileName: fileName,
                         fileSize: fileSize,
                         createdDate: createdDate
                     )
-                    
+
                     return imageFile.isValidImageFormat ? imageFile : nil
                 }
-                
+
                 return sortImageFiles(imageFiles, by: sortBy)
             } catch let error as NSError {
                 if error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError {

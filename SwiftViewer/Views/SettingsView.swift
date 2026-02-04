@@ -363,33 +363,6 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Slideshow Presets View
-
-struct SlideShowPresetsView: View {
-    @Binding var selectedInterval: Double
-    let intervals: [TimeInterval]
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(intervals, id: \.self) { interval in
-                    Button(SlideshowIntervalHelper.formatInterval(interval)) {
-                        withAnimation(.fromSettings(.ui)) {
-                            selectedInterval = interval
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .foregroundColor(selectedInterval == interval ? .white : .primary)
-                    .background(selectedInterval == interval ? Color.accentColor : Color.clear)
-                    .cornerRadius(6)
-                }
-            }
-            .padding(.horizontal, 2)
-        }
-    }
-}
-
 #Preview {
     SettingsView(settingsManager: MockSettingsManager())
 }
