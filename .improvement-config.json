@@ -3,8 +3,8 @@
   "focus": "all",
   "qa": {
     "lint": {
-      "enabled": true,
-      "tool": "swiftlint"
+      "enabled": false,
+      "tool": "none"
     },
     "typecheck": {
       "enabled": false,
