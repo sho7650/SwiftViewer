@@ -116,3 +116,4 @@ memAgent/
 .serena/
 temp/
 ./*.log
+.improvement-state/
