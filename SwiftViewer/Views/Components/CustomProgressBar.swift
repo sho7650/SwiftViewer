@@ -41,11 +41,10 @@ struct CustomProgressBar: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { location in
-                    if let onProgressTapped = onProgressTapped {
-                        let tappedIndex = Int((location.x / geometry.size.width) * Double(totalCount))
-                        let clampedIndex = max(0, min(totalCount - 1, tappedIndex))
-                        onProgressTapped(clampedIndex)
-                    }
+                    guard totalCount > 0, let onProgressTapped = onProgressTapped else { return }
+                    let tappedIndex = Int((location.x / geometry.size.width) * Double(totalCount))
+                    let clampedIndex = max(0, min(totalCount - 1, tappedIndex))
+                    onProgressTapped(clampedIndex)
                 }
             }
             .frame(height: 8)

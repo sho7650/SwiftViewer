@@ -16,13 +16,15 @@ final class ImageLoaderService: ImageLoaderServiceProtocol {
     private let logger = Logger.shared
     
     func loadImage(from url: URL) async throws -> NSImage {
-        return try await Task {
-            guard let image = NSImage(contentsOf: url) else {
-                logger.error("Failed to load image from \(url.path)")
-                throw ImageLoaderError.invalidImage
-            }
-            return image
-        }.value
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            logger.error("Image file not found: \(Logger.sanitizePath(url))")
+            throw ImageLoaderError.fileNotFound
+        }
+        guard let image = NSImage(contentsOf: url) else {
+            logger.error("Failed to load image from \(Logger.sanitizePath(url))")
+            throw ImageLoaderError.invalidImage
+        }
+        return image
     }
 }
 

@@ -59,7 +59,8 @@ final class Logger {
     /// Get the current logging level from UserDefaults, defaulting to .info
     private var currentLoggingLevel: LogLevel {
         if let levelString = UserDefaults.standard.string(forKey: "loggingLevel"),
-           let level = LogLevel(rawValue: Int(levelString) ?? 1) {
+           let rawValue = Int(levelString),
+           let level = LogLevel(rawValue: rawValue) {
             return level
         }
         return .info // Default to info level
