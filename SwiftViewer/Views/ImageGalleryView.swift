@@ -182,23 +182,18 @@ struct ImageGalleryView: View {
                 SimpleAnimatedImageView(url: currentImageFile.url)
                     .id(currentImageFile.url.absoluteString)
             } else {
+                let imageId = viewModel.currentImageFile?.url.absoluteString ?? "static-image"
                 switch currentDisplayMode {
-                case .fit:
+                case .fit, .fill:
                     Image(nsImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .aspectRatio(contentMode: currentDisplayMode == .fit ? .fit : .fill)
                         .clipped()
-                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
-                case .fill:
-                    Image(nsImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .clipped()
-                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                        .id(imageId)
                 case .actualSize:
                     ScrollView([.horizontal, .vertical]) {
                         Image(nsImage: image)
-                            .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                            .id(imageId)
                     }
                 }
             }
