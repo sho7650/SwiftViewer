@@ -12,6 +12,7 @@ import SwiftGlass
 
 struct ImageGalleryView: View {
     var viewModel: ImageGalleryViewModel
+    private let settingsManager: SettingsManagerProtocol
     @State private var slideShowViewModel: SlideShowViewModel
     @State private var autoHideManager: AutoHideControlsManager
     @State private var transitionManager: TransitionManager
@@ -32,6 +33,7 @@ struct ImageGalleryView: View {
     init(viewModel: ImageGalleryViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
+        self.settingsManager = dependencies.settingsManager
         let slideShowVM = SlideShowViewModel(
             slideShowService: dependencies.slideShowService,
             imageNavigator: viewModel,
@@ -115,7 +117,7 @@ struct ImageGalleryView: View {
                 currentTransitionType = newTransitionType
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DisplayModeChanged"))) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: .displayModeChanged)) { notification in
             if let newDisplayMode = notification.object as? DisplayMode {
                 withAnimation(.fromSettings(.transition)) {
                     currentDisplayMode = newDisplayMode
@@ -201,7 +203,7 @@ struct ImageGalleryView: View {
                 }
             }
         }
-        .transition(transitionManager.createTransition(for: currentTransitionType, duration: DependencyContainer.shared.settingsManager.animationDurations[.transition] ?? 0.3))
+        .transition(transitionManager.createTransition(for: currentTransitionType, duration: settingsManager.animationDurations[.transition] ?? 0.3))
     }
     
     private var imageInfoOverlay: some View {
