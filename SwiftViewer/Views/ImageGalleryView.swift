@@ -20,6 +20,8 @@ struct ImageGalleryView: View {
     @State private var currentDisplayMode: DisplayMode = .fit
     @FocusState private var isFocused: Bool
     
+    private static let controlsMinimumWidth: CGFloat = 268
+
     // Keyboard press states for visual feedback
     @State private var isLeftKeyPressed = false
     @State private var isRightKeyPressed = false
@@ -311,7 +313,7 @@ struct ImageGalleryView: View {
                             }
                         }
                     )
-                    .frame(maxWidth: max(268, geometry.size.width / 4))
+                    .frame(maxWidth: max(Self.controlsMinimumWidth, geometry.size.width / 4))
                     
                     Spacer()
                 }
