@@ -213,13 +213,6 @@ extension Logger {
         self.error(baseMessage, error: error, file: file, function: function, line: line)
     }
     
-    /// Context-aware logger for specific view components
-    /// Following Swift-Log value semantics pattern
-    static func viewLogger(for viewName: String) -> Logger {
-        // Future: Create logger instance with embedded context metadata
-        // For now, return shared instance (maintains current behavior)
-        return Logger.shared
-    }
 }
 
 // MARK: - Test Environment Support
