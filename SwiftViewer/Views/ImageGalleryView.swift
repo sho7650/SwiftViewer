@@ -344,62 +344,42 @@ struct ImageGalleryView: View {
     }
     
     // MARK: - Input Handling
-    
+
+    /// Shows momentary visual feedback by toggling a binding on then off after a short delay
+    private func withKeyFeedback(_ pressed: Binding<Bool>, action: @escaping () async -> Void) async {
+        withAnimation(.fromSettings(.feedback)) {
+            pressed.wrappedValue = true
+        }
+        await action()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.fromSettings(.feedback)) {
+                pressed.wrappedValue = false
+            }
+        }
+    }
+
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
-        // Show controls and reset timer on any keyboard activity
         autoHideManager.registerActivity()
-        
+
         Task { @MainActor in
             switch key {
             case .leftArrow, .upArrow:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isLeftKeyPressed = true
+                await withKeyFeedback($isLeftKeyPressed) {
+                    await viewModel.navigateToPrevious()
+                    slideShowViewModel.restartSlideShowIfRunning()
                 }
-                
-                // Navigate with transition
-                await viewModel.navigateToPrevious()
-                slideShowViewModel.restartSlideShowIfRunning()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isLeftKeyPressed = false
-                    }
-                }
-                
+
             case .rightArrow, .downArrow:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isRightKeyPressed = true
+                await withKeyFeedback($isRightKeyPressed) {
+                    await viewModel.navigateToNext()
+                    slideShowViewModel.restartSlideShowIfRunning()
                 }
-                
-                // Navigate with transition
-                await viewModel.navigateToNext()
-                slideShowViewModel.restartSlideShowIfRunning()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isRightKeyPressed = false
-                    }
-                }
-                
+
             case .space:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isSpaceKeyPressed = true
+                await withKeyFeedback($isSpaceKeyPressed) {
+                    slideShowViewModel.toggleSlideShow()
                 }
-                
-                slideShowViewModel.toggleSlideShow()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isSpaceKeyPressed = false
-                    }
-                }
-                
+
             default:
                 break
             }
