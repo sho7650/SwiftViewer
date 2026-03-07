@@ -13,12 +13,12 @@ final class ViewLoggingIntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Reset debug logging state for each test
-        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: SettingsKeys.debugLoggingEnabled)
     }
     
     override func tearDown() {
         // Clean up debug logging state
-        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: SettingsKeys.debugLoggingEnabled)
         super.tearDown()
     }
     
@@ -58,7 +58,7 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         let testPath = "/Users/test/Pictures"
         
         // Enable debug logging for this test
-        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(true, forKey: SettingsKeys.debugLoggingEnabled)
         
         // Then - Should not crash when logging folder selection
         XCTAssertNoThrow(logger.debug("Folder selected: \(testPath)"))
@@ -71,7 +71,7 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         let logger = Logger.shared
         
         // Enable debug logging for this test
-        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(true, forKey: SettingsKeys.debugLoggingEnabled)
         
         // When - This tests that Logger.shared.debug can be called for preview actions
         // Then - Should not crash when logging various preview actions
@@ -116,14 +116,14 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         // Test that debug logging state affects view logging behavior
         
         // Given - Debug logging disabled
-        UserDefaults.standard.set(false, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(false, forKey: SettingsKeys.debugLoggingEnabled)
         let logger = Logger.shared
         
         // When & Then - Debug calls should not crash (even if not logged)
         XCTAssertNoThrow(logger.debug("Debug message from view"))
         
         // Given - Debug logging enabled
-        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(true, forKey: SettingsKeys.debugLoggingEnabled)
         
         // When & Then - Debug calls should not crash
         XCTAssertNoThrow(logger.debug("Debug message from view with logging enabled"))

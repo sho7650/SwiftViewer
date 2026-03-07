@@ -29,7 +29,7 @@ struct ImageGalleryView: View {
     
     /// Check if debug overlay is enabled from UserDefaults
     private var isDebugModeEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
     }
     
     init(viewModel: ImageGalleryViewModel) {

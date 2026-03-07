@@ -35,7 +35,7 @@ final class Logger {
     }
 
     private var isDebugLoggingEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
     }
 
     // MARK: - Path Sanitization
@@ -58,7 +58,7 @@ final class Logger {
     
     /// Get the current logging level from UserDefaults, defaulting to .info
     private var currentLoggingLevel: LogLevel {
-        if let levelString = UserDefaults.standard.string(forKey: "loggingLevel"),
+        if let levelString = UserDefaults.standard.string(forKey: SettingsKeys.loggingLevel),
            let rawValue = Int(levelString),
            let level = LogLevel(rawValue: rawValue) {
             return level
