@@ -12,11 +12,11 @@ final class LoggerTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: SettingsKeys.debugLoggingEnabled)
     }
     
     override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: SettingsKeys.debugLoggingEnabled)
         UserDefaults.standard.removeObject(forKey: "loggingLevel")
         super.tearDown()
     }
@@ -35,7 +35,7 @@ final class LoggerTests: XCTestCase {
     // MARK: - Debug Mode Tests
     
     func test_logger_logsDebugMessage_whenDebugLoggingEnabled() {
-        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(true, forKey: SettingsKeys.debugLoggingEnabled)
         
         let logger = Logger.shared
         let testMessage = "Test debug message"
@@ -45,7 +45,7 @@ final class LoggerTests: XCTestCase {
     }
     
     func test_logger_doesNotLogDebugMessage_whenDebugLoggingDisabled() {
-        UserDefaults.standard.set(false, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(false, forKey: SettingsKeys.debugLoggingEnabled)
         
         let logger = Logger.shared
         let testMessage = "Test debug message"
@@ -56,10 +56,10 @@ final class LoggerTests: XCTestCase {
     
     func test_debug_logging_disabled_by_default() {
         // Given
-        UserDefaults.standard.removeObject(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.removeObject(forKey: SettingsKeys.debugLoggingEnabled)
         
         // When
-        let debugEnabled = UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        let debugEnabled = UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
         
         // Then
         XCTAssertFalse(debugEnabled, "Debug logging should be disabled by default")
@@ -169,7 +169,7 @@ final class LoggerTests: XCTestCase {
     func test_logger_respectsLoggingLevel_debugDisabled() {
         // Given
         UserDefaults.standard.set("1", forKey: "loggingLevel") // Info level
-        UserDefaults.standard.set(true, forKey: "debugLoggingEnabled")
+        UserDefaults.standard.set(true, forKey: SettingsKeys.debugLoggingEnabled)
         let logger = Logger.shared
         
         // Then - Debug messages should be filtered out when level is Info

@@ -15,7 +15,7 @@ struct FolderSelectionView: View {
     
     /// Check if debug overlay is enabled from UserDefaults
     private var isDebugModeEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
     }
     
     var body: some View {
@@ -141,6 +141,10 @@ struct FolderSelectionView: View {
         guard let provider = providers.first else { return false }
         
         _ = provider.loadObject(ofClass: URL.self) { url, error in
+            if let error = error {
+                Logger.shared.error("Drag and drop failed", error: error)
+                return
+            }
             DispatchQueue.main.async {
                 if let url = url, url.hasDirectoryPath {
                     onFolderSelected(url)

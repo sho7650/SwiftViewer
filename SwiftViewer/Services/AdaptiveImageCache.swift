@@ -196,11 +196,14 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
         }
     }
     
+    private var isTestEnvironment: Bool {
+        NSClassFromString("XCTestCase") != nil
+    }
+
     private func loadAndCacheFromDisk(url: URL, completion: @escaping (NSImage?) -> Void) {
-        // Handle test URLs
-        if url.path.contains("/test/") && !url.path.contains("/corrupted/") {
+        // Handle test URLs only in test environment
+        if isTestEnvironment && !url.path.contains("/corrupted/") && !FileManager.default.fileExists(atPath: url.path) {
             let testImage = createTestImage()
-            // Store in Kingfisher cache (NSImage for macOS)
             kingfisherCache.store(testImage, forKey: url.absoluteString)
             Task {
                 await cacheTracker.addKey(url.absoluteString)
@@ -208,7 +211,7 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
             completion(testImage)
             return
         }
-        
+
         // Real file loading
         if let diskImage = NSImage(contentsOf: url) {
             kingfisherCache.store(diskImage, forKey: url.absoluteString)

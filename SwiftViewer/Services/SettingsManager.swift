@@ -33,6 +33,11 @@ protocol SettingsManagerProtocol {
     var cachePreloadPercentage: Double { get set } // 10-100% of images to preload
 }
 
+enum SettingsKeys {
+    static let debugLoggingEnabled = "debugLoggingEnabled"
+    static let loggingLevel = "loggingLevel"
+}
+
 final class SettingsManager: SettingsManagerProtocol {
     private let userDefaults: UserDefaults
     
@@ -77,10 +82,10 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var debugLoggingEnabled: Bool {
         get {
-            userDefaults.bool(forKey: "debugLoggingEnabled")
+            userDefaults.bool(forKey: SettingsKeys.debugLoggingEnabled)
         }
         set {
-            userDefaults.set(newValue, forKey: "debugLoggingEnabled")
+            userDefaults.set(newValue, forKey: SettingsKeys.debugLoggingEnabled)
         }
     }
     
@@ -183,14 +188,14 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var loggingLevel: LogLevel {
         get {
-            if let levelString = userDefaults.string(forKey: "loggingLevel"),
+            if let levelString = userDefaults.string(forKey: SettingsKeys.loggingLevel),
                let level = LogLevel(rawValue: Int(levelString) ?? 1) {
                 return level
             }
             return .info // Default
         }
         set {
-            userDefaults.set(String(newValue.rawValue), forKey: "loggingLevel")
+            userDefaults.set(String(newValue.rawValue), forKey: SettingsKeys.loggingLevel)
         }
     }
     

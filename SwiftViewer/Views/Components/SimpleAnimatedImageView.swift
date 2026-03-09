@@ -147,6 +147,6 @@ struct SimpleAnimatedImageView: View {
 
 // MARK: - Preview
 #Preview {
-    SimpleAnimatedImageView(url: URL(string: "file:///path/to/sample.gif")!)
+    SimpleAnimatedImageView(url: URL(fileURLWithPath: "/path/to/sample.gif"))
         .frame(width: 400, height: 300)
 }

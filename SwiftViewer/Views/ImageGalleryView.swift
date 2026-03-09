@@ -20,6 +20,8 @@ struct ImageGalleryView: View {
     @State private var currentDisplayMode: DisplayMode = .fit
     @FocusState private var isFocused: Bool
     
+    private static let controlsMinimumWidth: CGFloat = 268
+
     // Keyboard press states for visual feedback
     @State private var isLeftKeyPressed = false
     @State private var isRightKeyPressed = false
@@ -27,7 +29,7 @@ struct ImageGalleryView: View {
     
     /// Check if debug overlay is enabled from UserDefaults
     private var isDebugModeEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
     }
     
     init(viewModel: ImageGalleryViewModel) {
@@ -182,23 +184,18 @@ struct ImageGalleryView: View {
                 SimpleAnimatedImageView(url: currentImageFile.url)
                     .id(currentImageFile.url.absoluteString)
             } else {
+                let imageId = viewModel.currentImageFile?.url.absoluteString ?? "static-image"
                 switch currentDisplayMode {
-                case .fit:
+                case .fit, .fill:
                     Image(nsImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .aspectRatio(contentMode: currentDisplayMode == .fit ? .fit : .fill)
                         .clipped()
-                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
-                case .fill:
-                    Image(nsImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .clipped()
-                        .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                        .id(imageId)
                 case .actualSize:
                     ScrollView([.horizontal, .vertical]) {
                         Image(nsImage: image)
-                            .id(viewModel.currentImageFile?.url.absoluteString ?? "static-image")
+                            .id(imageId)
                     }
                 }
             }
@@ -316,7 +313,7 @@ struct ImageGalleryView: View {
                             }
                         }
                     )
-                    .frame(maxWidth: max(268, geometry.size.width / 4))
+                    .frame(maxWidth: max(Self.controlsMinimumWidth, geometry.size.width / 4))
                     
                     Spacer()
                 }

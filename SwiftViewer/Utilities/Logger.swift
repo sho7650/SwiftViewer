@@ -35,7 +35,7 @@ final class Logger {
     }
 
     private var isDebugLoggingEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
+        UserDefaults.standard.bool(forKey: SettingsKeys.debugLoggingEnabled)
     }
 
     // MARK: - Path Sanitization
@@ -58,8 +58,9 @@ final class Logger {
     
     /// Get the current logging level from UserDefaults, defaulting to .info
     private var currentLoggingLevel: LogLevel {
-        if let levelString = UserDefaults.standard.string(forKey: "loggingLevel"),
-           let level = LogLevel(rawValue: Int(levelString) ?? 1) {
+        if let levelString = UserDefaults.standard.string(forKey: SettingsKeys.loggingLevel),
+           let rawValue = Int(levelString),
+           let level = LogLevel(rawValue: rawValue) {
             return level
         }
         return .info // Default to info level
@@ -212,13 +213,6 @@ extension Logger {
         self.error(baseMessage, error: error, file: file, function: function, line: line)
     }
     
-    /// Context-aware logger for specific view components
-    /// Following Swift-Log value semantics pattern
-    static func viewLogger(for viewName: String) -> Logger {
-        // Future: Create logger instance with embedded context metadata
-        // For now, return shared instance (maintains current behavior)
-        return Logger.shared
-    }
 }
 
 // MARK: - Test Environment Support
