@@ -3,14 +3,14 @@ name: improve
 description: |
   Autonomous improvement loop — repeatedly runs QA, Fix, and Refactor cycles to continuously improve code quality.
   Each round runs tests and auto-reverts refactoring commits that break tests.
-  Leverages SuperClaude commands for enhanced analysis.
-  Uses MCP servers (serena,sequential-thinking,context7,tavily,playwright) for semantic analysis, documentation lookup, and multi-step reasoning.
+  Leverages SuperClaude commands and MCP servers (serena, sequential-thinking, context7, playwright, tavily).
+  Uses agent teams for parallel QA when CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS is enabled.
 arguments:
   - name: rounds
     description: Maximum number of improvement rounds (early termination if 0 issues found)
     default: "5"
   - name: focus
-    description: Scope of improvement (all)
+    description: Scope of improvement (api|frontend|all)
     default: all
   - name: dry-run
     description: If true, run QA only without fixes or refactoring
@@ -19,12 +19,12 @@ arguments:
 
 # Autonomous Improvement Loop
 
-Repeats QA → Fix → Refactor → Safety Check → Reflection → Self-Learning for up to {{rounds}} rounds.
+Repeats QA → Fix → Refactor → E2E Safety → Reflection → Self-Learning for up to {{rounds}} rounds.
 Terminates early when open issues reach 0, or when abort conditions are triggered.
 
 ## Toolchain
 
-This skill uses the following tools:
+This skill combines the following tools:
 
 **SuperClaude commands:**
 - `/sc:analyze` — Phase 1: Code and architecture structural analysis
@@ -35,8 +35,8 @@ This skill uses the following tools:
 **MCP servers:**
 - `serena` — Phase 1/3: Semantic code understanding, dependency graph analysis
 - `sequential-thinking` — Phase 1/6: Multi-step reasoning for complex problems
-- `context7` — Phase 2: Official documentation lookup for SwiftUI and related tools
-- `playwright` — Phase 1/4: Browser-based E2E test execution
+- `context7` — Phase 2: Official documentation for Hono, Drizzle, Vitest, etc.
+- `playwright` — Phase 1/4: Browser-based E2E test execution (via `make test-e2e`)
 - `tavily` — Phase 6: Web research for best practices
 
 **Fallback rule:** If any MCP server or `/sc:` command is unavailable, log a warning and continue without it. MCPs and SuperClaude enhance the loop but are NOT required.
@@ -46,25 +46,8 @@ This skill uses the following tools:
 - **All work MUST be done on a feature branch. NEVER modify the main branch.**
 - Auto-revert refactoring commits when tests break after refactoring.
 - Record results of each phase in `.improvement-state/`.
-- Follow Conventional Commits commit format.
+- Follow Conventional Commits format.
 - **NEVER weaken or delete tests to make them pass.** Fix the implementation instead.
-
-## Logging
-
-After completing each phase and at each round boundary, record results in `.improvement-state/execution.log` and `.improvement-state/run.log`.
-
-**execution.log format:**
-```
-[HH:MM:SS] [Phase N-name] result summary
-```
-
-**run.log format (per round):**
-```
-## Round N — YYYY-MM-DDTHH:MM:SS
-Result: found=X, fixed=Y
-```
-
-This logging is a **required workflow step** — the same as writing `issues-round-N.md` or `reflection-log.md`. Follow the **"Log:"** instruction at the end of each phase.
 
 ## Abort Conditions (Loop Stops Entirely)
 
@@ -75,7 +58,7 @@ The loop MUST stop immediately and report to the user if ANY of these occur:
 3. **Recurring failure**: The same file/test fails in 2 consecutive rounds after being "fixed".
 4. **Phase 2 regression**: A fix in Phase 2 causes NEW test failures that did not exist before.
 5. **Consecutive reverts**: Phase 4 auto-revert triggers in 2 consecutive rounds.
-6. **Test runner crash**: Test command exits non-zero but produces no failure lines AND no test summary (infrastructure failure, not test failure).
+6. **Test runner crash**: `npm test` exits non-zero but produces no `FAIL` lines AND no test summary line (infrastructure failure, not test failure).
 7. **Disk space critical**: Less than 500MB free disk space.
 
 When aborting, output:
@@ -93,23 +76,8 @@ Action required: {what the user should do}
 1. Verify the working directory is a git repository.
 2. Run `git status` to confirm the working tree is clean.
    - If not clean, warn the user and abort.
-3. Check `timeout` command availability and save to persistent env file:
-   ```bash
-   if command -v timeout >/dev/null 2>&1; then
-     TIMEOUT_CMD="timeout --kill-after=10s"
-   elif command -v gtimeout >/dev/null 2>&1; then
-     TIMEOUT_CMD="gtimeout --kill-after=10s"
-   else
-     TIMEOUT_CMD=""
-     echo "⚠️ timeout command not available — tests will run without timeout protection"
-   fi
-   # Persist for use in all subsequent bash blocks
-   mkdir -p .improvement-state
-   echo "TIMEOUT_CMD=\"$TIMEOUT_CMD\"" > .improvement-state/timeout-env.sh
-   ```
-   `$TIMEOUT_CMD` is persisted in `.improvement-state/timeout-env.sh` for use in subsequent bash blocks.
-4. Confirm the current branch is main.
-5. Create a feature branch:
+3. Confirm the current branch is main.
+4. Create a feature branch:
    ```bash
    BRANCH="improve/$(date +%Y%m%d-%H%M%S)"
    if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
@@ -118,65 +86,91 @@ Action required: {what the user should do}
    fi
    git checkout -b "$BRANCH"
    ```
-6. Create the state directory:
+5. Create the state directory:
    ```bash
    mkdir -p .improvement-state
    ```
-7. Initialize execution log:
-   ```bash
-   echo "=== Improvement Loop Started ===" > .improvement-state/execution.log
-   echo "Time: $(date '+%Y-%m-%dT%H:%M:%S')" >> .improvement-state/execution.log
-   echo "Parameters: rounds={{rounds}}, focus={{focus}}, dry-run={{dry-run}}" >> .improvement-state/execution.log
-   echo "" >> .improvement-state/execution.log
-   ```
-8. Initialize the run log:
+6. Initialize the run log:
    ```bash
    echo "# Run Log — $BRANCH" > .improvement-state/run.log
-   echo "Started: $(date '+%Y-%m-%dT%H:%M:%S')" >> .improvement-state/run.log
+   echo "Started: $(date -Iseconds)" >> .improvement-state/run.log
    echo "Parameters: rounds={{rounds}}, focus={{focus}}, dry-run={{dry-run}}" >> .improvement-state/run.log
    ```
-9. Load `.improvement-config.json` if it exists. Otherwise use default values.
-10. **Capture test baseline** — run unit tests to record the initial state:
+7. Load `.improvement-config.json` if it exists. Otherwise use default values.
+8. **Capture test baseline** — run unit tests and E2E tests to record the initial state:
    ```bash
-   xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee .improvement-state/test-baseline.log
+   # Unit tests
+   cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1 | tee .improvement-state/test-baseline.log
    BASELINE_UNIT_EXIT=$?
+
+   # E2E tests
+   cd $(git rev-parse --show-toplevel) && timeout --kill-after=30s ${E2E_TIMEOUT:-300}s make test-e2e 2>&1 | tee .improvement-state/e2e-baseline.log
+   BASELINE_E2E_EXIT=$?
    ```
-   Extract baseline test counts from output. Record: `BASELINE_UNIT_TEST_COUNT`, `BASELINE_UNIT_FAIL_COUNT`.
+   Extract baseline test counts from both outputs (see "Reading Test Output" section).
+   Record: `BASELINE_UNIT_TEST_COUNT`, `BASELINE_UNIT_FAIL_COUNT`, `BASELINE_E2E_EXIT`.
    These baselines are used throughout the loop to detect regressions.
-11. **Use available MCP servers to understand project structure** — Query semantic analysis tools for module structure, dependency graph, and key entry points.
+9. **Use serena MCP to understand project structure** — Query serena for module structure, dependency graph, and key entry points. This improves analysis accuracy in subsequent phases.
 
-**Initialize the round counter:**
-Set `ROUND_NUM=1`. This variable tracks the current round number throughout the loop.
+## Reading Test Output
 
-**Phase 0 complete. Proceed IMMEDIATELY to the Main Loop (starting at Phase 1 with ROUND_NUM=1).**
+All phases that run tests MUST use this standardized procedure.
 
-## Running Tests (Reference)
+### Running tests with timeout
 
-Whenever this skill says "run tests", follow this procedure:
+ALWAYS wrap test commands with a timeout:
+```bash
+cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1 | tee /tmp/test-output.log
+TEST_EXIT=$?
+```
 
-1. **Run with timeout** (if available — detected in Phase 0):
-   ```bash
-   [ -f .improvement-state/timeout-env.sh ] && source .improvement-state/timeout-env.sh
-   ${TIMEOUT_CMD:-} ${TEST_TIMEOUT:-120}s xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/test-output.log
-   TEST_EXIT=${PIPESTATUS[0]}
-   ```
-   If timeout is not available, run directly:
-   ```bash
-   xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/test-output.log
-   TEST_EXIT=$?
-   ```
-2. **Classify exit code**: 124=timeout (HIGH issue), infrastructure failure patterns (Docker, port, disk) → NOT a test failure, else → actual test failure.
-3. **Parse failures** using xcodebuild output patterns (see `references/qa-guide.md` for parsing rules).
-4. **Create a separate issue for EACH failure** with: file, line, test name, error, severity=HIGH.
-5. **Regression check**: If current test count < `BASELINE_UNIT_TEST_COUNT` → **ABORT** (test file deleted).
+### Classifying the exit code
 
----
+If `TEST_EXIT` is non-zero, determine the cause:
+
+1. **Timeout** (`TEST_EXIT=124`): Log as `[HIGH] Test execution timeout`. Check Docker status.
+2. **Infrastructure failure**: Check output for these patterns:
+   - `Cannot connect to Docker daemon` → Docker not running. Skip Vitest, continue with lint only.
+   - `EADDRINUSE` or `port already in use` → Port conflict. Log warning and skip.
+   - `no space left on device` → Trigger abort condition #7.
+   - `Cannot find module.*vitest` → Config error. Abort loop.
+   If ANY of these match, this is NOT a test failure. Do NOT file test issues.
+3. **Actual test failure**: Output contains `FAIL` lines or the test summary shows `failed > 0`.
+
+### Parsing test failures
+
+Search the output for ALL of these patterns:
+
+- **Standard failures**: Lines starting with `FAIL` (e.g., `FAIL  tests/file.ts > Test Name`)
+- **Compilation errors**: Lines matching `error TS[0-9]` or `SyntaxError` or `ParseError`
+- **Import errors**: Lines matching `Cannot find module`
+- **Setup failures**: `beforeAll` or `beforeEach` errors in stack traces
+
+**Create a separate issue for EACH failure.** Each issue MUST include:
+- Test file name and line number
+- Test name (if available)
+- Error message
+- Severity: **always HIGH**
+
+### Verifying the test summary
+
+Find the summary line (handles multiple Vitest formats):
+```
+Tests  2 failed | 144 passed (146)        ← Vitest 1.x
+Test Files  1 failed | 12 passed (13)     ← Vitest 2.x
+```
+
+Extract `failed` and `passed` counts. If no summary line exists AND exit code is non-zero, treat as infrastructure failure.
+
+### Test count regression check
+
+Compare current total test count against `BASELINE_TEST_COUNT`:
+- If current total < baseline: **ABORT. A test file may have been deleted.** Log the difference and investigate.
+- If current total >= baseline: OK, proceed.
 
 ## Main Loop: Round 1 ~ {{rounds}}
 
-**Repeat Phase 1 through Phase 5 for each round.** Use `ROUND_NUM` (initialized to 1 in Phase 0) as the current round number. After each round, the "Loop Continuation Decision" section at the end of Phase 5 determines whether to continue, exit, or proceed to finalization.
-
-Log `[Round $ROUND_NUM/{{rounds}}]` at the start of each round.
+Log `[Round N/{{rounds}}]` at the start of each round.
 
 ### Phase 1: QA (Issue Detection)
 
@@ -187,54 +181,78 @@ Scope: {{focus}}
 git tag "savepoint-round-$ROUND_NUM"
 ```
 
-**Log:** Append to `.improvement-state/run.log`: `## Round $ROUND_NUM — {current timestamp}`
-Append to `.improvement-state/execution.log`: `[HH:MM:SS] [Round $ROUND_NUM] Started`
+If agent teams are available (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), run QA checks in parallel using 4 agent teams:
+- **Team A**: Static analysis (1-1 Biome + 1-2 TypeScript)
+- **Team B**: Unit test execution (1-3 Vitest)
+- **Team C**: E2E test execution (1-4 make test-e2e)
+- **Team D**: Code analysis (1-5 /sc:analyze + serena + sequential-thinking)
 
-Run QA checks. If agent teams are available (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), run in parallel using separate agent teams. Otherwise, run sequentially.
+Otherwise, run sequentially.
 
-
-
-#### 1-3. Unit Tests (xcodebuild)
+#### 1-1. Biome Lint (when {{focus}} is api or all)
 
 ```bash
-xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/test-output.log
-UNIT_TEST_EXIT=${PIPESTATUS[0]}
+cd api && npx biome check src/ 2>&1
 ```
 
-Parse test output using xcodebuild patterns (see `references/qa-guide.md`).
+Extract warnings/errors from output and record as issues.
+
+#### 1-2. TypeScript Type Check (when {{focus}} is api or all)
+
+```bash
+cd api && npx tsc --noEmit 2>&1
+```
+
+Record type errors as issues (severity: HIGH — type errors mean compilation failure).
+
+#### 1-3. Vitest Tests (when {{focus}} is api or all)
+
+Run tests using the standardized procedure in "Reading Test Output" section.
 File each failure as a separate issue.
 
+#### 1-4. E2E Tests
+
+Run the full E2E test suite. `make test-e2e` handles environment startup, test execution, and cleanup automatically.
+
+```bash
+cd $(git rev-parse --show-toplevel) && timeout --kill-after=30s ${E2E_TIMEOUT:-300}s make test-e2e 2>&1 | tee /tmp/e2e-output.log
+E2E_EXIT=$?
+```
+
+Apply the same "Reading Test Output" procedure to E2E output:
+- If `E2E_EXIT=124`: timeout. Log as `[HIGH] E2E test execution timeout`.
+- If `E2E_EXIT` is non-zero: parse output for failure patterns. File each E2E failure as a separate issue with `Source: e2e` and severity: HIGH.
+- If `E2E_EXIT=0`: no E2E issues.
+
+**E2E regression check**: If `BASELINE_E2E_EXIT` was 0 (E2E passed at baseline) but `E2E_EXIT` is now non-zero, mark these failures as regressions introduced by previous rounds.
+
+If `make test-e2e` fails due to infrastructure (Docker not running, port conflicts), log as "E2E infrastructure failure" and continue with other QA checks. Do NOT file test issues for infrastructure failures.
 
 #### 1-5. Code Analysis with /sc:analyze
 
-Use `/sc:analyze` for structural analysis:
+Use `/sc:analyze` for structural analysis of the codebase:
 
 ```
 /sc:analyze "Analyze {{focus}} codebase for code quality issues:
-- Type safety problems
-- Error handling gaps
+- Type safety problems (any types, missing type guards)
+- Error handling gaps (async without try-catch)
 - Files exceeding 300 lines
 - Functions exceeding 50 lines
-- Missing input validation
+- Missing input validation (Zod schemas)
 - Hardcoded strings/config values
-- Circular dependencies"
+- Circular dependencies
+- CLAUDE.md convention violations"
 ```
 
-**MCP-enhanced analysis**: Use available MCP servers for deeper code understanding:
-Use serena for semantic analysis: check module dependency issues, unused exports, and circular call graphs.
-Use sequential-thinking for complex architectural problems: multi-step reasoning to identify root causes at the design level.
-Use context7 to look up official documentation for SwiftUI APIs before flagging potential misuse.
+**Use serena MCP alongside**: Leverage serena's semantic analysis to check module dependency issues, unused exports, and circular call graphs.
 
-#### Code Review (Claude)
+**Use sequential-thinking MCP alongside**: For complex architectural problems, use multi-step reasoning to identify root causes at the design level.
 
-If no SuperClaude `/sc:analyze` is available, perform manual code review:
-- Read source files in SwiftViewer
-- Check for: type safety, error handling, file/function size limits, input validation, hardcoded values, circular dependencies
-- Classify findings by severity: CRITICAL, HIGH, MEDIUM, LOW
+**Review target selection**: Prioritize files modified in the previous round or files with many lint issues. In round 1, focus on the service layer (`api/src/services/`) and route layer (`api/src/routes/`).
 
 #### Issue Aggregation
 
-Save all QA results to `.improvement-state/issues-round-N.md`:
+Save all QA results to `.improvement-state/issues-round-N.md` in this format:
 
 ```markdown
 # Issues - Round N
@@ -245,58 +263,63 @@ Save all QA results to `.improvement-state/issues-round-N.md`:
 ## Issues
 
 ### [SEVERITY] Short description
-- **File**: `path/to/file:line`
-- **Source**: lint | typecheck | unit-test | e2e | review
+- **File**: `path/to/file.ts:line`
+- **Source**: lint | typecheck | vitest | e2e | sc:analyze | serena
 - **Detail**: Description of the problem
 - **Suggestion**: Proposed fix (if any)
 ```
 
-**Log:** Append to `.improvement-state/execution.log`:
-- `[HH:MM:SS] [Phase 1] Unit tests — {passed} passed, {failed} failed (exit={code})`
-- `[HH:MM:SS] [Phase 1] Issues found: {total} (CRITICAL={n}, HIGH={n}, MEDIUM={n}, LOW={n})`
-
 **Decision**:
 - Issue count is 0 → exit the loop and proceed to Phase 7 (Finalize).
-- **Quality gate check**: If `.improvement-config.json` defines `quality_gates`, enforce them:
-  - `max_critical_issues`: If CRITICAL count exceeds this, **ABORT** with "Quality gate failed: too many CRITICAL issues".
-  - `max_high_issues`: If HIGH count exceeds this, **ABORT** with "Quality gate failed: too many HIGH issues".
-  - `min_test_pass_rate`: If test pass rate drops below this percentage, **ABORT** with "Quality gate failed: test pass rate below threshold".
-  - A `null` value for any gate means it is not enforced.
-- **Net regression check**: If this round's issue count > previous round's, increment `REGRESSION_COUNTER`. If `REGRESSION_COUNTER >= 2`, trigger abort condition #2.
+- **Net regression check**: If this round's issue count > previous round's issue count, increment `REGRESSION_COUNTER`. If `REGRESSION_COUNTER >= 2`, trigger abort condition #2.
 
 ### Phase 2: Fix (Issue Resolution)
 
 Skip this phase if {{dry-run}} is true.
 
+#### 2-1. Auto-fix with Tools
+
+Apply Biome auto-fixes first:
+
+```bash
+cd api && npx biome check --write src/
+```
 
 #### 2-2. Fix Test Failures (HIGHEST PRIORITY)
 
 **Test failure issues MUST be fixed before all other issues.**
 
 **Use `/sc:troubleshoot` for debugging:**
+
 ```
 /sc:troubleshoot "Test failure in {test file name}:
 Error: {error message}
+at line {line number}
+
 Analyze the root cause and suggest a fix."
 ```
 
+**Use context7 MCP alongside**: Look up official documentation for frameworks (Vitest, Playwright, testcontainers) via context7. Verify correct API usage, especially mock lifecycle (`vi.spyOn`, `mockImplementation`, `mockReset`, `restoreAllMocks`).
+
 Fix procedure:
 1. **Read the source code** of both the failing test file and the implementation under test.
-2. **Identify the cause**.
+2. **Identify the cause** using `/sc:troubleshoot` + context7.
 3. **Decide the fix strategy**:
    - Bug in implementation → fix the implementation (NEVER weaken tests)
-   - Mock/setup issue in test → fix the test code (legitimate fix)
-   - Outdated test → update the test
-4. **Verify the fix** by re-running only that test file:
+   - Mock/setup issue in test → fix the test code (this is a legitimate fix)
+   - Outdated test (snapshot, expected values changed) → update the test
+4. **After fixing, use serena to check impact**: If you changed a helper/util function, check all callers via serena. If impact is large, consider adding a NEW test.
+5. **Verify the fix** by re-running only that test file:
    ```bash
-   xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx -only-testing:SwiftViewerTests test 2>&1 2>&1 | tee /tmp/single-test-output.log
-   SINGLE_TEST_EXIT=$?
+   cd api && npx vitest run tests/{test file name} 2>&1
    ```
-   If failures remain, retry (maximum 3 attempts per test). If still failing after 3 attempts, log as "unresolvable" and proceed.
+   If failures remain, retry the fix (maximum 3 attempts per test). If still failing after 3 attempts, log as "unresolvable" and proceed.
 
-#### 2-3. Fix Review Findings
+#### 2-3. Fix /sc:analyze Findings
 
 Prioritize HIGH severity and above. Only fix MEDIUM and below if safe and low-risk.
+
+Use **context7 MCP** to verify correct patterns for Hono / Drizzle / Zod before applying fixes.
 
 #### 2-4. Commit
 
@@ -305,25 +328,25 @@ git add -A
 git commit -m "fix: resolve N QA issues [round $ROUND_NUM]"
 ```
 
+Update issues-round-N.md to reflect fixed issues (set status to `fixed`).
+
 #### 2-5. Post-fix Regression Check (MANDATORY)
 
-After committing Phase 2 fixes, run the full test suite:
+After committing Phase 2 fixes, run the full test suite to verify fixes did not introduce new failures:
 
 ```bash
-xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/postfix-output.log
-POSTFIX_EXIT=${PIPESTATUS[0]}
+cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1 | tee /tmp/postfix-output.log
+POSTFIX_EXIT=$?
 ```
 
 - **All tests pass**: Proceed to Phase 3.
-- **New failures appear** (not in Phase 1 issue list): **Trigger abort condition #4.** Revert:
+- **New failures appear** (failures that were NOT in Phase 1 issue list): **Trigger abort condition #4.** Revert the Phase 2 commit:
   ```bash
   git revert --no-edit HEAD
   ```
+  Log: "Phase 2 fix caused regression. Reverted. Round $ROUND_NUM marked as failed."
   Skip to Phase 5.
-- **Same failures as Phase 1 remain**: Proceed to Phase 3.
-
-**Log:** Append to `.improvement-state/execution.log`:
-- `[HH:MM:SS] [Phase 2] Fixed {Y}/{X} issues, committed {hash}` — or if reverted: `[HH:MM:SS] [Phase 2] REGRESSION — fix reverted`
+- **Same failures as Phase 1 remain**: Log as "partially fixed" and proceed to Phase 3.
 
 ### Phase 3: Refactor (Quality Improvement)
 
@@ -332,26 +355,33 @@ Skip this phase if {{dry-run}} is true.
 **Pre-condition gate (MANDATORY):**
 Run the full test suite:
 ```bash
-xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/phase3-precheck-output.log
-PHASE3_PRECHECK_EXIT=${PIPESTATUS[0]}
+cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1
 ```
 
 **If ANY test fails:**
-1. Attempt fix (maximum 2 attempts).
+1. Attempt fix (same procedure as Phase 2-2, maximum 2 attempts).
 2. If fixed: commit as `fix: repair failing tests before refactor [round $ROUND_NUM]`
-3. Re-run to confirm ALL tests pass.
-4. If still failing: **skip Phase 3**, proceed to Phase 5. Log: "Refactoring skipped — tests not stable."
+3. Re-run full test suite to confirm ALL tests pass.
+4. If still failing after 2 attempts: **skip Phase 3 entirely**, proceed to Phase 5. Log: "Refactoring skipped — tests not stable."
 
 **Check refactor blocklist:** Load `.improvement-state/refactor-blocklist.json`. Skip any file/strategy combination that previously caused a revert.
 
 **Use `/sc:cleanup` for refactoring:**
+
 ```
 /sc:cleanup "{target file path} — strategy: {refactoring strategy}"
 ```
 
+**Use serena MCP alongside**: Before refactoring, query serena to check:
+- All modules that reference the target file (impact analysis)
+- All callers of the target function
+- Whether the change would introduce circular dependencies
+
+**Use serena to verify test coverage**: Before refactoring a file, check if it has corresponding test files. If test coverage is low, skip this refactoring candidate.
+
 Also refer to `references/refactor-patterns.md` for safe refactoring patterns.
 
-Maximum refactorings per round (configurable via `refactor.max_per_round` in `.improvement-config.json`, default: 3).
+Maximum 3 refactorings per round (configurable via `refactor.max_per_round` in `.improvement-config.json`).
 
 Refactoring candidate selection criteria:
 - Files where Phase 1 found issues
@@ -362,31 +392,37 @@ Refactoring candidate selection criteria:
 - **Exclude files in refactor-blocklist**
 
 **Commit each refactoring individually:**
+
 ```bash
 git add -A
 git commit -m "refactor: {specific description} [round $ROUND_NUM]"
 ```
 
-**Log:** Append to `.improvement-state/execution.log`:
-- `[HH:MM:SS] [Phase 3] Refactored {N} files, committed {hash}` — or `[HH:MM:SS] [Phase 3] Skipped (tests unstable)`
-
-### Phase 4: Safety Check
+### Phase 4: E2E Safety Check
 
 Only run if refactoring was performed in Phase 3.
 
-Unit tests MUST pass for the round to be considered safe.
+Run both unit tests and E2E tests. Both MUST pass for the round to be considered safe.
 
 ```bash
-xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/safety-unit-output.log
-SAFETY_UNIT_EXIT=${PIPESTATUS[0]}
+# Unit tests
+cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1 | tee /tmp/safety-unit-output.log
+SAFETY_UNIT_EXIT=$?
+
+# E2E tests
+cd $(git rev-parse --show-toplevel) && timeout --kill-after=30s ${E2E_TIMEOUT:-300}s make test-e2e 2>&1 | tee /tmp/safety-e2e-output.log
+SAFETY_E2E_EXIT=$?
 ```
 
+Run the unit test count regression check (current total >= BASELINE_UNIT_TEST_COUNT).
 
-Run the test count regression check (current total >= BASELINE_UNIT_TEST_COUNT).
-
-#### On all tests passing
+#### On both tests passing (SAFETY_UNIT_EXIT=0 AND SAFETY_E2E_EXIT=0)
 
 Proceed to Phase 5. Reset `CONSECUTIVE_REVERT_COUNT` to 0.
+
+#### On either test failing — Auto-Revert
+
+If E2E passed at baseline but fails now, the refactoring broke end-to-end behavior — auto-revert is required even if unit tests pass.
 
 #### On test failure — Auto-Revert
 
@@ -399,6 +435,7 @@ REFACTOR_SHAS=$(git log --oneline "savepoint-round-$ROUND_NUM"..HEAD | grep "ref
 # Revert each (newest first)
 for SHA in $REFACTOR_SHAS; do
   if ! git revert --no-edit "$SHA" 2>&1; then
+    echo "ERROR: Revert conflict on $SHA. Aborting loop."
     git revert --abort
     # Trigger abort condition #1 (git conflict)
     exit 1
@@ -408,87 +445,75 @@ done
 
 After revert, re-run tests:
 ```bash
-xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -sdk macosx test 2>&1 2>&1 | tee /tmp/post-revert-output.log
-POST_REVERT_EXIT=${PIPESTATUS[0]}
+cd api && timeout --kill-after=10s ${TEST_TIMEOUT:-120}s npm test 2>&1
 ```
 
-- **Tests pass**: Add file + strategy to `.improvement-state/refactor-blocklist.json`. Increment `CONSECUTIVE_REVERT_COUNT`.
-- **Tests still fail**: Revert to the savepoint:
+- **Tests pass**: Log "Refactoring reverted, tests recovered." Add the refactored file + strategy to `.improvement-state/refactor-blocklist.json`. Increment `CONSECUTIVE_REVERT_COUNT`.
+- **Tests still fail**: Phase 2 fixes also have problems. Revert to the savepoint:
   ```bash
   git revert --no-edit "savepoint-round-$ROUND_NUM"..HEAD
   ```
-
-**Log:** Append to `.improvement-state/execution.log`:
-- `[HH:MM:SS] [Phase 4] Safety check — PASSED` — or `[HH:MM:SS] [Phase 4] Safety check — REVERTED ({N} commits)`
+  Log: "Full round revert. Both fixes and refactoring reverted."
 
 **Consecutive revert check**: If `CONSECUTIVE_REVERT_COUNT >= 2`, trigger abort condition #5.
 
 ### Phase 5: Reflection (Record Results)
 
 **Use `/sc:reflect` for a structured retrospective:**
+
 ```
 /sc:reflect "Improvement Loop Round $ROUND_NUM retrospective:
-- QA found X issues
-- Fixed Y issues
+- QA found X issues (sources: lint, typecheck, vitest, e2e, sc:analyze, serena)
+- Fixed Y issues (auto-fix: p, troubleshoot: q)
 - Refactored Z files (reverted: W)
-- Safety Check: PASSED/REVERTED/SKIPPED
+- E2E Safety: PASSED/REVERTED/SKIPPED
 Analyze what went well, what didn't, and patterns to watch."
 ```
 
-Append to `.improvement-state/reflection-log.md`:
+Append output to `.improvement-state/reflection-log.md`:
 
 ```markdown
 ## Round N - YYYY-MM-DD HH:MM
 
 | Phase | Result |
 |-------|--------|
-| QA | X issues found |
-| Fix | Y/X issues fixed |
+| QA | X issues found (H:a, M:b, L:c) |
+| Fix | Y/X issues fixed (auto: p, troubleshoot: q) |
 | Post-fix regression | PASSED / REVERTED |
 | Refactor | Z refactorings applied / SKIPPED |
-| Safety Check | PASSED / REVERTED / SKIPPED |
+| E2E Safety | PASSED / REVERTED / SKIPPED |
+
+### Tool Usage
+- serena: {what dependency analysis revealed}
+- context7: {which docs were referenced}
+- sequential-thinking: {which problems used multi-step reasoning}
 
 ### Modified Files
-- `path/to/file1` - summary of changes
+- `path/to/file1.ts` - summary of changes
 
 ### Observations
-(1-3 sentence summary)
+(1-3 sentence summary from /sc:reflect analysis)
 
 ---
 ```
 
-**Log:** Append to `.improvement-state/execution.log`:
-- `[HH:MM:SS] [Phase 5] Reflection — issues={X}, fixed={Y}, rate={Z}%`
-
-Append to `.improvement-state/run.log`:
-- `Result: found={X}, fixed={Y}`
-
-### Loop Continuation Decision
-
-**This is the critical loop control point.** After completing Phase 5, decide the next action:
-
-1. **If issues found == 0 in this round**: Exit the loop. Proceed to Phase 7 (Finalize). Log: "No issues found — exiting loop early at round $ROUND_NUM."
-2. **If $ROUND_NUM == {{rounds}}** (maximum rounds reached): Proceed to Phase 6 (Self-Learning), then Phase 7 (Finalize). Log: "Maximum rounds reached."
-3. **Otherwise** (issues remain AND rounds remaining):
-   - Set `ROUND_NUM = ROUND_NUM + 1`
-   - **GO BACK TO "Phase 1: QA (Issue Detection)" above** and execute the entire Phase 1 → 2 → 3 → 4 → 5 sequence again.
-   - Do NOT proceed to Phase 6 or Phase 7.
-   - Log: "Round $ROUND_NUM complete. Issues remain. Proceeding to round $((ROUND_NUM+1))."
-
-**⚠️ CRITICAL: You MUST repeat Phase 1 through Phase 5 for each round. This is a LOOP, not a single pass. Do NOT stop after one round unless exit condition 1 or 2 is met.**
-
----
+Also append a summary line to `.improvement-state/run.log`.
 
 ### Phase 6: Self-Learning (Improve the Improvement Process)
 
-**Run ONLY after the final round** (when exiting the loop due to condition 1 or 2 above).
+**Run ONLY after the final round** (not during intermediate rounds).
 
+**Use sequential-thinking MCP for pattern analysis:**
 Analyze all rounds in `.improvement-state/reflection-log.md`:
-- Organize trends in issue count, fix count, and revert rate across rounds
-- Identify recurring issue category patterns
-- Generate prioritized improvement suggestions
+- Step 1: Organize trends in issue count, fix count, and revert rate across rounds
+- Step 2: Identify recurring issue category patterns
+- Step 3: Analyze correlation between tool usage and fix success rate
+- Step 4: Generate prioritized improvement suggestions
 
-**Use available MCP tools** for deeper analysis and best practice research.
+**Use tavily MCP to research best practices:**
+For recurring problem categories, search for latest best practices:
+- e.g., "vitest mock lifecycle best practices 2025"
+- e.g., "hono error handling patterns"
 
 Save output to `.improvement-state/self-learning-suggestions.md`:
 
@@ -504,6 +529,7 @@ Rounds analyzed: 1-N
 - **Current**: Current setting/behavior
 - **Proposed**: Proposed change
 - **Rationale**: Evidence-based reasoning
+- **Reference**: Best practice URL found via tavily (if any)
 - **Action**: Which parameter in `.improvement-config.json` to change
 ```
 
@@ -513,14 +539,20 @@ Rounds analyzed: 1-N
 
 After all rounds complete (or early termination):
 
+1. Clean up Docker containers from testcontainers:
+   ```bash
+   docker ps --filter "label=org.testcontainers=true" --format "{{.ID}}" | xargs -r docker stop 2>/dev/null
+   docker ps -a --filter "label=org.testcontainers=true" --format "{{.ID}}" | xargs -r docker rm 2>/dev/null
+   ```
 
-1. Output a final summary:
+2. Output a final summary:
    ```
    === Improvement Loop Summary ===
    Rounds completed: X / {{rounds}}
    Total issues found: Y
    Total issues fixed: Z
    Refactorings applied: W (reverted: V)
+   Tools used: serena, context7, sequential-thinking, tavily, playwright
    Branch: $BRANCH
 
    === Changes Summary ===
@@ -528,19 +560,22 @@ After all rounds complete (or early termination):
    {output of: git diff main...$BRANCH --stat}
    ```
 
-2. **[MANUAL GATE]** Ask the user whether to push the branch:
+3. **[MANUAL GATE]** Ask the user whether to push the branch:
    ```
    Push $BRANCH to origin? The summary above shows all changes.
    ```
-   - If confirmed: `git push -u origin "$BRANCH"`. Check exit code.
+   - If confirmed: `git push -u origin "$BRANCH"`. Check exit code. If push fails, report error.
    - If not confirmed: Keep branch local.
 
-3. Suggest creating a PR (do not auto-create).
+4. Suggest creating a PR (do not auto-create).
 
 ## Error Handling
 
 | Situation | Action |
 |-----------|--------|
+| Docker not running (testcontainers fail) | Skip Vitest and E2E, continue QA with lint + sc:analyze only |
+| `make test-e2e` infrastructure failure | Log warning, continue without E2E. Do NOT file test issues |
+| Biome not found | Skip lint if `npx biome` is unavailable |
 | Git conflict | **ABORT** the loop (abort condition #1) |
 | Test timeout (exit code 124) | Treat as HIGH-severity issue. If 3+ timeouts in one run, ABORT |
 | 0 issues in all rounds | Report "codebase is in good shape" |
