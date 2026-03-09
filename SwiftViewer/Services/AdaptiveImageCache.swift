@@ -244,17 +244,8 @@ final class AdaptiveImageCache: AdaptiveImageCacheProtocol {
         
         // Clear disk cache as well
         await withCheckedContinuation { continuation in
-            kingfisherCache.clearDiskCache { 
+            kingfisherCache.clearDiskCache {
                 self.logger.warning("Cleared all caches due to memory pressure")
-                
-                // Post notification for UI to respond
-                Task { @MainActor in
-                    NotificationCenter.default.post(
-                        name: Notification.Name("CacheMemoryWarning"),
-                        object: nil
-                    )
-                }
-                
                 continuation.resume()
             }
         }

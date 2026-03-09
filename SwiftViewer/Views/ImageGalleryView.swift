@@ -12,6 +12,7 @@ import SwiftGlass
 
 struct ImageGalleryView: View {
     var viewModel: ImageGalleryViewModel
+    private let settingsManager: SettingsManagerProtocol
     @State private var slideShowViewModel: SlideShowViewModel
     @State private var autoHideManager: AutoHideControlsManager
     @State private var transitionManager: TransitionManager
@@ -32,6 +33,7 @@ struct ImageGalleryView: View {
     init(viewModel: ImageGalleryViewModel) {
         self.viewModel = viewModel
         let dependencies = DependencyContainer.shared
+        self.settingsManager = dependencies.settingsManager
         let slideShowVM = SlideShowViewModel(
             slideShowService: dependencies.slideShowService,
             imageNavigator: viewModel,
@@ -115,7 +117,7 @@ struct ImageGalleryView: View {
                 currentTransitionType = newTransitionType
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DisplayModeChanged"))) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: .displayModeChanged)) { notification in
             if let newDisplayMode = notification.object as? DisplayMode {
                 withAnimation(.fromSettings(.transition)) {
                     currentDisplayMode = newDisplayMode
@@ -201,7 +203,7 @@ struct ImageGalleryView: View {
                 }
             }
         }
-        .transition(transitionManager.createTransition(for: currentTransitionType, duration: DependencyContainer.shared.settingsManager.animationDurations[.transition] ?? 0.3))
+        .transition(transitionManager.createTransition(for: currentTransitionType, duration: settingsManager.animationDurations[.transition] ?? 0.3))
     }
     
     private var imageInfoOverlay: some View {
@@ -342,62 +344,42 @@ struct ImageGalleryView: View {
     }
     
     // MARK: - Input Handling
-    
+
+    /// Shows momentary visual feedback by toggling a binding on then off after a short delay
+    private func withKeyFeedback(_ pressed: Binding<Bool>, action: @escaping () async -> Void) async {
+        withAnimation(.fromSettings(.feedback)) {
+            pressed.wrappedValue = true
+        }
+        await action()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.fromSettings(.feedback)) {
+                pressed.wrappedValue = false
+            }
+        }
+    }
+
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
-        // Show controls and reset timer on any keyboard activity
         autoHideManager.registerActivity()
-        
+
         Task { @MainActor in
             switch key {
             case .leftArrow, .upArrow:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isLeftKeyPressed = true
+                await withKeyFeedback($isLeftKeyPressed) {
+                    await viewModel.navigateToPrevious()
+                    slideShowViewModel.restartSlideShowIfRunning()
                 }
-                
-                // Navigate with transition
-                await viewModel.navigateToPrevious()
-                slideShowViewModel.restartSlideShowIfRunning()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isLeftKeyPressed = false
-                    }
-                }
-                
+
             case .rightArrow, .downArrow:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isRightKeyPressed = true
+                await withKeyFeedback($isRightKeyPressed) {
+                    await viewModel.navigateToNext()
+                    slideShowViewModel.restartSlideShowIfRunning()
                 }
-                
-                // Navigate with transition
-                await viewModel.navigateToNext()
-                slideShowViewModel.restartSlideShowIfRunning()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isRightKeyPressed = false
-                    }
-                }
-                
+
             case .space:
-                // Show visual feedback
-                withAnimation(.fromSettings(.feedback)) {
-                    isSpaceKeyPressed = true
+                await withKeyFeedback($isSpaceKeyPressed) {
+                    slideShowViewModel.toggleSlideShow()
                 }
-                
-                slideShowViewModel.toggleSlideShow()
-                
-                // Reset visual feedback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.fromSettings(.feedback)) {
-                        isSpaceKeyPressed = false
-                    }
-                }
-                
+
             default:
                 break
             }

@@ -44,7 +44,7 @@ final class KingfisherAdaptiveImageCache: KingfisherAdaptiveImageCacheProtocol {
     private let kingfisherCache: KingfisherImageCache
     private var currentPrefetcher: KingfisherImagePrefetcher?
     
-    private actor CacheConfiguration: @unchecked Sendable {
+    private actor CacheConfiguration {
         private var memoryLimit: Int = 100 * 1024 * 1024 // 100MB default
         private var diskLimit: Int = 500 * 1024 * 1024    // 500MB default
         private var capacity: Int = 100

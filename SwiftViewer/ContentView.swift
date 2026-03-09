@@ -177,11 +177,7 @@ struct ContentView: View {
         contentViewModel.updateDisplayMode(displayMode)
         Logger.shared.info("Display mode changed to: \(displayMode.rawValue)")
         
-        // Notify the gallery view to update its display mode
-        NotificationCenter.default.post(
-            name: Notification.Name("DisplayModeChanged"),
-            object: displayMode
-        )
+        // ContentViewModel.updateDisplayMode already posts .displayModeChanged
     }
     
     private func toggleFullscreen() {
