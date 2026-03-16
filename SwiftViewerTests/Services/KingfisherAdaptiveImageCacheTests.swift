@@ -213,7 +213,10 @@ final class KingfisherAdaptiveImageCacheTests: XCTestCase {
         for url in urls {
             await sut.cacheImage(url: url)
         }
-        
+
+        // Allow Kingfisher LRU eviction to settle (async on CI runners)
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
         // Then: Should evict oldest image via Kingfisher LRU
         let image1Cached = await sut.isImageCached(url: urls[0])
         let image4Cached = await sut.isImageCached(url: urls[3])
