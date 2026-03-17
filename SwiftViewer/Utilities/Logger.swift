@@ -215,31 +215,3 @@ extension Logger {
     
 }
 
-// MARK: - Test Environment Support
-
-extension Logger {
-    /// Detects if currently running in test environment
-    var isTestEnvironment: Bool {
-        return NSClassFromString("XCTestCase") != nil || 
-               ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
-               ProcessInfo.processInfo.arguments.contains("-XCTestObserver")
-    }
-    
-    /// Test category for log capture
-    
-    /// Captures logs for test validation when in test environment
-    func logForTesting(
-        _ message: String,
-        level: LogLevel,
-        category: String = "SwiftViewer",
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line
-    ) {
-        // Always perform normal logging
-        log(message, level: level, file: file, function: function, line: line)
-        
-        // Test log capture integration will be handled by external test coordination
-        // This maintains separation between production code and test infrastructure
-    }
-}

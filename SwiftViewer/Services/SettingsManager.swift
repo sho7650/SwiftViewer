@@ -318,8 +318,4 @@ final class MockSettingsManager: SettingsManagerProtocol {
     var cacheDiskLimitMB: Int = 500
     var cacheCountLimit: Int = 100
     var cachePreloadPercentage: Double = 20.0
-    
-    // Legacy testing properties (deprecated)
-    var customCacheMemoryLimit: Int? = nil
-    var preloadImageCount: Int? = nil
 }

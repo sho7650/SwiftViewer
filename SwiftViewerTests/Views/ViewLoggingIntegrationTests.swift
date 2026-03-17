@@ -64,9 +64,9 @@ final class ViewLoggingIntegrationTests: XCTestCase {
         XCTAssertNoThrow(logger.debug("Folder selected: \(testPath)"))
     }
     
-    // MARK: - SlideShowControlsView Preview Logging Tests
-    
-    func test_slideShowControlsView_should_log_preview_actions() {
+    // MARK: - Controls Preview Logging Tests
+
+    func test_controlsView_should_log_preview_actions() {
         // Given
         let logger = Logger.shared
         

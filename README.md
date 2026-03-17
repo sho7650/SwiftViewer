@@ -116,7 +116,7 @@ SwiftViewer follows a clean MVVM architecture with dependency injection:
 
 - **Views**: SwiftUI interface components
   - `ImageGalleryView`: Main image display
-  - `SlideShowControlsView`: Playback controls
+  - `GlassmorphismControlsView`: Playback controls
   - `SettingsView`: Preferences interface
 
 ### Key Design Patterns
