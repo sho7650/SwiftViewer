@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var currentLoadingTaskID: UUID?
     @FocusState private var isContentViewFocused: Bool
     
-    @StateObject private var contentViewModel = ContentViewModel()
+    @State private var contentViewModel = ContentViewModel()
     
     init() {
         let dependencies = DependencyContainer.shared

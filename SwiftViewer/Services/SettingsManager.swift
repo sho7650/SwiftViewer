@@ -138,22 +138,28 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var animationDurations: [AnimationType: TimeInterval] {
         get {
-            if let data = userDefaults.data(forKey: "animationDurations"),
-               let durations = try? JSONDecoder().decode([AnimationType: TimeInterval].self, from: data) {
-                return durations
+            guard let data = userDefaults.data(forKey: "animationDurations") else {
+                return defaultAnimationDurations
             }
-            // Default durations
-            return [
-                .control: 0.3,
-                .transition: 0.2,
-                .feedback: 0.1
-            ]
+            do {
+                return try JSONDecoder().decode([AnimationType: TimeInterval].self, from: data)
+            } catch {
+                Logger.shared.warning("Failed to decode animationDurations: \(error.localizedDescription)")
+                return defaultAnimationDurations
+            }
         }
         set {
-            if let data = try? JSONEncoder().encode(newValue) {
+            do {
+                let data = try JSONEncoder().encode(newValue)
                 userDefaults.set(data, forKey: "animationDurations")
+            } catch {
+                Logger.shared.warning("Failed to encode animationDurations: \(error.localizedDescription)")
             }
         }
+    }
+
+    private var defaultAnimationDurations: [AnimationType: TimeInterval] {
+        [.control: 0.3, .transition: 0.2, .feedback: 0.1]
     }
     
     var blurRadius: Double {
@@ -312,8 +318,4 @@ final class MockSettingsManager: SettingsManagerProtocol {
     var cacheDiskLimitMB: Int = 500
     var cacheCountLimit: Int = 100
     var cachePreloadPercentage: Double = 20.0
-    
-    // Legacy testing properties (deprecated)
-    var customCacheMemoryLimit: Int? = nil
-    var preloadImageCount: Int? = nil
 }

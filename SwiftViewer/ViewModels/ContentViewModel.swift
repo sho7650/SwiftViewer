@@ -6,17 +6,19 @@
 //
 
 import SwiftUI
+import Observation
 
 @MainActor
-final class ContentViewModel: ObservableObject {
-    
-    // MARK: - Published Properties
-    
-    @Published var currentSortType: SortType = .name(ascending: true)
-    @Published var currentDisplayMode: DisplayMode = .fit
-    @Published var currentWindowPosition: WindowPosition = .normal
-    @Published var isFullscreen: Bool = false
-    @Published var isRepeatEnabled: Bool = false
+@Observable
+final class ContentViewModel {
+
+    // MARK: - Observable Properties
+
+    var currentSortType: SortType = .name(ascending: true)
+    var currentDisplayMode: DisplayMode = .fit
+    var currentWindowPosition: WindowPosition = .normal
+    var isFullscreen: Bool = false
+    var isRepeatEnabled: Bool = false
     
     // MARK: - Dependencies
     
