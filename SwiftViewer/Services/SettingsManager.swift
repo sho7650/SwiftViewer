@@ -139,13 +139,13 @@ final class SettingsManager: SettingsManagerProtocol {
     var animationDurations: [AnimationType: TimeInterval] {
         get {
             guard let data = userDefaults.data(forKey: "animationDurations") else {
-                return defaultAnimationDurations
+                return Self.defaultAnimationDurations
             }
             do {
                 return try JSONDecoder().decode([AnimationType: TimeInterval].self, from: data)
             } catch {
                 Logger.shared.warning("Failed to decode animationDurations: \(error.localizedDescription)")
-                return defaultAnimationDurations
+                return Self.defaultAnimationDurations
             }
         }
         set {
@@ -158,9 +158,8 @@ final class SettingsManager: SettingsManagerProtocol {
         }
     }
 
-    private var defaultAnimationDurations: [AnimationType: TimeInterval] {
+    private static let defaultAnimationDurations: [AnimationType: TimeInterval] =
         [.control: 0.3, .transition: 0.2, .feedback: 0.1]
-    }
     
     var blurRadius: Double {
         get {

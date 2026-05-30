@@ -47,6 +47,20 @@ final class ImageLoaderServiceTests: XCTestCase {
         try pngData.write(to: url)
     }
 
+    private func assertLoadImageThrows(
+        _ expectedError: ImageLoaderError,
+        from url: URL,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        do {
+            _ = try await sut.loadImage(from: url)
+            XCTFail("Expected \(expectedError) error", file: file, line: line)
+        } catch {
+            XCTAssertEqual(error as? ImageLoaderError, expectedError, file: file, line: line)
+        }
+    }
+
     // MARK: - Tests
 
     func test_loadImage_validPNG_returnsNSImage() async throws {
@@ -63,35 +77,20 @@ final class ImageLoaderServiceTests: XCTestCase {
     func test_loadImage_fileNotFound_throwsFileNotFoundError() async {
         let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.jpg")
 
-        do {
-            _ = try await sut.loadImage(from: nonExistentURL)
-            XCTFail("Expected fileNotFound error")
-        } catch {
-            XCTAssertEqual(error as? ImageLoaderError, .fileNotFound)
-        }
+        await assertLoadImageThrows(.fileNotFound, from: nonExistentURL)
     }
 
     func test_loadImage_invalidData_throwsInvalidImageError() async throws {
         let invalidURL = tempDirectory.appendingPathComponent("invalid.jpg")
         try Data("not an image".utf8).write(to: invalidURL)
 
-        do {
-            _ = try await sut.loadImage(from: invalidURL)
-            XCTFail("Expected invalidImage error")
-        } catch {
-            XCTAssertEqual(error as? ImageLoaderError, .invalidImage)
-        }
+        await assertLoadImageThrows(.invalidImage, from: invalidURL)
     }
 
     func test_loadImage_emptyFile_throwsInvalidImageError() async throws {
         let emptyURL = tempDirectory.appendingPathComponent("empty.png")
         try Data().write(to: emptyURL)
 
-        do {
-            _ = try await sut.loadImage(from: emptyURL)
-            XCTFail("Expected invalidImage error")
-        } catch {
-            XCTAssertEqual(error as? ImageLoaderError, .invalidImage)
-        }
+        await assertLoadImageThrows(.invalidImage, from: emptyURL)
     }
 }
