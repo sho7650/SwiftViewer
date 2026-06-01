@@ -122,7 +122,7 @@
 - Bundle Identifier: oshiire.SwiftViewer
 - 開発チーム設定: Takashi Abe
 - Code Signing の方式: Development
-- 最小デプロイメントターゲット macOS 14.0 以降
+- 最小デプロイメントターゲット macOS 15.0 以降
 - テスト駆動仕様に従うこと
 - 作業は step by step で一つのファイル、又は一つの機能、一つのバグ修正の単位で進めること
   - コンパイルでのビルドエラーなく実行可能な最小限の単位を選択すること
