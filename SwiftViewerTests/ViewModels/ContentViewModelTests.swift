@@ -26,6 +26,14 @@ final class ContentViewModelTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Helpers
+
+    private func assertPostsNotification(_ name: Notification.Name, when action: () -> Void) {
+        let expectation = expectation(forNotification: name, object: nil)
+        action()
+        wait(for: [expectation], timeout: 1.0)
+    }
+
     // MARK: - Initialization
 
     func test_init_loadsSortTypeFromSettings() {
@@ -64,11 +72,9 @@ final class ContentViewModelTests: XCTestCase {
     }
 
     func test_updateSortType_postsNotification() {
-        let expectation = expectation(forNotification: .sortTypeChanged, object: nil)
-
-        sut.updateSortType(.random)
-
-        wait(for: [expectation], timeout: 1.0)
+        assertPostsNotification(.sortTypeChanged) {
+            sut.updateSortType(.random)
+        }
     }
 
     // MARK: - Display Mode Management
@@ -80,11 +86,9 @@ final class ContentViewModelTests: XCTestCase {
     }
 
     func test_updateDisplayMode_postsNotification() {
-        let expectation = expectation(forNotification: .displayModeChanged, object: nil)
-
-        sut.updateDisplayMode(.fill)
-
-        wait(for: [expectation], timeout: 1.0)
+        assertPostsNotification(.displayModeChanged) {
+            sut.updateDisplayMode(.fill)
+        }
     }
 
     // MARK: - Fullscreen Management
@@ -100,11 +104,9 @@ final class ContentViewModelTests: XCTestCase {
     }
 
     func test_toggleFullscreen_postsNotification() {
-        let expectation = expectation(forNotification: .fullscreenToggled, object: nil)
-
-        sut.toggleFullscreen()
-
-        wait(for: [expectation], timeout: 1.0)
+        assertPostsNotification(.fullscreenToggled) {
+            sut.toggleFullscreen()
+        }
     }
 
     // MARK: - Repeat Management
@@ -126,11 +128,9 @@ final class ContentViewModelTests: XCTestCase {
     }
 
     func test_toggleRepeat_postsNotification() {
-        let expectation = expectation(forNotification: .repeatModeChanged, object: nil)
-
-        sut.toggleRepeat()
-
-        wait(for: [expectation], timeout: 1.0)
+        assertPostsNotification(.repeatModeChanged) {
+            sut.toggleRepeat()
+        }
     }
 
     // MARK: - Window Position Management
@@ -148,10 +148,8 @@ final class ContentViewModelTests: XCTestCase {
     }
 
     func test_updateWindowPosition_postsNotification() {
-        let expectation = expectation(forNotification: .windowPositionChanged, object: nil)
-
-        sut.updateWindowPosition(.alwaysOnTop)
-
-        wait(for: [expectation], timeout: 1.0)
+        assertPostsNotification(.windowPositionChanged) {
+            sut.updateWindowPosition(.alwaysOnTop)
+        }
     }
 }
