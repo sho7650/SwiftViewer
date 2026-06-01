@@ -44,7 +44,7 @@ A modern, high-performance photo viewer application for macOS built with Swift 6
 ## 🚀 Getting Started
 
 ### Requirements
-- macOS 14.0 or later
+- macOS 15.0 or later
 - Xcode 16+ (for development)
 
 ### Installation
@@ -147,7 +147,7 @@ xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -testPlan TestCove
 
 ### Prerequisites
 - Xcode 16+
-- macOS 14.0+
+- macOS 15.0+
 - Swift 6.0
 
 ### Building
@@ -177,7 +177,7 @@ xcodebuild -project SwiftViewer.xcodeproj -scheme SwiftViewer -configuration Rel
 ## 📱 System Requirements
 
 ### Minimum Requirements
-- macOS 14.0 (Sonoma)
+- macOS 15.0 (Sequoia)
 - 4GB RAM
 - 100MB disk space
 

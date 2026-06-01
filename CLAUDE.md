@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SwiftViewer is a macOS photo viewer application built with Swift 6 and SwiftUI, targeting macOS 14.0+. The app provides comprehensive image viewing capabilities with slideshow functionality, folder browsing, and performance-optimized image caching.
+SwiftViewer is a macOS photo viewer application built with Swift 6 and SwiftUI, targeting macOS 15.0+. The app provides comprehensive image viewing capabilities with slideshow functionality, folder browsing, and performance-optimized image caching.
 
 ## Build and Development Commands
 
@@ -303,7 +303,7 @@ SwiftViewer will be enhanced through a systematic 4-phase implementation plan fo
 - Plugin API specification for third-party extensions
 
 ### Technical Standards
-- **Platform:** Swift 6, SwiftUI, macOS 14.0+
+- **Platform:** Swift 6, SwiftUI, macOS 15.0+
 - **Architecture:** MVVM + Dependency Injection (maintained)
 - **Testing:** TDD with 75%+ coverage requirement
 - **Performance:** Support 10,000+ images capability

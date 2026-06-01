@@ -46,9 +46,8 @@ struct BlurReplaceTransition: ImageTransitionProtocol {
     /// - Parameter duration: The duration of the transition animation
     /// - Returns: An AnyTransition that can be applied to SwiftUI views
     func createTransition(duration: TimeInterval) -> AnyTransition {
-        // Since we target macOS 15+, we can use native blur replace transition
-        // However, SwiftUI's .blurReplace is available as a static property/function
-        // We'll simulate it with scale and opacity for similar visual effect
+        // Simulate a blur-replace look with scale and opacity for a
+        // similar visual effect (kept API-version agnostic on purpose).
         
         let scaleTransition: AnyTransition
         switch configuration {
