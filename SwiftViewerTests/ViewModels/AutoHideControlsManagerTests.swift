@@ -126,12 +126,4 @@ final class AutoHideControlsManagerStandaloneTests: XCTestCase {
         XCTAssertTrue(mock.areControlsVisible)
     }
 
-    // MARK: - Cleanup
-
-    func test_cleanupTimer_canBeCalledSafely() {
-        sut.cleanupTimer()
-        sut.cleanupTimer() // Double cleanup should not crash
-
-        XCTAssertTrue(true) // No crash = pass
-    }
 }

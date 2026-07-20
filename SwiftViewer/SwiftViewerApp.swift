@@ -10,7 +10,12 @@ import SwiftUI
 @main
 struct SwiftViewerApp: App {
     @State private var isShowingSettings = false
-    
+
+    init() {
+        // Wire the animation-duration provider to the shared settings once at launch.
+        AnimationDurationProvider.configure(with: DependencyContainer.shared.settingsManager)
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

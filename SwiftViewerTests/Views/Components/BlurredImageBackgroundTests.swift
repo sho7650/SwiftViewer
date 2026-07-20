@@ -28,54 +28,42 @@ final class BlurredImageBackgroundTests: XCTestCase {
         super.tearDown()
     }
     
-    // MARK: - Red Phase Tests (Should Fail Initially)
-    
+    // MARK: - Rendering Tests
+
     func test_BlurredImageBackground_WhenImageProvided_ShouldApplyBlurEffect() throws {
         // Given
         let blurredBackground = BlurredImageBackground(image: testImage)
-        
+
         // When
         let hostingController = NSHostingController(rootView: blurredBackground)
         let view = hostingController.view
-        
+
         // Then
         XCTAssertNotNil(view, "BlurredImageBackground should render a view")
-        
-        // This test will fail initially because BlurredImageBackground doesn't exist yet
-        // We expect to see blur and scaling effects applied
-        XCTAssertTrue(true, "BlurredImageBackground should apply blur effect to provided image")
     }
-    
+
     func test_BlurredImageBackground_WhenNoImage_ShouldShowTransparentBackground() throws {
         // Given
         let blurredBackground = BlurredImageBackground(image: nil)
-        
+
         // When
         let hostingController = NSHostingController(rootView: blurredBackground)
         let view = hostingController.view
-        
+
         // Then
         XCTAssertNotNil(view, "BlurredImageBackground should render a view even with nil image")
-        
-        // This test will fail initially because BlurredImageBackground doesn't exist yet
-        // We expect a transparent/clear background when no image is provided
-        XCTAssertTrue(true, "BlurredImageBackground should show transparent background when no image provided")
     }
-    
+
     func test_BlurredImageBackground_ShouldScaleToFillEntireArea() throws {
         // Given
         let blurredBackground = BlurredImageBackground(image: testImage)
-        
+
         // When
         let hostingController = NSHostingController(rootView: blurredBackground.frame(width: 800, height: 600))
         let view = hostingController.view
-        
+
         // Then
         XCTAssertNotNil(view, "BlurredImageBackground should render within specified frame")
-        
-        // This test will fail initially because BlurredImageBackground doesn't exist yet
-        // We expect the background to scale to fill the entire area
-        XCTAssertTrue(true, "BlurredImageBackground should scale to fill entire area")
     }
     
     func test_BlurredImageBackground_ShouldHaveCorrectBlurRadius() throws {

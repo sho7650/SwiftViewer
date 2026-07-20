@@ -12,7 +12,7 @@ protocol SlideShowServiceProtocol {
     var isRunning: Bool { get }
     var currentInterval: TimeInterval? { get }
     
-    func startTimer(interval: TimeInterval, action: @escaping () -> Void) -> Result<Void, SlideShowError>
+    func startTimer(interval: TimeInterval, action: @escaping @MainActor () -> Void) -> Result<Void, SlideShowError>
     func stopTimer()
 }
 
@@ -50,7 +50,7 @@ final class SlideShowService: SlideShowServiceProtocol {
         logger.debug("SlideShowService initialized")
     }
     
-    deinit {
+    isolated deinit {
         timer?.invalidate()
         timer = nil
         logger.debug("SlideShowService deinitialized")
@@ -58,7 +58,7 @@ final class SlideShowService: SlideShowServiceProtocol {
     
     // MARK: - Public Methods
     
-    func startTimer(interval: TimeInterval, action: @escaping () -> Void) -> Result<Void, SlideShowError> {
+    func startTimer(interval: TimeInterval, action: @escaping @MainActor () -> Void) -> Result<Void, SlideShowError> {
         // Validate interval (1 second to 30 minutes)
         guard interval >= 1.0 && interval <= 1800.0 else {
             logger.error("Invalid timer interval: \(interval). Must be between 1 and 1800 seconds.")
@@ -73,9 +73,10 @@ final class SlideShowService: SlideShowServiceProtocol {
         // Store interval
         _currentInterval = interval
         
-        // Create and schedule new timer
+        // Create and schedule new timer. scheduledTimer fires on the main run loop,
+        // so the callback is already on the main actor.
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.logger.debug("SlideShow timer fired")
                 action()
             }
@@ -111,12 +112,12 @@ final class MockSlideShowService: SlideShowServiceProtocol {
     var isRunning: Bool = false
     var currentInterval: TimeInterval?
 
-    private var mockAction: (() -> Void)?
+    private var mockAction: (@MainActor () -> Void)?
     private var shouldFailStart: Bool = false
     /// For testing: allow intervals below 1.0 second
     var allowShortIntervals: Bool = true
 
-    func startTimer(interval: TimeInterval, action: @escaping () -> Void) -> Result<Void, SlideShowError> {
+    func startTimer(interval: TimeInterval, action: @escaping @MainActor () -> Void) -> Result<Void, SlideShowError> {
         guard !shouldFailStart else {
             return .failure(.invalidInterval(interval))
         }

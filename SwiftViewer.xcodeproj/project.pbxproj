@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CA71D4702E631E4B00A38DC5 /* Kingfisher */; };
-		CAC5D7482E645EBD00E32766 /* SwiftGlass in Frameworks */ = {isa = PBXBuildFile; productRef = CAC5D7472E645EBD00E32766 /* SwiftGlass */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,8 +55,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA71D4712E631E4B00A38DC5 /* Kingfisher in Frameworks */,
-				CAC5D7482E645EBD00E32766 /* SwiftGlass in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,8 +115,6 @@
 			);
 			name = SwiftViewer;
 			packageProductDependencies = (
-				CA71D4702E631E4B00A38DC5 /* Kingfisher */,
-				CAC5D7472E645EBD00E32766 /* SwiftGlass */,
 			);
 			productName = SwiftViewer;
 			productReference = CABC92202E56D25A001A43C1 /* SwiftViewer.app */;
@@ -205,8 +199,6 @@
 			mainGroup = CABC92172E56D25A001A43C1;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-				CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CABC92212E56D25A001A43C1 /* Products */;
@@ -415,7 +407,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 oshiire. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -424,7 +416,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -445,7 +437,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 oshiire. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -454,7 +446,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -466,7 +458,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TU59724Z2P;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -474,7 +466,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftViewer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SwiftViewer";
 			};
 			name = Debug;
@@ -487,7 +479,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TU59724Z2P;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -495,7 +487,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftViewer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SwiftViewer";
 			};
 			name = Release;
@@ -507,7 +499,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TU59724Z2P;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -515,7 +507,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_TARGET_NAME = SwiftViewer;
 			};
 			name = Debug;
@@ -527,7 +519,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TU59724Z2P;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = oshiire.SwiftViewerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -535,7 +527,7 @@
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_TARGET_NAME = SwiftViewer;
 			};
 			name = Release;
@@ -581,37 +573,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 8.5.0;
-			};
-		};
-		CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/1998code/SwiftGlass.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.9.9;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		CA71D4702E631E4B00A38DC5 /* Kingfisher */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CA71D46F2E631E4B00A38DC5 /* XCRemoteSwiftPackageReference "Kingfisher" */;
-			productName = Kingfisher;
-		};
-		CAC5D7472E645EBD00E32766 /* SwiftGlass */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CAC5D7462E645EBD00E32766 /* XCRemoteSwiftPackageReference "SwiftGlass" */;
-			productName = SwiftGlass;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CABC92182E56D25A001A43C1 /* Project object */;
 }

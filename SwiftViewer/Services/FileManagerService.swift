@@ -7,13 +7,6 @@
 
 import Foundation
 
-enum SortType: Equatable {
-    case name(ascending: Bool)
-    case date(ascending: Bool)
-    case size(ascending: Bool)
-    case random
-}
-
 enum FileManagerServiceError: Error {
     case directoryNotFound
     case accessDenied
@@ -21,7 +14,7 @@ enum FileManagerServiceError: Error {
     case symbolicLinkNotAllowed
 }
 
-protocol FileManagerServiceProtocol {
+protocol FileManagerServiceProtocol: Sendable {
     func getImageFiles(from url: URL, sortBy: SortType) async throws -> [ImageFile]
 }
 
@@ -31,7 +24,7 @@ extension FileManagerServiceProtocol {
     }
 }
 
-final class FileManagerService: FileManagerServiceProtocol {
+final class FileManagerService: FileManagerServiceProtocol, @unchecked Sendable {
     private let fileManager: FileManager
     private let logger = Logger.shared
     
@@ -40,79 +33,67 @@ final class FileManagerService: FileManagerServiceProtocol {
     }
     
     func getImageFiles(from url: URL, sortBy: SortType = .name(ascending: true)) async throws -> [ImageFile] {
-        return try await Task {
-            do {
-                // Validate the source directory is not a symbolic link (security check)
-                let resolvedURL = url.resolvingSymlinksInPath()
-                if resolvedURL.path != url.standardizedFileURL.path {
-                    logger.warning("Symbolic link detected, using resolved path: \(resolvedURL.lastPathComponent)")
-                }
-
-                let contents = try fileManager.contentsOfDirectory(
-                    at: resolvedURL,
-                    includingPropertiesForKeys: [.fileSizeKey, .creationDateKey, .isSymbolicLinkKey],
-                    options: [.skipsHiddenFiles]
-                )
-
-                let imageFiles = try contents.compactMap { fileURL -> ImageFile? in
-                    // Skip symbolic links for security
-                    let resourceValues = try? fileURL.resourceValues(forKeys: [.isSymbolicLinkKey])
-                    if resourceValues?.isSymbolicLink == true {
-                        logger.debug("Skipping symbolic link: \(fileURL.lastPathComponent)")
-                        return nil
-                    }
-
-                    let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
-
-                    let fileName = fileURL.lastPathComponent
-                    let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
-                    let createdDate = (attributes[.creationDate] as? Date) ?? Date()
-
-                    let imageFile = ImageFile(
-                        url: fileURL,
-                        fileName: fileName,
-                        fileSize: fileSize,
-                        createdDate: createdDate
-                    )
-
-                    return imageFile.isValidImageFormat ? imageFile : nil
-                }
-
-                return sortImageFiles(imageFiles, by: sortBy)
-            } catch let error as NSError {
-                if error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError {
-                    throw FileManagerServiceError.directoryNotFound
-                } else if error.code == NSFileReadNoPermissionError {
-                    throw FileManagerServiceError.accessDenied
-                } else {
-                    throw FileManagerServiceError.readError(error)
-                }
+        do {
+            // Reject a symlinked source directory outright rather than silently following it.
+            if url.resolvingSymlinksInPath().standardizedFileURL.path != url.standardizedFileURL.path {
+                logger.warning("Rejecting symbolic-link directory: \(Logger.sanitizePath(url))")
+                throw FileManagerServiceError.symbolicLinkNotAllowed
             }
-        }.value
-    }
-    
-    
-    private func sortImageFiles(_ files: [ImageFile], by sortType: SortType) -> [ImageFile] {
-        switch sortType {
-        case .name(let ascending):
-            return files.sorted { 
-                ascending ? $0.fileName < $1.fileName : $0.fileName > $1.fileName
+
+            let contents = try fileManager.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.fileSizeKey, .creationDateKey, .isSymbolicLinkKey],
+                options: [.skipsHiddenFiles]
+            )
+
+            let imageFiles = contents.compactMap { makeImageFile(from: $0) }
+            return imageFiles.sorted(by: sortBy)
+        } catch let error as FileManagerServiceError {
+            throw error
+        } catch let error as NSError {
+            if error.code == NSFileReadNoSuchFileError || error.code == NSFileNoSuchFileError {
+                throw FileManagerServiceError.directoryNotFound
+            } else if error.code == NSFileReadNoPermissionError {
+                throw FileManagerServiceError.accessDenied
+            } else {
+                throw FileManagerServiceError.readError(error)
             }
-        case .date(let ascending):
-            return files.sorted {
-                ascending ? $0.createdDate < $1.createdDate : $0.createdDate > $1.createdDate
-            }
-        case .size(let ascending):
-            return files.sorted {
-                ascending ? $0.fileSize < $1.fileSize : $0.fileSize > $1.fileSize
-            }
-        case .random:
-            return files.shuffled()
         }
+    }
+
+    /// Builds an `ImageFile` from a directory entry, or `nil` if it should be excluded.
+    /// A single `attributesOfItem` read supplies both the symlink flag and the metadata.
+    /// Any failure to read the entry fails closed (the entry is excluded).
+    private func makeImageFile(from fileURL: URL) -> ImageFile? {
+        guard ImageFile.supportedExtensions.contains(fileURL.pathExtension.lowercased()) else {
+            return nil
+        }
+
+        let attributes: [FileAttributeKey: Any]
+        do {
+            attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
+        } catch {
+            logger.debug("Excluding unreadable entry: \(fileURL.lastPathComponent)")
+            return nil
+        }
+
+        if attributes[.type] as? FileAttributeType == .typeSymbolicLink {
+            logger.debug("Skipping symbolic link: \(fileURL.lastPathComponent)")
+            return nil
+        }
+
+        let fileSize = (attributes[.size] as? NSNumber)?.int64Value ?? 0
+        let createdDate = (attributes[.creationDate] as? Date) ?? Date()
+        return ImageFile(
+            url: fileURL,
+            fileName: fileURL.lastPathComponent,
+            fileSize: fileSize,
+            createdDate: createdDate
+        )
     }
 }
 
-final class MockFileManagerService: FileManagerServiceProtocol {
+final class MockFileManagerService: FileManagerServiceProtocol, @unchecked Sendable {
     var mockImageFiles: [ImageFile] = []
     var shouldThrowError = false
     var errorToThrow: Error = FileManagerServiceError.directoryNotFound

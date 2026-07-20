@@ -31,8 +31,8 @@ final class SlideShowViewModel {
     // Convert to stored property for @Observable reactivity
     internal var isRepeatEnabled: Bool = false {
         didSet {
-            // Update settings manager when property changes - use shared instance for consistency
-            DependencyContainer.shared.settingsManager.repeatEnabled = isRepeatEnabled
+            // Persist through the injected settings manager (honours mocks in tests).
+            settingsManager.repeatEnabled = isRepeatEnabled
         }
     }
     
@@ -123,7 +123,7 @@ final class SlideShowViewModel {
 
     /// Creates the timer action closure for slideshow navigation.
     /// Handles repeat mode and stopping at the last image.
-    private func makeTimerAction() -> () -> Void {
+    private func makeTimerAction() -> @MainActor () -> Void {
         return { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in

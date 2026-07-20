@@ -9,27 +9,28 @@ import XCTest
 import SwiftUI
 @testable import SwiftViewer
 
+@MainActor
 final class ImageGalleryViewBlurTests: XCTestCase {
-    
+
     private var mockFileManagerService: MockFileManagerService!
-    private var mockImageLoaderService: MockImageLoaderService!
+    private var mockImagePipeline: MockImagePipeline!
     private var mockSettingsManager: MockSettingsManager!
     private var mockContainer: MockDependencyContainer!
     private var viewModel: ImageGalleryViewModel!
     private var testImage: NSImage!
-    
-    @MainActor override func setUpWithError() throws {
+
+    override func setUpWithError() throws {
         super.setUp()
         mockFileManagerService = MockFileManagerService()
-        mockImageLoaderService = MockImageLoaderService()
+        mockImagePipeline = MockImagePipeline()
         mockSettingsManager = MockSettingsManager()
         mockContainer = MockDependencyContainer(
             fileManagerService: mockFileManagerService,
-            imageLoaderService: mockImageLoaderService,
+            imagePipeline: mockImagePipeline,
             settingsManager: mockSettingsManager
         )
         viewModel = ImageGalleryViewModel(dependencies: mockContainer)
-        
+
         // Create a test image
         testImage = NSImage(size: NSSize(width: 200, height: 150))
         testImage.lockFocus()
@@ -37,10 +38,10 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         NSRect(origin: .zero, size: NSSize(width: 200, height: 150)).fill()
         testImage.unlockFocus()
     }
-    
+
     override func tearDownWithError() throws {
         mockFileManagerService = nil
-        mockImageLoaderService = nil
+        mockImagePipeline = nil
         mockSettingsManager = nil
         mockContainer = nil
         viewModel = nil
@@ -48,7 +49,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         super.tearDown()
     }
     
-    // MARK: - Integration Tests (Red Phase - Should Fail Initially)
+    // MARK: - Integration Tests
     
     @MainActor func test_ImageGalleryView_WhenImageDisplayed_ShouldShowBlurredBackground() throws {
         // Given
@@ -63,7 +64,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the current image
-        mockImageLoaderService.mockImage = testImage
+        _ = testImage  // image content is not asserted by these render smoke tests
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -72,10 +73,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
-        
-        // This test will fail initially because blur background integration doesn't exist yet
-        // We expect to see both the blurred background and the sharp main image
-        XCTAssertTrue(true, "ImageGalleryView should display blurred background when image is shown")
     }
     
     @MainActor func test_ImageGalleryView_WhenNoImage_ShouldNotShowBlurredBackground() throws {
@@ -90,10 +87,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then
         XCTAssertNotNil(view, "ImageGalleryView should render successfully even with no images")
-        
-        // This test will fail initially because blur background integration doesn't exist yet
-        // We expect no blur background when no image is loaded
-        XCTAssertTrue(true, "ImageGalleryView should not display blurred background when no image is loaded")
     }
     
     @MainActor func test_ImageGalleryView_WhenImageChanges_ShouldUpdateBlurredBackground() async throws {
@@ -122,7 +115,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the first image (will be overwritten for second test)
-        mockImageLoaderService.mockImage = testImage
+        _ = testImage  // image content is not asserted by these render smoke tests
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -134,10 +127,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
-        
-        // This test will fail initially because blur background integration doesn't exist yet
-        // We expect the blur background to update when the main image changes
-        XCTAssertTrue(true, "ImageGalleryView should update blurred background when image changes")
     }
     
     @MainActor func test_ImageGalleryView_BlurBackground_ShouldNotInterfereWithControls() throws {
@@ -153,7 +142,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the current image
-        mockImageLoaderService.mockImage = testImage
+        _ = testImage  // image content is not asserted by these render smoke tests
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -162,10 +151,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
-        
-        // This test will fail initially because blur background integration doesn't exist yet
-        // We expect blur background to be behind controls and not interfere with interactions
-        XCTAssertTrue(true, "ImageGalleryView blur background should not interfere with slideshow controls")
     }
     
     // MARK: - Image Layout Tests
@@ -189,9 +174,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.imageFiles = [imageFile]
         viewModel.currentIndex = 0
         
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = portraitImage
-        }
+        _ = portraitImage  // image content is not asserted by this render smoke test
         
         // When: Displayed in a landscape window (1000x200)
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -200,11 +183,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then: Image should be scaled to fit entirely within bounds (25x100) and centered
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
-        
-        // This test validates the user's specific example:
-        // Window: 1000x200, Image: 100x400 → Should display as 25x100 centered
-        // This will fail if image is using .fill instead of .fit
-        XCTAssertTrue(true, "Image should use .fit aspect ratio to display entirely within window bounds")
     }
     
     @MainActor func test_ImageGalleryView_ShouldCenterImagesWithinWindow() throws {
@@ -226,9 +204,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.imageFiles = [imageFile]
         viewModel.currentIndex = 0
         
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = landscapeImage
-        }
+        _ = landscapeImage  // image content is not asserted by this render smoke test
         
         // When: Displayed in a portrait window
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -237,10 +213,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then: Image should be scaled to fit and centered vertically
         XCTAssertNotNil(view, "ImageGalleryView should render successfully")
-        
-        // This test validates that images are always fully visible and centered
-        // The image should be scaled down to fit width and centered vertically
-        XCTAssertTrue(true, "Image should be centered within window bounds using .fit aspect ratio")
     }
     
     @MainActor func test_ImageGalleryView_BlurBackgroundShouldNotAffectMainImageLayout() throws {
@@ -262,9 +234,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.imageFiles = [imageFile]
         viewModel.currentIndex = 0
         
-        if let mockService = mockContainer.imageLoaderService as? MockImageLoaderService {
-            mockService.mockImage = squareImage
-        }
+        _ = squareImage  // image content is not asserted by this render smoke test
         
         // When: Displayed with blur background
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -273,10 +243,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         
         // Then: Main image layout should not be affected by blur background
         XCTAssertNotNil(view, "ImageGalleryView should render successfully with blur background")
-        
-        // This test ensures that blur background (which uses .fill) doesn't interfere 
-        // with main image display (which should use .fit)
-        XCTAssertTrue(true, "Blur background should not affect main image layout calculations")
     }
     
     @MainActor func test_ImageGalleryView_ShouldMaintainCorrectAspectRatioForAllImageSizes() throws {
@@ -305,7 +271,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
             viewModel.imageFiles = [imageFile]
             viewModel.currentIndex = 0
             
-            mockImageLoaderService.mockImage = testImage
+            _ = testImage  // image content is not asserted by these render smoke tests
             
             // When: Displayed in standard window
             let imageGalleryView = ImageGalleryView(viewModel: viewModel)
@@ -315,9 +281,6 @@ final class ImageGalleryViewBlurTests: XCTestCase {
             // Then: Each image should be properly displayed with .fit behavior
             XCTAssertNotNil(view, "ImageGalleryView should render \(name) image successfully")
         }
-        
-        // This test validates that all image aspect ratios work correctly with .fit mode
-        XCTAssertTrue(true, "All image aspect ratios should display correctly with .fit mode")
     }
     
     // MARK: - Performance Integration Tests
@@ -337,7 +300,7 @@ final class ImageGalleryViewBlurTests: XCTestCase {
         viewModel.currentIndex = 0
         
         // Mock the first image for testing (MockImageLoaderService only supports one image at a time)
-        mockImageLoaderService.mockImage = testImage
+        _ = testImage  // image content is not asserted by these render smoke tests
         
         // When
         let imageGalleryView = ImageGalleryView(viewModel: viewModel)

@@ -14,28 +14,28 @@ final class ImageGalleryViewModelTests: XCTestCase {
     
     var sut: ImageGalleryViewModel!
     var mockFileManagerService: MockFileManagerService!
-    var mockImageLoaderService: MockImageLoaderService!
+    var mockImagePipeline: MockImagePipeline!
     var mockSettingsManager: MockSettingsManager!
     var mockContainer: MockDependencyContainer!
-    
+
     override func setUp() {
         super.setUp()
         mockFileManagerService = MockFileManagerService()
-        mockImageLoaderService = MockImageLoaderService()
+        mockImagePipeline = MockImagePipeline()
         mockSettingsManager = MockSettingsManager()
         mockContainer = MockDependencyContainer(
             fileManagerService: mockFileManagerService,
-            imageLoaderService: mockImageLoaderService,
+            imagePipeline: mockImagePipeline,
             settingsManager: mockSettingsManager
         )
         sut = ImageGalleryViewModel(dependencies: mockContainer)
     }
-    
+
     override func tearDown() {
         sut = nil
         mockContainer = nil
         mockFileManagerService = nil
-        mockImageLoaderService = nil
+        mockImagePipeline = nil
         mockSettingsManager = nil
         super.tearDown()
     }
@@ -57,10 +57,9 @@ final class ImageGalleryViewModelTests: XCTestCase {
         let testURL = URL(fileURLWithPath: "/test/folder")
         let testImageFiles = createTestImageFiles(count: 3)
         mockFileManagerService.mockImageFiles = testImageFiles
-        mockImageLoaderService.mockImage = NSImage()
-        
+
         await sut.loadFolder(testURL)
-        
+
         XCTAssertEqual(sut.imageFiles.count, 3)
         XCTAssertEqual(sut.imageFiles, testImageFiles)
         XCTAssertEqual(sut.currentIndex, 0)
@@ -183,22 +182,21 @@ final class ImageGalleryViewModelTests: XCTestCase {
     // MARK: - Image Loading Tests
     
     func test_loadImageAtIndex_loadsCorrectImage() async {
-        let testImages = [NSImage(), NSImage(), NSImage()]
         await setupWithImages(count: 3)
-        mockImageLoaderService.mockImage = testImages[1]
-        
+
         await sut.navigateToIndex(1)
-        
-        XCTAssertEqual(sut.currentImage, testImages[1])
+
         XCTAssertEqual(sut.currentIndex, 1)
+        XCTAssertNotNil(sut.currentImage)
+        XCTAssertEqual(sut.currentImageFile, sut.imageFiles[1])
     }
-    
+
     func test_loadImageAtIndex_handlesImageLoadingError() async {
         await setupWithImages(count: 3)
-        mockImageLoaderService.shouldThrowError = true
-        
+        mockImagePipeline.shouldThrowError = true
+
         await sut.navigateToIndex(1)
-        
+
         XCTAssertNotNil(sut.errorMessage)
         XCTAssertNil(sut.currentImage)
     }
@@ -235,8 +233,7 @@ final class ImageGalleryViewModelTests: XCTestCase {
         let testURL = URL(fileURLWithPath: "/test/folder")
         let testImageFiles = createTestImageFiles(count: count)
         mockFileManagerService.mockImageFiles = testImageFiles
-        mockImageLoaderService.mockImage = NSImage()
-        
+
         await sut.loadFolder(testURL)
     }
 }

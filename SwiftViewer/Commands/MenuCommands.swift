@@ -96,14 +96,6 @@ extension FocusedValues {
     }
 }
 
-// MARK: - Display Mode
-
-enum DisplayMode: String, CaseIterable {
-    case fit = "Fit to Window"
-    case fill = "Fill Window"
-    case actualSize = "Actual Size"
-}
-
 // MARK: - Menu Commands
 
 struct MenuCommands: Commands {

@@ -7,14 +7,29 @@
 
 import SwiftUI
 
+/// Supplies animation durations to `Animation.fromSettings`, injected once at app launch.
+///
+/// Defaults to each type's built-in duration so tests and previews work without wiring.
+/// The many static `fromSettings` call sites (including inside `ButtonStyle`s where
+/// per-call injection is impractical) read this single provider instead of a global singleton.
+///
+/// The closure is assigned once from the app entry point (main thread) and only read
+/// thereafter, so unsynchronised access is safe.
+enum AnimationDurationProvider {
+    nonisolated(unsafe) static var duration: (AnimationType) -> TimeInterval = { $0.defaultDuration }
+
+    /// Wires the provider to a settings manager. Call once from the app entry point.
+    static func configure(with settingsManager: SettingsManagerProtocol) {
+        duration = { settingsManager.animationDurations[$0] ?? $0.defaultDuration }
+    }
+}
+
 extension Animation {
     /// Returns an animation with duration from settings
     /// - Parameter type: The type of animation to retrieve duration for
     /// - Returns: An easeInOut animation with the configured duration
     static func fromSettings(_ type: AnimationType) -> Animation {
-        let settingsManager = DependencyContainer.shared.settingsManager
-        let duration = settingsManager.animationDurations[type] ?? type.defaultDuration
-        return .easeInOut(duration: duration)
+        .easeInOut(duration: AnimationDurationProvider.duration(type))
     }
     
     /// Convenience method for control animations (show/hide controls)

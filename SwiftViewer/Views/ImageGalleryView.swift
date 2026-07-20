@@ -8,7 +8,6 @@
 import SwiftUI
 import AppKit
 import Observation
-import SwiftGlass
 
 struct ImageGalleryView: View {
     var viewModel: ImageGalleryViewModel
@@ -44,7 +43,8 @@ struct ImageGalleryView: View {
         self._slideShowViewModel = State(initialValue: slideShowVM)
         self._autoHideManager = State(initialValue: AutoHideControlsManager(
             slideShowViewModel: slideShowVM,
-            imageGalleryViewModel: viewModel
+            imageGalleryViewModel: viewModel,
+            settingsManager: dependencies.settingsManager
         ))
         self._transitionManager = State(initialValue: TransitionManager())
         self._currentTransitionType = State(initialValue: dependencies.settingsManager.transitionType)
@@ -80,7 +80,11 @@ struct ImageGalleryView: View {
             .background {
                 // Background - Blurred image or solid black (isolated from main content layout)
                 if let currentImage = viewModel.currentImage {
-                    BlurredImageBackground(image: currentImage)
+                    BlurredImageBackground(
+                        image: currentImage,
+                        blurRadius: settingsManager.blurRadius,
+                        backgroundOpacity: settingsManager.blurOpacity
+                    )
                 } else {
                     Color.black
                 }

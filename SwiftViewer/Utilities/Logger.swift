@@ -24,7 +24,9 @@ enum LogLevel: Int {
     }
 }
 
-final class Logger {
+/// Immutable and thread-safe: stored state is created once, and logging goes through
+/// `os_log` and `UserDefaults`, which are themselves thread-safe.
+final class Logger: @unchecked Sendable {
     static let shared = Logger()
 
     private let subsystem = Bundle.main.bundleIdentifier ?? "oshiire.SwiftViewer"

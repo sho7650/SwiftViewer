@@ -20,14 +20,14 @@ class TransitionManager: ObservableObject {
     /// Default transition type
     public static let defaultTransitionType: TransitionType = .crossDissolve
     
-    /// Initialize with auto-discovered transitions
+    /// Initialize with the built-in transition strategies.
     init() {
         self.transitionRegistry = [
-            .crossDissolve: CrossDissolveTransition(),
-            .zoomOut: ZoomOutTransition(),
-            .zoomIn: ZoomInTransition(),
-            .blurReplace: BlurReplaceTransition(configuration: .downThenUp),
-            .blurReplaceUpUp: BlurReplaceTransition(configuration: .expandBoth)
+            .crossDissolve: ScaleFadeTransition(name: "crossDissolve", displayName: "Cross Dissolve", insertionScale: 1.0, removalScale: 1.0),
+            .zoomOut: ScaleFadeTransition(name: "zoomOut", displayName: "Zoom Out", insertionScale: 0.8, removalScale: 1.2),
+            .zoomIn: ScaleFadeTransition(name: "zoomIn", displayName: "Zoom In", insertionScale: 1.2, removalScale: 0.8),
+            .blurReplace: ScaleFadeTransition(name: "blurReplace", displayName: "Blur Replace", insertionScale: 1.1, removalScale: 0.9),
+            .blurReplaceUpUp: ScaleFadeTransition(name: "blurReplaceUpUp", displayName: "Blur Replace (Expand)", insertionScale: 1.1, removalScale: 1.1)
         ]
     }
     
@@ -49,13 +49,11 @@ class TransitionManager: ObservableObject {
         if type == .none {
             return .identity
         }
-        
-        guard let transitionStrategy = transitionRegistry[type] else {
-            // Fallback to default transition if type not found
-            return transitionRegistry[Self.defaultTransitionType]?.createTransition(duration: duration) ?? .opacity
-        }
-        
-        return transitionStrategy.createTransition(duration: duration)
+
+        let strategy = transitionRegistry[type] ?? transitionRegistry[Self.defaultTransitionType]
+        let transition = strategy?.createTransition(duration: duration) ?? .opacity
+        // Apply the configured timing centrally so every strategy honours `duration`.
+        return transition.animation(.easeInOut(duration: duration))
     }
     
     /// Get the display name for a transition type

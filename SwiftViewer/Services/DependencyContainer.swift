@@ -9,68 +9,52 @@ import Foundation
 
 protocol DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol { get }
-    var imageLoaderService: ImageLoaderServiceProtocol { get }
+    var imagePipeline: ImagePipelineProtocol { get }
     var settingsManager: SettingsManagerProtocol { get }
-    var adaptiveImageCache: AdaptiveImageCacheProtocol { get }
     @MainActor var slideShowService: SlideShowServiceProtocol { get }
-    // TODO: Plugin system not yet implemented
-    // @MainActor var pluginSettingsManager: PluginSettingsManager { get }
 }
 
-final class DependencyContainer: DependencyContainerProtocol {
+/// The production composition root. Marked `@unchecked Sendable` because it is
+/// initialised once and its stored services are only read afterward; the
+/// `@MainActor` service is created lazily on the main actor.
+final class DependencyContainer: DependencyContainerProtocol, @unchecked Sendable {
     static let shared = DependencyContainer()
-    
-    private init() {}
-    
-    lazy var fileManagerService: FileManagerServiceProtocol = {
-        FileManagerService()
-    }()
-    
-    lazy var imageLoaderService: ImageLoaderServiceProtocol = {
-        ImageLoaderService()
-    }()
-    
-    lazy var settingsManager: SettingsManagerProtocol = {
-        SettingsManager()
-    }()
-    
-    lazy var adaptiveImageCache: AdaptiveImageCacheProtocol = {
-        AdaptiveImageCache(fileManager: fileManagerService, settings: settingsManager)
-    }()
-    
+
+    let fileManagerService: FileManagerServiceProtocol
+    let settingsManager: SettingsManagerProtocol
+    let imagePipeline: ImagePipelineProtocol
+
+    private init() {
+        let settings = SettingsManager()
+        self.fileManagerService = FileManagerService()
+        self.settingsManager = settings
+        self.imagePipeline = ImagePipeline(
+            memoryLimitPercentage: settings.cacheMemoryLimitPercentage,
+            countLimit: settings.cacheCountLimit
+        )
+    }
+
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         SlideShowService()
     }()
-    
-    // TODO: Plugin system not yet implemented
-    // @MainActor lazy var pluginSettingsManager: PluginSettingsManager = {
-    //     PluginSettingsManager(settingsManager: settingsManager)
-    // }()
 }
 
 final class MockDependencyContainer: DependencyContainerProtocol {
     var fileManagerService: FileManagerServiceProtocol
-    var imageLoaderService: ImageLoaderServiceProtocol
+    var imagePipeline: ImagePipelineProtocol
     var settingsManager: SettingsManagerProtocol
-    var adaptiveImageCache: AdaptiveImageCacheProtocol
-    
+
     @MainActor lazy var slideShowService: SlideShowServiceProtocol = {
         MockSlideShowService()
     }()
-    
-    // TODO: Plugin system not yet implemented
-    // @MainActor lazy var pluginSettingsManager: PluginSettingsManager = {
-    //     PluginSettingsManager(settingsManager: settingsManager)
-    // }()
-    
+
     init(
         fileManagerService: FileManagerServiceProtocol = MockFileManagerService(),
-        imageLoaderService: ImageLoaderServiceProtocol = MockImageLoaderService(),
+        imagePipeline: ImagePipelineProtocol = MockImagePipeline(),
         settingsManager: SettingsManagerProtocol = MockSettingsManager()
     ) {
         self.fileManagerService = fileManagerService
-        self.imageLoaderService = imageLoaderService
+        self.imagePipeline = imagePipeline
         self.settingsManager = settingsManager
-        self.adaptiveImageCache = AdaptiveImageCache(fileManager: fileManagerService, settings: settingsManager)
     }
 }

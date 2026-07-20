@@ -64,14 +64,13 @@ final class SlideShowViewModelTests: XCTestCase {
     func test_isRepeatEnabled_whenToggled_shouldUpdateSettingsManager() {
         // Given: Initial repeat is disabled
         mockSettingsManager.repeatEnabled = false
-        DependencyContainer.shared.settingsManager.repeatEnabled = false
         XCTAssertFalse(sut.isRepeatEnabled)
-        
+
         // When: Toggle repeat mode
         sut.toggleRepeatMode()
-        
-        // Then: Shared settings manager is updated (matching production behavior)
-        XCTAssertTrue(DependencyContainer.shared.settingsManager.repeatEnabled)
+
+        // Then: The injected settings manager is updated (proper dependency injection).
+        XCTAssertTrue(mockSettingsManager.repeatEnabled)
         XCTAssertTrue(sut.isRepeatEnabled)
     }
     
@@ -240,22 +239,6 @@ final class SlideShowViewModelTests: XCTestCase {
         
         sut.startSlideShow(interval: -1)
         XCTAssertFalse(sut.isRunning)
-    }
-    
-    // MARK: - Memory Management Tests
-    
-    func test_deinit_stopsSlideshow() {
-        // Simply test that object can be deallocated
-        let viewModel = SlideShowViewModel(
-            slideShowService: MockSlideShowService(),
-            imageNavigator: MockImageGalleryViewModel(),
-            settingsManager: MockSettingsManager()
-        )
-        viewModel.startSlideShow()
-        
-        // This test verifies that SlideShowViewModel can be created and deallocated
-        // Timer cleanup is handled by the SlideShowService's own deinit
-        XCTAssertTrue(true, "SlideShowViewModel test completed")
     }
     
     // MARK: - Settings Integration Tests

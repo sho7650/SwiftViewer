@@ -20,17 +20,27 @@ class AutoHideControlsManager {
     // MARK: - Private Properties
     
     private var hideTimer: Timer?
-    private let autoHideDelay: TimeInterval = 3.0
-    
+
     // Dependencies for state checking
     private weak var slideShowViewModel: SlideShowViewModel?
     private weak var imageGalleryViewModel: ImageGalleryViewModel?
-    
+    private let settingsManager: SettingsManagerProtocol
+
+    /// The auto-hide delay, sourced live from settings (1–60s).
+    private var autoHideDelay: TimeInterval {
+        settingsManager.autoHideDelay
+    }
+
     // MARK: - Initialization
-    
-    init(slideShowViewModel: SlideShowViewModel?, imageGalleryViewModel: ImageGalleryViewModel?) {
+
+    init(
+        slideShowViewModel: SlideShowViewModel?,
+        imageGalleryViewModel: ImageGalleryViewModel?,
+        settingsManager: SettingsManagerProtocol = DependencyContainer.shared.settingsManager
+    ) {
         self.slideShowViewModel = slideShowViewModel
         self.imageGalleryViewModel = imageGalleryViewModel
+        self.settingsManager = settingsManager
     }
     
     deinit {
@@ -124,8 +134,16 @@ final class MockAutoHideControlsManager: AutoHideControlsManager {
     var hideTimerFireCount: Int = 0
     var registerActivityCallCount: Int = 0
     
-    override init(slideShowViewModel: SlideShowViewModel?, imageGalleryViewModel: ImageGalleryViewModel?) {
-        super.init(slideShowViewModel: slideShowViewModel, imageGalleryViewModel: imageGalleryViewModel)
+    override init(
+        slideShowViewModel: SlideShowViewModel?,
+        imageGalleryViewModel: ImageGalleryViewModel?,
+        settingsManager: SettingsManagerProtocol = DependencyContainer.shared.settingsManager
+    ) {
+        super.init(
+            slideShowViewModel: slideShowViewModel,
+            imageGalleryViewModel: imageGalleryViewModel,
+            settingsManager: settingsManager
+        )
     }
     
     override func registerActivity() {

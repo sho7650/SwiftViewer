@@ -34,28 +34,6 @@ final class ContentViewMenuTests: XCTestCase {
         XCTAssertNotNil(contentView.body)
     }
     
-    // MARK: - Sort Change Tests
-    
-    func test_contentView_responds_to_sortTypeChanged_notification() {
-        let expectation = XCTestExpectation(description: "ContentView responds to sort change")
-        
-        // Post a sort type change notification
-        NotificationCenter.default.post(
-            name: .sortTypeChanged,
-            object: SortType.name(ascending: false)
-        )
-        
-        // Give the async operation a moment to process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 1.0)
-        
-        // The test passes if no crash occurs and the notification is handled
-        XCTAssertTrue(true)
-    }
-    
     // MARK: - ContentViewModel Tests
     
     func test_handleSortChange_updates_contentViewModel() {
