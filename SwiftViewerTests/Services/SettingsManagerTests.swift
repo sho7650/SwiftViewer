@@ -182,7 +182,7 @@ final class SettingsManagerTests: XCTestCase {
     }
     
     func test_blurOpacity_returnsDefaultValue() {
-        XCTAssertEqual(sut.blurOpacity, 0.8)
+        XCTAssertEqual(sut.blurOpacity, 0.3)
     }
     
     func test_blurOpacity_validatesRange() {
@@ -294,7 +294,7 @@ final class SettingsManagerTests: XCTestCase {
         XCTAssertEqual(mockSettings.autoHideDelay, 3.0)
         XCTAssertEqual(mockSettings.animationDurations[.control], 0.3)
         XCTAssertEqual(mockSettings.blurRadius, 20.0)
-        XCTAssertEqual(mockSettings.blurOpacity, 0.8)
+        XCTAssertEqual(mockSettings.blurOpacity, 0.3)
         XCTAssertEqual(mockSettings.loggingLevel, .info)
         XCTAssertEqual(mockSettings.windowPosition, .normal)
         XCTAssertEqual(mockSettings.slideShowPresetIntervals.count, 13)

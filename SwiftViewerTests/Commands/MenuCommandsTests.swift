@@ -179,9 +179,6 @@ final class MenuCommandsTests: XCTestCase {
         
         // Then: View should be created successfully and be focusable
         XCTAssertNotNil(view, "ContentView should be created successfully")
-        
-        // This test validates that ContentView maintains the necessary structure for focus
-        XCTAssertTrue(true, "ContentView should support focus for keyboard shortcuts")
     }
     
     func test_focus_chain_should_support_keyboard_shortcuts() {
@@ -208,10 +205,6 @@ final class MenuCommandsTests: XCTestCase {
         
         // Then: Should not crash and should maintain focus capability
         XCTAssertNotNil(hostingController.view, "ContentView should render successfully with focus support")
-        
-        // This test will fail initially if focus management is broken
-        // We expect the view to maintain proper focus chain for menu commands
-        XCTAssertTrue(true, "ContentView should maintain focusable state for keyboard shortcuts")
     }
     
     func test_focus_recovery_after_window_loses_and_regains_focus() {
@@ -228,9 +221,6 @@ final class MenuCommandsTests: XCTestCase {
         
         // Then: Focus should be restored
         XCTAssertTrue(focusRecovered, "Focus should be recoverable after window regains frontmost status")
-        
-        // This test will validate that our focus management improvements work
-        XCTAssertTrue(true, "Focus management should handle window focus state changes")
     }
 }
 
@@ -241,13 +231,5 @@ final class MenuCommandsStructureTests: XCTestCase {
     func test_menuCommands_initialization() {
         let commands = MenuCommands()
         XCTAssertNotNil(commands)
-    }
-    
-    func test_menuCommands_has_body() {
-        let commands = MenuCommands()
-        // The body property exists and can be accessed
-        _ = commands.body
-        // If we get here without crashing, the test passes
-        XCTAssertTrue(true)
     }
 }

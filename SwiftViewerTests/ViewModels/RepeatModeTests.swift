@@ -54,30 +54,28 @@ final class RepeatModeTests: XCTestCase {
     
     func test_repeatEnabled_can_be_toggled() {
         XCTAssertFalse(slideShowViewModel.isRepeatEnabled)
-        
+
         slideShowViewModel.isRepeatEnabled = true
-        // Setting writes to DependencyContainer.shared.settingsManager, but reading from injected mock
-        // This reflects the actual implementation behavior - test should verify persistence to shared settings
-        XCTAssertTrue(DependencyContainer.shared.settingsManager.repeatEnabled)
-        
+        // Persistence goes through the injected settings manager, not a global singleton.
+        XCTAssertTrue(mockContainer.settingsManager.repeatEnabled)
+
         slideShowViewModel.isRepeatEnabled = false
-        XCTAssertFalse(DependencyContainer.shared.settingsManager.repeatEnabled)
+        XCTAssertFalse(mockContainer.settingsManager.repeatEnabled)
     }
-    
+
     func test_repeatEnabled_persists_to_settings() {
         slideShowViewModel.isRepeatEnabled = true
-        
-        // Settings persist to DependencyContainer.shared.settingsManager
-        XCTAssertTrue(DependencyContainer.shared.settingsManager.repeatEnabled)
-        
-        // Create new view model that reads from real settings manager
-        let realSettingsManager = DependencyContainer.shared.settingsManager
+
+        // The value persists through the injected settings manager.
+        XCTAssertTrue(mockContainer.settingsManager.repeatEnabled)
+
+        // A new view model backed by the same settings manager reads the persisted value.
         let newViewModel = SlideShowViewModel(
             slideShowService: mockContainer.slideShowService,
             imageNavigator: mockNavigator,
-            settingsManager: realSettingsManager
+            settingsManager: mockContainer.settingsManager
         )
-        
+
         XCTAssertTrue(newViewModel.isRepeatEnabled)
     }
     

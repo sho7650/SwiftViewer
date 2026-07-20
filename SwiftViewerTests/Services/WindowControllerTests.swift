@@ -9,6 +9,7 @@ import XCTest
 import AppKit
 @testable import SwiftViewer
 
+@MainActor
 final class WindowControllerTests: XCTestCase {
     
     var sut: WindowController!

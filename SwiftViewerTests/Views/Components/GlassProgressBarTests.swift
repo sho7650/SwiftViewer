@@ -165,8 +165,29 @@ final class GlassProgressBarTests: XCTestCase {
         XCTAssertNotNil(progressBar)
     }
     
+    // MARK: - Progress Computation Tests
+
+    func test_glassProgressBar_singleImageFolder_progressIsFiniteZero() {
+        // Given a folder with exactly one image (totalCount == 1),
+        // the progress divisor (totalCount - 1) is 0.
+        let progressBar = GlassProgressBar(
+            currentIndex: 0,
+            totalCount: 1,
+            onTapped: { _ in }
+        )
+
+        // Then progress must be a finite value, not NaN, and clamped to 0.
+        XCTAssertTrue(progressBar.progress.isFinite, "Progress must not be NaN for a single-image folder")
+        XCTAssertEqual(progressBar.progress, 0.0, "Single-image folder should report zero progress")
+    }
+
+    func test_glassProgressBar_progressSpansZeroToOne() {
+        XCTAssertEqual(GlassProgressBar(currentIndex: 0, totalCount: 10, onTapped: { _ in }).progress, 0.0)
+        XCTAssertEqual(GlassProgressBar(currentIndex: 9, totalCount: 10, onTapped: { _ in }).progress, 1.0)
+    }
+
     // MARK: - Edge Case Tests
-    
+
     func test_glassProgressBar_handlesInvalidIndex() {
         // Given & When
         let progressBarNegative = GlassProgressBar(

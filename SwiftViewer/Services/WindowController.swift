@@ -8,13 +8,14 @@
 import AppKit
 import Foundation
 
+@MainActor
 final class WindowController {
     static let shared = WindowController()
-    
+
     private var window: NSWindow?
     private var savedLevel: NSWindow.Level?
     private let logger = Logger.shared
-    
+
     init() {}
     
     func setWindow(_ window: NSWindow) {

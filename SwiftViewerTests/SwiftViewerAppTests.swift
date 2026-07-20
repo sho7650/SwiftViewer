@@ -13,20 +13,7 @@ import SwiftUI
 final class SwiftViewerAppTests: XCTestCase {
     
     // MARK: - Window Style Tests
-    
-    func test_swiftViewerApp_windowStyle_isHiddenTitleBar() {
-        // Given: SwiftViewerApp instance
-        let app = SwiftViewerApp()
-        
-        // When: Checking app body configuration
-        let scene = app.body
-        
-        // Then: Should be configured for hidden titlebar
-        // Note: This test verifies the app compiles and initializes correctly
-        // The actual window style verification happens at runtime
-        XCTAssertTrue(true, "App should initialize without titlebar mode dependencies")
-    }
-    
+
     func test_swiftViewerApp_initializesWithoutTitlebarMode() {
         // Given: Clean app initialization
         let app = SwiftViewerApp()

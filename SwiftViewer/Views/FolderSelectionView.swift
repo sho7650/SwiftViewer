@@ -160,7 +160,7 @@ struct FolderSelectionView: View {
 
 #Preview {
     FolderSelectionView { url in
-        Logger.shared.debug("Folder selected: \(url.path)")
+        Logger.shared.debug("Folder selected: \(Logger.sanitizePath(url))")
     }
     .frame(width: 600, height: 500)
 }

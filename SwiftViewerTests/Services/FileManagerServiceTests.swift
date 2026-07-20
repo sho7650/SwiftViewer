@@ -130,6 +130,45 @@ final class FileManagerServiceTests: XCTestCase {
         XCTAssertEqual(imageFiles[1].fileName, "medium.jpg")
         XCTAssertEqual(imageFiles[2].fileName, "small.jpg")
     }
+    // MARK: - Symlink Handling (real filesystem)
+
+    func test_getImageFiles_throwsSymbolicLinkNotAllowed_forSymlinkedDirectory() async throws {
+        let fm = FileManager.default
+        let realDir = fm.temporaryDirectory.appendingPathComponent("fms-real-\(UUID().uuidString)")
+        try fm.createDirectory(at: realDir, withIntermediateDirectories: true)
+        try Data().write(to: realDir.appendingPathComponent("a.jpg"))
+        let linkDir = fm.temporaryDirectory.appendingPathComponent("fms-link-\(UUID().uuidString)")
+        try fm.createSymbolicLink(at: linkDir, withDestinationURL: realDir)
+        defer { try? fm.removeItem(at: realDir); try? fm.removeItem(at: linkDir) }
+
+        let service = FileManagerService()
+        do {
+            _ = try await service.getImageFiles(from: linkDir)
+            XCTFail("Expected symbolicLinkNotAllowed for a symlinked directory")
+        } catch let error as FileManagerServiceError {
+            guard case .symbolicLinkNotAllowed = error else {
+                return XCTFail("Expected symbolicLinkNotAllowed, got \(error)")
+            }
+        }
+    }
+
+    func test_getImageFiles_excludesSymlinkedFiles() async throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("fms-files-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let realImage = dir.appendingPathComponent("real.jpg")
+        try Data().write(to: realImage)
+        let linkImage = dir.appendingPathComponent("link.jpg")
+        try fm.createSymbolicLink(at: linkImage, withDestinationURL: realImage)
+        defer { try? fm.removeItem(at: dir) }
+
+        let service = FileManagerService()
+        let files = try await service.getImageFiles(from: dir)
+
+        let names = files.map(\.fileName)
+        XCTAssertTrue(names.contains("real.jpg"))
+        XCTAssertFalse(names.contains("link.jpg"), "Symlinked files must be excluded")
+    }
 }
 
 class MockFoundationFileManager: FileManager {

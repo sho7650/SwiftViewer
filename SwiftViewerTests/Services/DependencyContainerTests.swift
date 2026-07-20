@@ -27,10 +27,10 @@ final class DependencyContainerTests: XCTestCase {
         XCTAssertTrue(service is FileManagerService)
     }
 
-    func test_imageLoaderService_returnsCorrectType() {
-        let service = DependencyContainer.shared.imageLoaderService
+    func test_imagePipeline_returnsCorrectType() {
+        let service = DependencyContainer.shared.imagePipeline
 
-        XCTAssertTrue(service is ImageLoaderService)
+        XCTAssertTrue(service is ImagePipeline)
     }
 
     func test_settingsManager_returnsCorrectType() {
@@ -45,7 +45,7 @@ final class DependencyContainerTests: XCTestCase {
         let mock = MockDependencyContainer()
 
         XCTAssertTrue(mock.fileManagerService is MockFileManagerService)
-        XCTAssertTrue(mock.imageLoaderService is MockImageLoaderService)
+        XCTAssertTrue(mock.imagePipeline is MockImagePipeline)
         XCTAssertTrue(mock.settingsManager is MockSettingsManager)
     }
 
@@ -56,11 +56,5 @@ final class DependencyContainerTests: XCTestCase {
         let mock = MockDependencyContainer(settingsManager: customSettings)
 
         XCTAssertEqual(mock.settingsManager.slideShowInterval, 42.0)
-    }
-
-    func test_mockContainer_adaptiveImageCache_isInitialized() {
-        let mock = MockDependencyContainer()
-
-        XCTAssertNotNil(mock.adaptiveImageCache)
     }
 }

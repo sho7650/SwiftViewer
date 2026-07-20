@@ -123,7 +123,7 @@ struct ContentView: View {
         
         panel.begin { response in
             if response == .OK, let url = panel.url {
-                Logger.shared.info("[ContentView] Folder selected: \(url.path)")
+                Logger.shared.info("[ContentView] Folder selected: \(Logger.sanitizePath(url))")
                 self.handleFolderSelection(url)
             }
         }

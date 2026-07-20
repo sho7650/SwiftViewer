@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol SettingsManagerProtocol {
+protocol SettingsManagerProtocol: AnyObject {
     // Existing properties
     var slideShowInterval: TimeInterval { get set }
     var repeatEnabled: Bool { get set }
@@ -28,14 +28,28 @@ protocol SettingsManagerProtocol {
     
     // Cache configuration properties
     var cacheMemoryLimitPercentage: Double { get set } // 1-50% of system memory
-    var cacheDiskLimitMB: Int { get set } // Disk cache limit in MB
     var cacheCountLimit: Int { get set } // Max number of cached images
-    var cachePreloadPercentage: Double { get set } // 10-100% of images to preload
+    var cachePreloadWindow: Int { get set } // Number of neighbouring images to preload
 }
 
 enum SettingsKeys {
     static let debugLoggingEnabled = "debugLoggingEnabled"
     static let loggingLevel = "loggingLevel"
+    static let slideShowInterval = "slideShowInterval"
+    static let repeatEnabled = "repeatEnabled"
+    static let sortType = "sortType"
+    static let autoHideDelay = "autoHideDelay"
+    static let animationDurations = "animationDurations"
+    static let blurRadius = "blurRadius"
+    static let blurRadiusSet = "blurRadiusSet"
+    static let blurOpacity = "blurOpacity"
+    static let blurOpacitySet = "blurOpacitySet"
+    static let windowPosition = "windowPosition"
+    static let transitionType = "transitionType"
+    static let cacheMemoryLimitPercentage = "cacheMemoryLimitPercentage"
+    static let cacheMemoryLimitPercentageSet = "cacheMemoryLimitPercentageSet"
+    static let cacheCountLimit = "cacheCountLimit"
+    static let cachePreloadWindow = "cachePreloadWindow"
 }
 
 final class SettingsManager: SettingsManagerProtocol {
@@ -47,12 +61,12 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var slideShowInterval: TimeInterval {
         get {
-            let interval = userDefaults.double(forKey: "slideShowInterval")
+            let interval = userDefaults.double(forKey: SettingsKeys.slideShowInterval)
             return interval > 0 ? interval : 10.0
         }
         set {
             let validatedValue = validateSlideShowInterval(newValue)
-            userDefaults.set(validatedValue, forKey: "slideShowInterval")
+            userDefaults.set(validatedValue, forKey: SettingsKeys.slideShowInterval)
         }
     }
     
@@ -63,20 +77,20 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var repeatEnabled: Bool {
         get {
-            userDefaults.bool(forKey: "repeatEnabled")
+            userDefaults.bool(forKey: SettingsKeys.repeatEnabled)
         }
         set {
-            userDefaults.set(newValue, forKey: "repeatEnabled")
+            userDefaults.set(newValue, forKey: SettingsKeys.repeatEnabled)
         }
     }
     
     var sortType: SortType {
         get {
-            let sortTypeRaw = userDefaults.string(forKey: "sortType") ?? "name_ascending"
+            let sortTypeRaw = userDefaults.string(forKey: SettingsKeys.sortType) ?? "name_ascending"
             return parseSortType(from: sortTypeRaw)
         }
         set {
-            userDefaults.set(sortTypeString(from: newValue), forKey: "sortType")
+            userDefaults.set(sortTypeString(from: newValue), forKey: SettingsKeys.sortType)
         }
     }
     
@@ -127,18 +141,18 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var autoHideDelay: TimeInterval {
         get {
-            let delay = userDefaults.double(forKey: "autoHideDelay")
+            let delay = userDefaults.double(forKey: SettingsKeys.autoHideDelay)
             return delay > 0 ? delay : 3.0 // Default 3 seconds
         }
         set {
             let validatedValue = max(1.0, min(60.0, newValue))
-            userDefaults.set(validatedValue, forKey: "autoHideDelay")
+            userDefaults.set(validatedValue, forKey: SettingsKeys.autoHideDelay)
         }
     }
     
     var animationDurations: [AnimationType: TimeInterval] {
         get {
-            guard let data = userDefaults.data(forKey: "animationDurations") else {
+            guard let data = userDefaults.data(forKey: SettingsKeys.animationDurations) else {
                 return Self.defaultAnimationDurations
             }
             do {
@@ -151,7 +165,7 @@ final class SettingsManager: SettingsManagerProtocol {
         set {
             do {
                 let data = try JSONEncoder().encode(newValue)
-                userDefaults.set(data, forKey: "animationDurations")
+                userDefaults.set(data, forKey: SettingsKeys.animationDurations)
             } catch {
                 Logger.shared.warning("Failed to encode animationDurations: \(error.localizedDescription)")
             }
@@ -159,28 +173,28 @@ final class SettingsManager: SettingsManagerProtocol {
     }
 
     private static let defaultAnimationDurations: [AnimationType: TimeInterval] =
-        [.control: 0.3, .transition: 0.2, .feedback: 0.1]
+        [.control: 0.3, .transition: 0.2, .feedback: 0.1, .ui: 0.2]
     
     var blurRadius: Double {
         get {
-            let radius = userDefaults.double(forKey: "blurRadius")
-            if radius == 0 && !userDefaults.bool(forKey: "blurRadiusSet") {
+            let radius = userDefaults.double(forKey: SettingsKeys.blurRadius)
+            if radius == 0 && !userDefaults.bool(forKey: SettingsKeys.blurRadiusSet) {
                 return 20.0 // Default 20
             }
             return max(0.0, min(50.0, radius)) // Always clamp
         }
         set {
             let validatedValue = max(0.0, min(50.0, newValue))
-            userDefaults.set(validatedValue, forKey: "blurRadius")
-            userDefaults.set(true, forKey: "blurRadiusSet")
+            userDefaults.set(validatedValue, forKey: SettingsKeys.blurRadius)
+            userDefaults.set(true, forKey: SettingsKeys.blurRadiusSet)
         }
     }
     
     var blurOpacity: Double {
         get {
-            let opacity = userDefaults.double(forKey: "blurOpacity")
-            if opacity == 0 && !userDefaults.bool(forKey: "blurOpacitySet") {
-                return 0.8 // Default 0.8
+            let opacity = userDefaults.double(forKey: SettingsKeys.blurOpacity)
+            if opacity == 0 && !userDefaults.bool(forKey: SettingsKeys.blurOpacitySet) {
+                return 0.3 // Default matches the previously hardcoded background opacity
             }
             return opacity
         }
@@ -206,14 +220,14 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var windowPosition: WindowPosition {
         get {
-            if let positionString = userDefaults.string(forKey: "windowPosition"),
+            if let positionString = userDefaults.string(forKey: SettingsKeys.windowPosition),
                let position = WindowPosition(rawValue: positionString) {
                 return position
             }
             return .normal // Default
         }
         set {
-            userDefaults.set(newValue.rawValue, forKey: "windowPosition")
+            userDefaults.set(newValue.rawValue, forKey: SettingsKeys.windowPosition)
         }
     }
     
@@ -224,14 +238,14 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var transitionType: TransitionType {
         get {
-            if let transitionString = userDefaults.string(forKey: "transitionType"),
+            if let transitionString = userDefaults.string(forKey: SettingsKeys.transitionType),
                let type = TransitionType(rawValue: transitionString) {
                 return type
             }
             return .crossDissolve // Default
         }
         set {
-            userDefaults.set(newValue.rawValue, forKey: "transitionType")
+            userDefaults.set(newValue.rawValue, forKey: SettingsKeys.transitionType)
         }
     }
     
@@ -239,53 +253,38 @@ final class SettingsManager: SettingsManagerProtocol {
     
     var cacheMemoryLimitPercentage: Double {
         get {
-            let percentage = userDefaults.double(forKey: "cacheMemoryLimitPercentage")
-            if percentage == 0 && !userDefaults.bool(forKey: "cacheMemoryLimitPercentageSet") {
+            let percentage = userDefaults.double(forKey: SettingsKeys.cacheMemoryLimitPercentage)
+            if percentage == 0 && !userDefaults.bool(forKey: SettingsKeys.cacheMemoryLimitPercentageSet) {
                 return 15.0 // Default 15% of system memory
             }
             return max(1.0, min(50.0, percentage))
         }
         set {
             let validatedValue = max(1.0, min(50.0, newValue))
-            userDefaults.set(validatedValue, forKey: "cacheMemoryLimitPercentage")
-            userDefaults.set(true, forKey: "cacheMemoryLimitPercentageSet")
-        }
-    }
-    
-    var cacheDiskLimitMB: Int {
-        get {
-            let limit = userDefaults.integer(forKey: "cacheDiskLimitMB")
-            return limit > 0 ? limit : 500 // Default 500MB
-        }
-        set {
-            let validatedValue = max(100, min(10000, newValue)) // 100MB to 10GB
-            userDefaults.set(validatedValue, forKey: "cacheDiskLimitMB")
+            userDefaults.set(validatedValue, forKey: SettingsKeys.cacheMemoryLimitPercentage)
+            userDefaults.set(true, forKey: SettingsKeys.cacheMemoryLimitPercentageSet)
         }
     }
     
     var cacheCountLimit: Int {
         get {
-            let limit = userDefaults.integer(forKey: "cacheCountLimit")
+            let limit = userDefaults.integer(forKey: SettingsKeys.cacheCountLimit)
             return limit > 0 ? limit : 100 // Default 100 images
         }
         set {
             let validatedValue = max(10, min(1000, newValue)) // 10 to 1000 images
-            userDefaults.set(validatedValue, forKey: "cacheCountLimit")
+            userDefaults.set(validatedValue, forKey: SettingsKeys.cacheCountLimit)
         }
     }
-    
-    var cachePreloadPercentage: Double {
+
+    var cachePreloadWindow: Int {
         get {
-            let percentage = userDefaults.double(forKey: "cachePreloadPercentage")
-            if percentage == 0 && !userDefaults.bool(forKey: "cachePreloadPercentageSet") {
-                return 20.0 // Default 20% preload
-            }
-            return max(10.0, min(100.0, percentage))
+            let window = userDefaults.integer(forKey: SettingsKeys.cachePreloadWindow)
+            return window > 0 ? window : 10 // Default 10 neighbours
         }
         set {
-            let validatedValue = max(10.0, min(100.0, newValue))
-            userDefaults.set(validatedValue, forKey: "cachePreloadPercentage")
-            userDefaults.set(true, forKey: "cachePreloadPercentageSet")
+            let validatedValue = max(1, min(100, newValue)) // 1 to 100 images
+            userDefaults.set(validatedValue, forKey: SettingsKeys.cachePreloadWindow)
         }
     }
 }
@@ -304,7 +303,7 @@ final class MockSettingsManager: SettingsManagerProtocol {
         .feedback: 0.1
     ]
     var blurRadius: Double = 20.0
-    var blurOpacity: Double = 0.8
+    var blurOpacity: Double = 0.3
     var loggingLevel: LogLevel = .info
     var windowPosition: WindowPosition = .normal
     var slideShowPresetIntervals: [TimeInterval] = [1, 2, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800]
@@ -314,7 +313,6 @@ final class MockSettingsManager: SettingsManagerProtocol {
     
     // Cache configuration properties
     var cacheMemoryLimitPercentage: Double = 15.0
-    var cacheDiskLimitMB: Int = 500
     var cacheCountLimit: Int = 100
-    var cachePreloadPercentage: Double = 20.0
+    var cachePreloadWindow: Int = 10
 }

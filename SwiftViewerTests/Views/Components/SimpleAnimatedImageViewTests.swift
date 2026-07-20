@@ -34,42 +34,6 @@ final class SimpleAnimatedImageViewTests: XCTestCase {
         XCTAssertNotNil(hostingController.view)
     }
     
-    // MARK: - Animation Control Tests
-    
-    func test_simpleAnimatedImageView_pause_functionality() {
-        let testURL = URL(fileURLWithPath: "/test/animation.gif")
-        let view = SimpleAnimatedImageView(url: testURL)
-        
-        // Test pause functionality
-        view.pause()
-        // Since we can't directly access @State variables in tests,
-        // we'll test that the method doesn't crash
-        XCTAssertTrue(true)
-    }
-    
-    func test_simpleAnimatedImageView_resume_functionality() {
-        let testURL = URL(fileURLWithPath: "/test/animation.gif")
-        let view = SimpleAnimatedImageView(url: testURL)
-        
-        // Test resume functionality
-        view.resume()
-        // Since we can't directly access @State variables in tests,
-        // we'll test that the method doesn't crash
-        XCTAssertTrue(true)
-    }
-    
-    func test_simpleAnimatedImageView_toggle_functionality() {
-        let testURL = URL(fileURLWithPath: "/test/animation.gif")
-        let view = SimpleAnimatedImageView(url: testURL)
-        
-        // Test toggle functionality
-        view.togglePlayback()
-        view.togglePlayback() // Toggle twice
-        // Since we can't directly access @State variables in tests,
-        // we'll test that the method doesn't crash
-        XCTAssertTrue(true)
-    }
-    
     // MARK: - URL Validation Tests
     
     func test_simpleAnimatedImageView_handles_valid_file_url() {

@@ -72,4 +72,4 @@ struct LogCapture {
 }
 
 /// Global log capture instance for test coordination
-var testLogCapture = LogCapture()
+nonisolated(unsafe) var testLogCapture = LogCapture()

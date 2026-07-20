@@ -24,47 +24,60 @@ final class ImageGalleryViewModel {
     var errorMessage: String?
     
     // MARK: - Dependencies
-    
+
     private let fileManagerService: FileManagerServiceProtocol
-    private let imageLoaderService: ImageLoaderServiceProtocol
+    private let imagePipeline: ImagePipelineProtocol
     private let settingsManager: SettingsManagerProtocol
     private let logger = Logger.shared
-    
+
+    // Tracks the in-flight display load so rapid navigation can cancel stale work.
+    private var displayLoadTask: Task<Void, Never>?
+    private var preloadTask: Task<Void, Never>?
+
     // MARK: - Initialization
-    
+
     init(dependencies: DependencyContainerProtocol) {
         self.fileManagerService = dependencies.fileManagerService
-        self.imageLoaderService = dependencies.imageLoaderService
+        self.imagePipeline = dependencies.imagePipeline
         self.settingsManager = dependencies.settingsManager
+    }
+
+    /// The longest edge, in pixels, worth decoding for the current display.
+    private var displayMaxPixelSize: CGFloat {
+        guard let screen = NSScreen.main else { return 2048 }
+        let longEdge = max(screen.frame.width, screen.frame.height)
+        return longEdge * screen.backingScaleFactor
     }
     
     // MARK: - Public Methods
     
     func loadFolder(_ url: URL) async {
-        logger.info("Loading folder: \(url.path)")
+        logger.info("Loading folder: \(Logger.sanitizePath(url))")
         clearError()
         isLoading = true
-        
+        await imagePipeline.reset()
+
         do {
             let sortType = settingsManager.sortType
             let loadedFiles = try await fileManagerService.getImageFiles(from: url, sortBy: sortType)
-            
+
             imageFiles = loadedFiles
             currentIndex = 0
-            
+
             if !imageFiles.isEmpty {
                 await loadImageAtCurrentIndex()
+                schedulePreload()
             } else {
                 currentImage = nil
                 currentImageFile = nil
-                logger.warning("No image files found in folder: \(url.path)")
+                logger.warning("No image files found in folder: \(Logger.sanitizePath(url))")
             }
-            
+
         } catch {
-            logger.error("Failed to load folder: \(url.path)", error: error)
+            logger.error("Failed to load folder: \(Logger.sanitizePath(url))", error: error)
             handleError(error)
         }
-        
+
         isLoading = false
     }
     
@@ -108,39 +121,27 @@ final class ImageGalleryViewModel {
         
         currentIndex = index
         await loadImageAtCurrentIndex()
+        schedulePreload()
     }
     
     func refreshWithCurrentSort() async {
         guard !imageFiles.isEmpty else { return }
-        
+
         logger.info("Refreshing with current sort type")
-        
-        // Store current image file to maintain position if possible
+
+        // Re-order the already-loaded files in memory; no directory re-scan.
         let currentImageFile = self.currentImageFile
-        
-        do {
-            let sortType = settingsManager.sortType
-            let currentFolderURL = imageFiles.first?.url.deletingLastPathComponent()
-            
-            guard let folderURL = currentFolderURL else { return }
-            
-            let sortedFiles = try await fileManagerService.getImageFiles(from: folderURL, sortBy: sortType)
-            imageFiles = sortedFiles
-            
-            // Try to find the current image in the new sorted list
-            if let currentFile = currentImageFile,
-               let newIndex = imageFiles.firstIndex(where: { $0.url == currentFile.url }) {
-                currentIndex = newIndex
-            } else {
-                currentIndex = 0
-            }
-            
-            await loadImageAtCurrentIndex()
-            
-        } catch {
-            logger.error("Failed to refresh with current sort", error: error)
-            handleError(error)
+        imageFiles = imageFiles.sorted(by: settingsManager.sortType)
+
+        if let currentFile = currentImageFile,
+           let newIndex = imageFiles.firstIndex(where: { $0.url == currentFile.url }) {
+            currentIndex = newIndex
+        } else {
+            currentIndex = 0
         }
+
+        await loadImageAtCurrentIndex()
+        schedulePreload()
     }
     
     // MARK: - Private Methods
@@ -148,37 +149,84 @@ final class ImageGalleryViewModel {
     private func loadImageAtCurrentIndex() async {
         guard !imageFiles.isEmpty,
               currentIndex >= 0,
-              currentIndex < imageFiles.count else { 
+              currentIndex < imageFiles.count else {
             logger.warning("Cannot load image: invalid index \(currentIndex) for \(imageFiles.count) images")
-            return 
+            return
         }
-        
+
         let imageFile = imageFiles[currentIndex]
+        let requestedIndex = currentIndex
         clearError()
-        
+
+        displayLoadTask?.cancel()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performLoad(of: imageFile, requestedIndex: requestedIndex)
+        }
+        displayLoadTask = task
+        await task.value
+    }
+
+    private func performLoad(of imageFile: ImageFile, requestedIndex: Int) async {
         do {
             logger.debug("Loading image: \(imageFile.fileName)")
-            let loadedImage = try await imageLoaderService.loadImage(from: imageFile.url)
-            
-            // Update Observable properties with animation context for smooth transitions
-            await MainActor.run {
-                withAnimation(.fromSettings(.transition)) {
-                    self.currentImageFile = imageFile
-                    self.currentImage = loadedImage
-                }
+            let decoded = try await imagePipeline.image(for: imageFile.url, maxPixelSize: displayMaxPixelSize)
+
+            // Ignore results for a navigation that has since moved on or been cancelled.
+            guard !Task.isCancelled, currentIndex == requestedIndex else { return }
+
+            let image = NSImage(cgImage: decoded.cgImage, size: .zero)
+            withAnimation(.fromSettings(.transition)) {
+                self.currentImageFile = imageFile
+                self.currentImage = image
             }
-            
+        } catch is CancellationError {
+            return
         } catch {
+            guard currentIndex == requestedIndex else { return }
             logger.error("Failed to load image: \(imageFile.fileName)", error: error)
             handleError(error)
-            await MainActor.run {
-                self.currentImage = nil
-            }
+            self.currentImage = nil
         }
     }
-    
+
+    /// Preloads a forward-biased window of neighbours around the current index.
+    private func schedulePreload() {
+        guard !imageFiles.isEmpty else { return }
+        let window = settingsManager.cachePreloadWindow
+        let backward = min(2, window)
+        let forward = window - backward
+
+        var urls: [URL] = []
+        for offset in 1...max(1, forward) where currentIndex + offset < imageFiles.count {
+            urls.append(imageFiles[currentIndex + offset].url)
+        }
+        for offset in 1...max(1, backward) where currentIndex - offset >= 0 {
+            urls.append(imageFiles[currentIndex - offset].url)
+        }
+
+        let maxPixelSize = displayMaxPixelSize
+        preloadTask?.cancel()
+        preloadTask = Task { [weak self] in
+            await self?.imagePipeline.preload(urls, maxPixelSize: maxPixelSize)
+        }
+    }
+
     private func handleError(_ error: Error) {
-        errorMessage = error.localizedDescription
+        switch error {
+        case FileManagerServiceError.directoryNotFound:
+            errorMessage = "Folder not found."
+        case FileManagerServiceError.accessDenied:
+            errorMessage = "SwiftViewer doesn't have permission to read this folder."
+        case FileManagerServiceError.symbolicLinkNotAllowed:
+            errorMessage = "Symbolic links are not supported."
+        case FileManagerServiceError.readError:
+            errorMessage = "The folder could not be read."
+        case ImagePipelineError.fileNotFound, ImagePipelineError.invalidImage:
+            errorMessage = "This image could not be displayed."
+        default:
+            errorMessage = "An unexpected error occurred."
+        }
     }
     
     private func clearError() {
