@@ -7,6 +7,28 @@
 
 import SwiftUI
 
+/// Shared dimensions for the slideshow control bar and its progress scrubber.
+private enum Metrics {
+    static let stackSpacing: CGFloat = 12
+    static let controlSpacing: CGFloat = 20
+    static let horizontalPadding: CGFloat = 24
+    static let verticalPadding: CGFloat = 16
+    static let cornerRadius: CGFloat = 16
+
+    static let buttonSize: CGFloat = 40
+    static let iconSize: CGFloat = 18
+    static let repeatIconSize: CGFloat = 16
+    static let keyPressScale: CGFloat = 0.95
+    static let disabledOpacity: Double = 0.35
+
+    static let barSpacing: CGFloat = 6
+    static let barHeight: CGFloat = 4
+    /// The bar is drawn thin but grabbed through a taller transparent strip.
+    static let barHitHeight: CGFloat = 24
+    static let counterHorizontalPadding: CGFloat = 8
+    static let counterVerticalPadding: CGFloat = 2
+}
+
 struct GlassmorphismControlsView: View {
     let isSlideShowRunning: Bool
     let currentIndex: Int
@@ -21,63 +43,73 @@ struct GlassmorphismControlsView: View {
     let onToggleRepeat: () -> Void
     let onProgressTapped: (Int) -> Void
     
+    /// Shared by `.disabled` and the dimming opacity so the two never disagree.
+    private var isPreviousDisabled: Bool { currentIndex <= 0 }
+    private var isNextDisabled: Bool { currentIndex >= totalCount - 1 }
+
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Metrics.stackSpacing) {
             // Progress bar with glassmorphism styling
             GlassProgressBar(
                 currentIndex: currentIndex,
                 totalCount: totalCount,
                 onTapped: onProgressTapped
             )
-            
+
             // Control buttons with glass effects
-            GlassEffectContainer(spacing: 20) {
-                HStack(spacing: 20) {
+            GlassEffectContainer(spacing: Metrics.controlSpacing) {
+                HStack(spacing: Metrics.controlSpacing) {
                     // Previous button
                     Button(action: onPrevious) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white)
+                        controlIcon("chevron.left")
                     }
-                    .buttonStyle(GlassButtonStyle())
-                    .scaleEffect(isLeftKeyPressed ? 0.95 : 1.0)
-                    .disabled(currentIndex <= 0)
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .disabled(isPreviousDisabled)
+                    .opacity(isPreviousDisabled ? Metrics.disabledOpacity : 1.0)
+                    .scaleEffect(isLeftKeyPressed ? Metrics.keyPressScale : 1.0)
 
-                    // Play/Pause button
+                    // Play/Pause button — the primary action, so it reads a step louder
                     Button(action: onToggleSlideShow) {
-                        Image(systemName: isSlideShowRunning ? "pause.fill" : "play.fill")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white)
+                        controlIcon(isSlideShowRunning ? "pause.fill" : "play.fill")
                     }
-                    .buttonStyle(GlassButtonStyle())
-                    .scaleEffect(isSpaceKeyPressed ? 0.95 : 1.0)
+                    .buttonStyle(.glassProminent)
+                    .buttonBorderShape(.circle)
+                    .scaleEffect(isSpaceKeyPressed ? Metrics.keyPressScale : 1.0)
 
                     // Next button
                     Button(action: onNext) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white)
+                        controlIcon("chevron.right")
                     }
-                    .buttonStyle(GlassButtonStyle())
-                    .scaleEffect(isRightKeyPressed ? 0.95 : 1.0)
-                    .disabled(currentIndex >= totalCount - 1)
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .disabled(isNextDisabled)
+                    .opacity(isNextDisabled ? Metrics.disabledOpacity : 1.0)
+                    .scaleEffect(isRightKeyPressed ? Metrics.keyPressScale : 1.0)
 
                     // Repeat button
                     Button(action: onToggleRepeat) {
-                        Image(systemName: "repeat")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(isRepeatEnabled ? .accentColor : .white)
+                        controlIcon("repeat", size: Metrics.repeatIconSize)
+                            .foregroundStyle(isRepeatEnabled ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
                     }
-                    .buttonStyle(GlassButtonStyle())
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .padding(.horizontal, Metrics.horizontalPadding)
+        .padding(.vertical, Metrics.verticalPadding)
+        .glassEffect(.regular, in: .rect(cornerRadius: Metrics.cornerRadius))
         .animation(.fromSettings(.feedback), value: isLeftKeyPressed)
         .animation(.fromSettings(.feedback), value: isSpaceKeyPressed)
         .animation(.fromSettings(.feedback), value: isRightKeyPressed)
+    }
+
+    /// Gives every control the same tap target, so `.glass` and `.glassProminent` size alike.
+    private func controlIcon(_ systemName: String, size: CGFloat = Metrics.iconSize) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: size, weight: .medium))
+            .frame(width: Metrics.buttonSize, height: Metrics.buttonSize)
     }
 }
 
@@ -85,11 +117,12 @@ struct GlassProgressBar: View {
     let currentIndex: Int
     let totalCount: Int
     let onTapped: (Int) -> Void
-    
+
+    /// Index under the thumb mid-drag. `nil` whenever the bar is not being scrubbed.
+    @State private var scrubIndex: Int?
+
     var progress: Double {
-        // A single-image folder (totalCount == 1) has a zero divisor; clamp to avoid NaN.
-        guard totalCount > 1 else { return 0.0 }
-        return Double(currentIndex) / Double(totalCount - 1)
+        displayProgress(scrubbing: nil)
     }
 
     /// The target index for a tap at the given horizontal fraction (0...1) of the bar.
@@ -99,68 +132,78 @@ struct GlassProgressBar: View {
         return max(0, min(index, totalCount - 1))
     }
 
+    /// Converts a gesture location into a 0...1 fraction of the bar's width.
+    func fraction(forX x: CGFloat, width: CGFloat) -> Double {
+        // GeometryReader reports a zero width on the first layout pass.
+        guard width > 0 else { return 0.0 }
+        return Double(x / width)
+    }
+
+    /// The index the bar should render: the thumb position while scrubbing, otherwise the live index.
+    func displayIndex(scrubbing scrubIndex: Int?) -> Int {
+        scrubIndex ?? currentIndex
+    }
+
+    /// Progress for `displayIndex`, so the fill tracks the thumb before navigation commits.
+    func displayProgress(scrubbing scrubIndex: Int?) -> Double {
+        // A single-image folder (totalCount == 1) has a zero divisor; clamp to avoid NaN.
+        guard totalCount > 1 else { return 0.0 }
+        return Double(displayIndex(scrubbing: scrubIndex)) / Double(totalCount - 1)
+    }
+
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: Metrics.barSpacing) {
             // Progress visualization
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     // Background track
                     Capsule()
                         .fill(.clear)
-                        .frame(height: 4)
+                        .frame(height: Metrics.barHeight)
                         .glassEffect(in: .capsule)
 
-                    // Progress fill (thin bar — a plain gradient reads better than glass here)
+                    // Progress fill (thin bar — a solid tint reads better than glass here)
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue.opacity(0.8), .cyan.opacity(0.6)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                        .fill(.tint)
+                        .frame(
+                            width: geometry.size.width * displayProgress(scrubbing: scrubIndex),
+                            height: Metrics.barHeight
                         )
-                        .frame(width: geometry.size.width * progress, height: 4)
                 }
+                // Fill the taller strip so the thin bar stays centred but easy to grab.
+                .frame(maxHeight: .infinity)
                 .contentShape(Rectangle())
-                .onTapGesture { location in
-                    let fraction = geometry.size.width > 0 ? location.x / geometry.size.width : 0
-                    onTapped(targetIndex(forFraction: fraction))
-                }
+                // minimumDistance 0 makes this handle plain clicks as well as drags,
+                // so there is no separate tap gesture to double-fire.
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            // Preview only — navigating here would thrash the image
+                            // pipeline on a 10,000-image folder.
+                            scrubIndex = targetIndex(
+                                forFraction: fraction(forX: value.location.x, width: geometry.size.width)
+                            )
+                        }
+                        .onEnded { value in
+                            let index = targetIndex(
+                                forFraction: fraction(forX: value.location.x, width: geometry.size.width)
+                            )
+                            scrubIndex = nil
+                            onTapped(index)
+                        }
+                )
             }
-            .frame(height: 4)
+            .frame(height: Metrics.barHitHeight)
 
             // Index indicator
-            Text("\(currentIndex + 1) / \(totalCount)")
+            Text("\(displayIndex(scrubbing: scrubIndex) + 1) / \(totalCount)")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+                .padding(.horizontal, Metrics.counterHorizontalPadding)
+                .padding(.vertical, Metrics.counterVerticalPadding)
                 .glassEffect(.regular, in: .capsule)
         }
-    }
-}
-
-struct GlassButtonStyle: ButtonStyle {
-    let radius: CGFloat
-    let material: Material
-    let shadowRadius: CGFloat
-    
-    init(
-        radius: CGFloat = 12,
-        material: Material = .ultraThinMaterial,
-        shadowRadius: CGFloat = 6
-    ) {
-        self.radius = radius
-        self.material = material
-        self.shadowRadius = shadowRadius
-    }
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(width: 40, height: 40)
-            .glassEffect(.regular.interactive(), in: .circle)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.fromSettings(.feedback), value: configuration.isPressed)
     }
 }
 

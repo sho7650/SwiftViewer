@@ -207,4 +207,90 @@ final class GlassProgressBarTests: XCTestCase {
         XCTAssertNotNil(progressBarNegative)
         XCTAssertNotNil(progressBarOverflow)
     }
+
+    // MARK: - Target Index Tests
+
+    func test_targetIndex_mapsFractionAcrossRange() {
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.targetIndex(forFraction: 0.0), 0)
+        XCTAssertEqual(bar.targetIndex(forFraction: 1.0), 9)
+        XCTAssertEqual(bar.targetIndex(forFraction: 0.5), 4)
+    }
+
+    func test_targetIndex_clampsFractionBelowZero() {
+        // A drag can travel left of the bar's origin, producing a negative fraction.
+        let bar = GlassProgressBar(currentIndex: 3, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.targetIndex(forFraction: -0.5), 0)
+    }
+
+    func test_targetIndex_clampsFractionAboveOne() {
+        // A drag can travel past the bar's trailing edge, producing a fraction > 1.
+        let bar = GlassProgressBar(currentIndex: 3, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.targetIndex(forFraction: 1.5), 9)
+    }
+
+    func test_targetIndex_singleImageFolder_returnsZero() {
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 1, onTapped: { _ in })
+
+        XCTAssertEqual(bar.targetIndex(forFraction: 0.8), 0)
+    }
+
+    // MARK: - Fraction Conversion Tests
+
+    func test_fraction_convertsPositionToUnitRange() {
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.fraction(forX: 0, width: 200), 0.0, accuracy: 0.0001)
+        XCTAssertEqual(bar.fraction(forX: 100, width: 200), 0.5, accuracy: 0.0001)
+        XCTAssertEqual(bar.fraction(forX: 200, width: 200), 1.0, accuracy: 0.0001)
+    }
+
+    func test_fraction_zeroWidth_returnsZeroNotNaN() {
+        // GeometryReader reports a zero width on the first layout pass.
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 10, onTapped: { _ in })
+
+        let fraction = bar.fraction(forX: 50, width: 0)
+
+        XCTAssertTrue(fraction.isFinite, "Fraction must not be NaN when width is zero")
+        XCTAssertEqual(fraction, 0.0)
+    }
+
+    // MARK: - Scrubbing Tests
+
+    func test_displayIndex_notScrubbing_usesCurrentIndex() {
+        let bar = GlassProgressBar(currentIndex: 4, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.displayIndex(scrubbing: nil), 4)
+    }
+
+    func test_displayIndex_whileScrubbing_usesScrubIndex() {
+        let bar = GlassProgressBar(currentIndex: 4, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.displayIndex(scrubbing: 7), 7)
+    }
+
+    func test_displayProgress_notScrubbing_matchesProgress() {
+        let bar = GlassProgressBar(currentIndex: 3, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.displayProgress(scrubbing: nil), bar.progress, accuracy: 0.0001)
+    }
+
+    func test_displayProgress_whileScrubbing_followsScrubIndex() {
+        // Dragging to the last image must fill the bar even though currentIndex has not moved.
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 10, onTapped: { _ in })
+
+        XCTAssertEqual(bar.displayProgress(scrubbing: 9), 1.0, accuracy: 0.0001)
+    }
+
+    func test_displayProgress_singleImageFolder_isFiniteZero() {
+        let bar = GlassProgressBar(currentIndex: 0, totalCount: 1, onTapped: { _ in })
+
+        let progress = bar.displayProgress(scrubbing: 0)
+
+        XCTAssertTrue(progress.isFinite, "Progress must not be NaN for a single-image folder")
+        XCTAssertEqual(progress, 0.0)
+    }
 }

@@ -359,8 +359,24 @@ struct ImageGalleryView: View {
         }
     }
 
+    /// Whether a key press counts as activity that wakes the auto-hide controls.
+    ///
+    /// The four navigation arrows are exempt: once the player has faded out, browsing
+    /// with the keyboard keeps it out of the way, and while it is still on screen the
+    /// arrows neither reveal nor extend it. Every other key registers activity as usual.
+    static func affectsAutoHideControls(_ key: KeyEquivalent) -> Bool {
+        switch key {
+        case .leftArrow, .rightArrow, .upArrow, .downArrow:
+            return false
+        default:
+            return true
+        }
+    }
+
     private func handleKeyPress(_ key: KeyEquivalent) -> Void {
-        autoHideManager.registerActivity()
+        if Self.affectsAutoHideControls(key) {
+            autoHideManager.registerActivity()
+        }
 
         Task { @MainActor in
             switch key {
